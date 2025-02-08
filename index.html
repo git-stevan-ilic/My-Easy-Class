@@ -2,13 +2,70 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="./css/main.css">
     <title>My Easy Class</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" type="text/css" href="./css/login.css">
+    <link rel="stylesheet" type="text/css" href="./css/main.css">
+
+    <script type="text/javascript" src="./js/login logic.js"></script>
+    <script type="text/javascript" src="./js/main.js"></script>
 </head>
 <body>
-    <div class="page-head"></div>
-    <div class="page-body"></div>
+    <div class="page-head">
+        <div class="logo"></div>
+        <div class="header-title">My Easy Class</div>
+        <div class="header-button-holder" id="sign-up-holder">
+            <div class="header-button-text">Don't have an account?</div>
+            <button id="open-sign-up">Sign Up</button>
+        </div>
+        <div class="header-button-holder" id="login-holder">
+            <div class="header-button-text">Already have an account?</div>
+            <button id="open-login">Log In</button>
+        </div>
+    </div>
+    <div class="page-body">
+        <div class="screen" id="login-screen">
+            <div class="login-window">
+                <div class="login-window-l">
+                    <div class="login-title-l">Welcome</div>
+                    <div class="login-text-l">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod  tempor incididunt ut labore et dolore magna aliqua. </div>
+                    <div class="login-sub-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod  tempor incididunt ut labore et dolore magna aliqua.</div>
+                </div>
+                <div class="login-window-r">
+                    <div class="login-title-r">Log In</div>
+                    <div class="login-input-holder">
+                        <div class="login-text-r">Username</div>
+                        <input type="text" class="login-input" id="login-username">
+                        <div class="login-text-r">Password</div>
+                        <input type="password" class="login-input" id="login-password">
+                        <div class="remember-me-holder">
+                            <div class="check-holder" id="remember-me-check">
+                                <div class="check" id="remember-me-check-mark">
+                                    <div class="check-lines"></div>
+                                </div>
+                            </div>
+                            <div class="remember-me-text">Remember Me</div>
+                        </div>
+                        <button class="blue-button" id="login">LOGIN</button>
+                        <div class="forgot-password">Forgot Password?</div>
+                    </div>
+                    <div class="alternate-signin-divider">
+                        <div class="alternate-signin-line"></div>
+                        <div class="alternate-signin-text">Or sign in with</div>
+                        <div class="alternate-signin-line"></div>
+                    </div>
+                    <div class="alternate-signin-holder">
+                        <div class="alternate-signin-icon signin-google"></div>
+                        <div class="alternate-signin-icon signin-zoom"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="screen" id="signin-screen">
+            <div class="signin-window"></div>
+        </div>
+    </div>
     <div class="page-foot">
         <div class="footer-element-holder" id="footer-social-media">
             <div class="footer-element-title align-left">Social Media</div>
