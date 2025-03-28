@@ -15,87 +15,148 @@
     <div class="page-head">
         <div class="logo"></div>
         <div class="header-title">My Easy Class</div>
-        <div class="header-button-holder" id="sign-up-holder">
-            <div class="header-button-text">Don't have an account?</div>
-            <button id="open-sign-up">Sign Up</button>
+        <div class="pre-main-head" style="display:none;">
+            <div class="header-button-holder" id="sign-up-holder">
+                <div class="header-button-text">Don't have an account?</div>
+                <button id="open-sign-up">Sign Up</button>
+            </div>
+            <div class="header-button-holder" id="login-holder">
+                <div class="header-button-text">Already have an account?</div>
+                <button id="open-login">Log In</button>
+            </div>
         </div>
-        <div class="header-button-holder" id="login-holder">
-            <div class="header-button-text">Already have an account?</div>
-            <button id="open-login">Log In</button>
+        <div class="main-head">
+            <div class="tab-holder">
+                <div class="tab selected-tab">Dashboard<div class="tab-notification"></div></div>
+                <div class="tab">Mail<div class="tab-notification"></div></div>
+                <div class="tab">Calendar<div class="tab-notification"></div></div>
+                <div class="tab">Drive<div class="tab-notification"></div></div>
+                <div class="tab">Students<div class="tab-notification"></div></div>
+                <div class="tab">Homework<div class="tab-notification"></div></div>
+            </div>
+            <div class="account-holder">
+                <div class="account-icon"></div>
+                <div class="account-drop-down">
+                    <div class="account-drop-down-arrow"></div>
+                    <div class="account-drop-down-window">
+                        <div class="account-drop-down-row" id="account-about-me">About Me</div>
+                        <div class="account-drop-down-row" id="account-log-off">Log Off</div>
+                    </div>
+                    <div class="hide-arrow-border"></div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="page-body">
-        <div class="screen" id="login-screen">
-            <div class="login-window">
-                <div class="login-window-l">
-                    <div class="login-text-l">Focus on teaching while we do the rest</div>
-                    <div class="login-logo-l"></div>
-                </div>
-                <div class="login-window-r">
-                    <div class="login-title-r">Log In</div>
-                    <div class="login-input-holder">
-                        <div class="login-text-r">Username</div>
-                        <input type="text" class="login-input" id="login-username">
-                        <div class="login-text-r">Password</div>
-                        <input type="password" class="login-input" id="login-password">
-                        <div class="remember-me-holder">
-                            <div class="check-holder" id="remember-me-check">
-                                <div class="check" id="remember-me-check-mark">
-                                    <div class="check-lines"></div>
+        <div class="screen" id="pre-main" style="display:none;">
+            <div class="screen" id="login-screen">
+                <div class="login-window">
+                    <div class="login-window-l">
+                        <div class="login-text-l">Focus on teaching while we do the rest</div>
+                        <div class="login-logo-l"></div>
+                    </div>
+                    <div class="login-window-r">
+                        <div class="login-title-r">Log In</div>
+                        <div class="login-input-holder">
+                            <div class="login-text-r">Username</div>
+                            <input type="text" class="login-input" id="login-username">
+                            <div class="login-text-r">Password</div>
+                            <input type="password" class="login-input" id="login-password">
+                            <div class="remember-me-holder">
+                                <div class="check-holder" id="remember-me-check">
+                                    <div class="check" id="remember-me-check-mark">
+                                        <div class="check-lines"></div>
+                                    </div>
                                 </div>
+                                <div class="remember-me-text">Remember Me</div>
                             </div>
-                            <div class="remember-me-text">Remember Me</div>
+                            <button class="blue-button" id="login">LOGIN</button>
+                            <div class="forgot-password">Forgot Password?</div>
                         </div>
-                        <button class="blue-button" id="login">LOGIN</button>
-                        <div class="forgot-password">Forgot Password?</div>
+                        <div class="alternate-signin-divider">
+                            <div class="alternate-signin-line"></div>
+                            <div class="alternate-signin-text">Or sign in with</div>
+                            <div class="alternate-signin-line"></div>
+                        </div>
+                        <div class="alternate-signin-holder">
+                            <div class="alternate-signin-icon signin-google"></div>
+                            <div class="alternate-signin-icon signin-zoom"></div>
+                        </div>
                     </div>
-                    <div class="alternate-signin-divider">
-                        <div class="alternate-signin-line"></div>
-                        <div class="alternate-signin-text">Or sign in with</div>
-                        <div class="alternate-signin-line"></div>
+                </div>
+            </div>
+            <div class="screen" id="signin-screen">
+                <div class="signin-window">
+                    <div class="signin-window-title">Create Teacher Account</div>
+                    <div class="signin-window-form">
+                        <div class="signin-window-row">
+                            <div class="signin-window-row-title">
+                                <div class="signin-window-row-title-text">Name</div>
+                                <div class="signin-window-row-title-error"></div>
+                            </div>
+                            <input class="signin-input" type="text">
+                        </div>
+                        <div class="signin-window-row">
+                            <div class="signin-window-row-title">
+                                <div class="signin-window-row-title-text">Email</div>
+                                <div class="signin-window-row-title-error"></div>
+                            </div>
+                            <input class="signin-input" type="email">
+                        </div>
+                        <div class="signin-window-row">
+                            <div class="signin-window-row-title">
+                                <div class="signin-window-row-title-text">Password</div>
+                                <div class="signin-window-row-title-error"></div>
+                            </div>
+                            <input class="signin-input" type="password">
+                        </div>
+                        <div class="signin-window-row">
+                            <div class="signin-window-row-title">
+                                <div class="signin-window-row-title-text">Confirm Password</div>
+                            </div>
+                            <input class="signin-input" type="password">
+                        </div>
                     </div>
-                    <div class="alternate-signin-holder">
-                        <div class="alternate-signin-icon signin-google"></div>
-                        <div class="alternate-signin-icon signin-zoom"></div>
+                    <div class="signin-window-button-holder">
+                        <button id="signin-confirm">Confirm</button>
+                        <button id="signin-back">Back</button>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="screen" id="signin-screen">
-            <div class="signin-window">
-                <div class="signin-window-title">Create Teacher Account</div>
-                <div class="signin-window-form">
-                    <div class="signin-window-row">
-                        <div class="signin-window-row-title">
-                            <div class="signin-window-row-title-text">Name</div>
-                            <div class="signin-window-row-title-error"></div>
-                        </div>
-                        <input class="signin-input" type="text">
+        <div class="screen" id="main" style="display:block;">
+            <div class="screen tab-affected" id="dahsboard">1</div>
+            <div class="screen tab-affected" id="mail">2</div>
+            <div class="screen tab-affected" id="calendar">3</div>
+            <div class="screen tab-affected" id="drive">4</div>
+            <div class="screen tab-affected" id="students">5</div>
+            <div class="screen tab-affected" id="homework">6</div>
+
+            <div class="assistant-holder" style="display:none;">
+                <div class="assistant-button"></div>
+                <div class="assistant-window">
+                    <div class="assistant-window-head">
+                        <div class="assistant-window-close"></div>
+                        Assistant
                     </div>
-                    <div class="signin-window-row">
-                        <div class="signin-window-row-title">
-                            <div class="signin-window-row-title-text">Email</div>
-                            <div class="signin-window-row-title-error"></div>
+                    <div class="assistant-window-body">
+                        <div class="assistant-message">
+                            <div class="assistant-message-body">Lorem ipsum dolor sit amet, consectetur adipiscing elit</div>
+                            <div class="assistant-message-arrow"></div>
                         </div>
-                        <input class="signin-input" type="email">
-                    </div>
-                    <div class="signin-window-row">
-                        <div class="signin-window-row-title">
-                            <div class="signin-window-row-title-text">Password</div>
-                            <div class="signin-window-row-title-error"></div>
+                        <div class="assistant-message bot-message">
+                            <div class="assistant-message-body bot-message-body">Lorem ipsum dolor sit amet, consectetur adipiscing elit</div>
+                            <div class="assistant-message-arrow bot-message-arrow"></div>
                         </div>
-                        <input class="signin-input" type="password">
-                    </div>
-                    <div class="signin-window-row">
-                        <div class="signin-window-row-title">
-                            <div class="signin-window-row-title-text">Confirm Password</div>
+                        <div class="assistant-message">
+                            <div class="assistant-message-body">Lorem ipsum dolor sit amet, consectetur adipiscing elit</div>
+                            <div class="assistant-message-arrow"></div>
                         </div>
-                        <input class="signin-input" type="password">
                     </div>
-                </div>
-                <div class="signin-window-button-holder">
-                    <button id="signin-confirm">Confirm</button>
-                    <button id="signin-back">Back</button>
+                    <div class="assistant-window-foot">
+                        <input type="text" class="assistant-input">
+                        <button class="assistant-send"></button>
+                    </div>
                 </div>
             </div>
         </div>
