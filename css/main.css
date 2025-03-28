@@ -7,6 +7,7 @@
     --accent-blue-1:     rgb(087, 160, 211);
     --accent-blue-2:     rgb(067, 140, 191);
     --dark-blue:         rgb(016, 047, 068);
+    --error:             rgb(255, 000, 000);
 
     --border-radius-1:   0.3vw;
     --border-radius-2:   0.6vw;
@@ -73,11 +74,12 @@ button:active{
     border:none;
 }
 
-input[type=text],[type=password]{
+input[type=text],[type=password],[type=email]{
     background-color:var(--background-gray-1);
     border:1px solid var(--border-gray-1);
     border-radius:var(--border-radius-1);
 
+    color:var(--dark-blue);
     font-family:"Inter";
     font-size:1vw;
     height:1.75vw;
@@ -201,6 +203,17 @@ input[type=text],[type=password]{
     aspect-ratio:9.6;
     width:100%;
 }
+.footer-right-holder{
+    transform:translate(-50%);
+    position:absolute;
+    height:60%;
+    left:50%;
+    top:0px;
+
+    justify-content:flex-end;
+    align-items:flex-start;
+    display:flex;
+}
 .footer-element-holder{
     height:calc(100% - 2.5vw);
     
@@ -221,16 +234,6 @@ input[type=text],[type=password]{
 .footer-element-value{
     height:calc(100% - 2vw);
     width:100%;
-}
-.footer-right-holder{
-    position:absolute;
-    height:100%;
-    right:0px;
-    top:0px;
-
-    justify-content:flex-end;
-    align-items:flex-start;
-    display:flex;
 }
 
 .social-media-holder{
@@ -325,4 +328,44 @@ input[type=text],[type=password]{
 }
 .align-left{
     justify-content:flex-start;
+}
+
+.company-info-holder{
+    position:absolute;
+    height:calc(100% - 2vw);
+    width:30vw;
+    right:1vw;
+    top:1vw;
+}
+.terms-policy{
+    justify-content:center;
+    align-items:center;
+    display:flex;
+
+    margin-left:25%;
+    height:60%;
+    width:75%;
+}
+.terms-policy > *{
+    justify-content:flex-end;
+}
+.terms-policy-divider{
+    border-right:1px solid var(--background-white);
+    margin-left:0.7vw;
+    opacity:0.5;
+    height:30%;
+    width:1px;
+}
+.llc-info{
+    height:40%;
+    width:100%;
+}
+.llc-row{
+    justify-content:flex-end;
+    align-items:center;
+    display:flex;
+
+    font-size:0.8vw;
+    height:33%;
+    width:100%;
 }
