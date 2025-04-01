@@ -2,6 +2,7 @@
 window.onload = initLoad;
 
 function initLoad(){
+    loadAssistantLogic();
     loadLogInLogic();
     loadHeadLogic();
 }
@@ -115,4 +116,14 @@ function headTabLogic(){
         const currSelectedTab = document.querySelector(".selected-tab");
         currSelectedTab.classList.remove("selected-tab");
     });
+}
+
+/*--Assistant Logic----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+function loadAssistantLogic(){
+    const assistantClose  = document.querySelector(".assistant-window-close");
+    const assistantButton = document.querySelector(".assistant-button");
+    const assistantWindow = document.querySelector(".assistant-window");
+
+    assistantButton.onclick = ()=>{assistantWindow.style.animation = "assistant-window-slide-in ease-in-out 0.2s forwards"}
+    assistantClose.onclick = ()=>{assistantWindow.style.animation = "assistant-window-slide-out ease-in-out 0.2s forwards"}
 }

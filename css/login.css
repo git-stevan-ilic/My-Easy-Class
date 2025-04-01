@@ -174,6 +174,7 @@ input[type=text].login-input, input[type=password].login-input{
     background-position:center center;
     background-repeat:no-repeat;
     background-size:contain;
+    user-select:none;
     cursor:pointer;
 }
 .alternate-signin-icon:hover{

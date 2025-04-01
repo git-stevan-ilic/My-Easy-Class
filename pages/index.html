@@ -5,17 +5,17 @@
     <title>My Easy Class</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" type="text/css" href="./css/login.css">
-    <link rel="stylesheet" type="text/css" href="./css/main.css">
+    <link rel="stylesheet" type="text/css" href="../css/login.css">
+    <link rel="stylesheet" type="text/css" href="../css/main.css">
 
-    <script type="text/javascript" src="./js/login logic.js"></script>
-    <script type="text/javascript" src="./js/main.js"></script>
+    <script type="text/javascript" src="../js/login logic.js"></script>
+    <script type="text/javascript" src="../js/main.js"></script>
 </head>
 <body>
     <div class="page-head">
         <div class="logo"></div>
         <div class="header-title">My Easy Class</div>
-        <div class="pre-main-head" style="display:none;">
+        <div class="pre-main-head">
             <div class="header-button-holder" id="sign-up-holder">
                 <div class="header-button-text">Don't have an account?</div>
                 <button id="open-sign-up">Sign Up</button>
@@ -48,7 +48,7 @@
         </div>
     </div>
     <div class="page-body">
-        <div class="screen" id="pre-main" style="display:none;">
+        <div class="screen" id="pre-main">
             <div class="screen" id="login-screen">
                 <div class="login-window">
                     <div class="login-window-l">
@@ -124,15 +124,15 @@
                 </div>
             </div>
         </div>
-        <div class="screen" id="main" style="display:block;">
-            <div class="screen tab-affected" id="dahsboard">1</div>
-            <div class="screen tab-affected" id="mail">2</div>
-            <div class="screen tab-affected" id="calendar">3</div>
-            <div class="screen tab-affected" id="drive">4</div>
-            <div class="screen tab-affected" id="students">5</div>
-            <div class="screen tab-affected" id="homework">6</div>
+        <div class="screen" id="main">
+            <div class="screen tab-affected" id="dahsboard"></div>
+            <div class="screen tab-affected" id="mail"></div>
+            <div class="screen tab-affected" id="calendar"></div>
+            <div class="screen tab-affected" id="drive"></div>
+            <div class="screen tab-affected" id="students"><div class="wip">Work in Progress</div></div>
+            <div class="screen tab-affected" id="homework"><div class="wip">Work in Progress</div></div>
 
-            <div class="assistant-holder" style="display:none;">
+            <div class="assistant-holder">
                 <div class="assistant-button"></div>
                 <div class="assistant-window">
                     <div class="assistant-window-head">
@@ -140,17 +140,22 @@
                         Assistant
                     </div>
                     <div class="assistant-window-body">
-                        <div class="assistant-message">
-                            <div class="assistant-message-body">Lorem ipsum dolor sit amet, consectetur adipiscing elit</div>
-                            <div class="assistant-message-arrow"></div>
-                        </div>
-                        <div class="assistant-message bot-message">
-                            <div class="assistant-message-body bot-message-body">Lorem ipsum dolor sit amet, consectetur adipiscing elit</div>
-                            <div class="assistant-message-arrow bot-message-arrow"></div>
-                        </div>
-                        <div class="assistant-message">
-                            <div class="assistant-message-body">Lorem ipsum dolor sit amet, consectetur adipiscing elit</div>
-                            <div class="assistant-message-arrow"></div>
+                        <div class="assistant-messages-list">
+                            <div class="assistant-message">
+                                <div class="assistant-message-body">
+                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit.Lorem ipsum dolor sit amet, consectetur aaaaaa
+                                </div>
+                            </div>
+                            <div class="assistant-message bot-message">
+                                <div class="assistant-message-body bot-message-body">
+                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit
+                                </div>
+                            </div>
+                            <div class="assistant-message">
+                                <div class="assistant-message-body">
+                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="assistant-window-foot">
@@ -189,21 +194,20 @@
                 <div class="footer-element-value">
                     <div class="footer-contact">
                         <div class="footer-contact-title">Email:</div>
-                        <div class="footer-contact-value">support@mail.com</div>
+                        <div class="footer-contact-value">contact@myeasyclass.com</div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="company-info-holder">
             <div class="terms-policy">
-                <a class="footer-link" href="./pdf/Privacy Policy.pdf" target="_blank" draggable="false">Privacy Policy</a>
+                <a class="footer-link" href="./privacy policy.html" target="_blank" draggable="false">Privacy Policy</a>
                 <div class="terms-policy-divider"></div>
-                <a class="footer-link" href="./pdf/Terms and Condition.pdf" target="_blank" draggable="false">Terms and Conditions</a>
+                <a class="footer-link" href="./terms and condition.html" target="_blank" draggable="false">Terms and Conditions</a>
             </div>
             <div class="llc-info">
-                <div class="llc-row">DDS E Commerce LLC</div>
+                <div class="llc-row">My Easy Class LLC</div>
                 <div class="llc-row">30 N Gould St Ste R, Sheridan, WY 82801, USA</div>
-                <div class="llc-row">Copyright: © 2025 DDS E Commerce LLC - All Rights Reserved.</div>
             </div>
         </div>
     </div>
