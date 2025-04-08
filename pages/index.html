@@ -6,16 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link rel="stylesheet" type="text/css" href="../css/login.css">
+    <link rel="stylesheet" type="text/css" href="../css/drive.css">
     <link rel="stylesheet" type="text/css" href="../css/main.css">
 
     <script type="text/javascript" src="../js/login logic.js"></script>
+    <script type="text/javascript" src="../js/drive.js"></script>
     <script type="text/javascript" src="../js/main.js"></script>
 </head>
 <body>
     <div class="page-head">
         <div class="logo"></div>
         <div class="header-title">My Easy Class</div>
-        <div class="pre-main-head">
+        <div class="pre-main-head" style="display:none;">
             <div class="header-button-holder" id="sign-up-holder">
                 <div class="header-button-text">Don't have an account?</div>
                 <button id="open-sign-up">Sign Up</button>
@@ -25,7 +27,7 @@
                 <button id="open-login">Log In</button>
             </div>
         </div>
-        <div class="main-head">
+        <div class="main-head"  style="display:flex;">
             <div class="tab-holder">
                 <div class="tab selected-tab">Dashboard<div class="tab-notification"></div></div>
                 <div class="tab">Mail<div class="tab-notification"></div></div>
@@ -49,7 +51,7 @@
     </div>
     <div class="page-body">
         <div class="screen" id="pre-main">
-            <div class="screen" id="login-screen">
+            <div class="screen" id="login-screen" style="display:none;">
                 <div class="login-window">
                     <div class="login-window-l">
                         <div class="login-text-l">Focus on teaching while we do the rest</div>
@@ -124,45 +126,85 @@
                 </div>
             </div>
         </div>
-        <div class="screen" id="main">
-            <div class="screen tab-affected" id="dahsboard"></div>
-            <div class="screen tab-affected" id="mail"></div>
-            <div class="screen tab-affected" id="calendar"></div>
-            <div class="screen tab-affected" id="drive"></div>
-            <div class="screen tab-affected" id="students"><div class="wip">Work in Progress</div></div>
-            <div class="screen tab-affected" id="homework"><div class="wip">Work in Progress</div></div>
+        <div class="screen" id="main" style="display:block;">
+            <div class="screen tab-affected" id="dahsboard" style="display:none;">
 
-            <div class="assistant-holder">
-                <div class="assistant-button"></div>
-                <div class="assistant-window">
-                    <div class="assistant-window-head">
-                        <div class="assistant-window-close"></div>
-                        Assistant
+            </div>
+            <div class="screen tab-affected" id="mail" style="display:block;">
+                <div class="mail-head"></div>
+                <div class="mail-body"></div>
+            </div>
+            <div class="screen tab-affected" id="calendar">
+
+            </div>
+            <div class="screen tab-affected" id="drive">
+                <div class="drive-head">
+                    <div class="drive-search-holder">
+                        <div class="drive-search-icon"></div>
+                        <input type="text" id="drive-search">
                     </div>
-                    <div class="assistant-window-body">
-                        <div class="assistant-messages-list">
-                            <div class="assistant-message">
-                                <div class="assistant-message-body">
-                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit.Lorem ipsum dolor sit amet, consectetur aaaaaa
-                                </div>
+                    <div class="filter">Filter: None</div>
+                    <div class="filter-window-holder">
+                        <div class="filter-window-arrow"></div>
+                        <div class="filter-window">
+                            <div class="filter-window-body">
+                                <div class="filter-window-text">File Type</div>
+                                <select class="filter-select" name="filter-select">
+                                    <option value="pdf"  >pdf  </option>
+                                    <option value="doc"  >doc  </option>
+                                    <option value="txt"  >text </option>
+                                    <option value="image">image</option>
+                                </select>
                             </div>
-                            <div class="assistant-message bot-message">
-                                <div class="assistant-message-body bot-message-body">
-                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit
-                                </div>
-                            </div>
-                            <div class="assistant-message">
-                                <div class="assistant-message-body">
-                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit
-                                </div>
+                            <div class="filter-window-foot">
+                                <button class="filter-button" id="filter-save">Save</button>
+                                <button class="filter-button" id="filter-cancel">Cancel</button>
                             </div>
                         </div>
                     </div>
-                    <div class="assistant-window-foot">
-                        <input type="text" class="assistant-input">
-                        <button class="assistant-send"></button>
+                </div>
+                <div class="drive-body">
+                    <div class="drive-divider">
+                        <div class="drive-divider-line-small"></div>
+                        <div class="drive-divider-date">29/01/2025</div>
+                        <div class="drive-divider-line-big"></div>
+                    </div>
+                    <div class="drive-holder">
+                        <div class="drive-item">
+                            <div class="drive-item-image"></div>
+                            <div class="drive-item-title">Lession 1: Introduction to English</div>
+                            <div class="drive-item-date">29/01/2025</div>
+                        </div>
+                        <div class="drive-item">
+                            <div class="drive-item-image"></div>
+                            <div class="drive-item-title">Lession 1: Introduction to English</div>
+                            <div class="drive-item-date">29/01/2025</div>
+                        </div>
+                        <div class="drive-item">
+                            <div class="drive-item-image"></div>
+                            <div class="drive-item-title">Lession 1: Introduction to English</div>
+                            <div class="drive-item-date">29/01/2025</div>
+                        </div>
+                    </div>
+                    <div class="drive-divider">
+                        <div class="drive-divider-line-small"></div>
+                        <div class="drive-divider-date">29/01/2025</div>
+                        <div class="drive-divider-line-big"></div>
+                    </div>
+                    <div class="drive-holder">
+                        <div class="drive-item">
+                            <div class="drive-item-image"></div>
+                            <div class="drive-item-title">Lession 1: Introduction to English</div>
+                            <div class="drive-item-date">29/01/2025</div>
+                        </div>
                     </div>
                 </div>
+            </div>
+            <div class="screen tab-affected" id="students">
+                <div class="wip">Work in Progress</div>
+            </div>
+            <div class="screen tab-affected" id="homework">
+                <div class="wip">Work in Progress</div>
             </div>
         </div>
     </div>
@@ -201,9 +243,9 @@
         </div>
         <div class="company-info-holder">
             <div class="terms-policy">
-                <a class="footer-link" href="./privacy policy.html" target="_blank" draggable="false">Privacy Policy</a>
+                <a class="footer-link" href="./pages/privacy policy.html" target="_blank" draggable="false">Privacy Policy</a>
                 <div class="terms-policy-divider"></div>
-                <a class="footer-link" href="./terms and condition.html" target="_blank" draggable="false">Terms and Conditions</a>
+                <a class="footer-link" href="./pages/terms and condition.html" target="_blank" draggable="false">Terms and Conditions</a>
             </div>
             <div class="llc-info">
                 <div class="llc-row">My Easy Class LLC</div>
@@ -213,3 +255,37 @@
     </div>
 </body>
 </html>
+
+
+<!--<div class="assistant-holder">
+        <div class="assistant-button"></div>
+        <div class="assistant-window">
+            <div class="assistant-window-head">
+                <div class="assistant-window-close"></div>
+                Assistant
+            </div>
+            <div class="assistant-window-body">
+                <div class="assistant-messages-list">
+                    <div class="assistant-message">
+                        <div class="assistant-message-body">
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit.Lorem ipsum dolor sit amet, consectetur aaaaaa
+                        </div>
+                    </div>
+                    <div class="assistant-message bot-message">
+                        <div class="assistant-message-body bot-message-body">
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit
+                        </div>
+                    </div>
+                    <div class="assistant-message">
+                        <div class="assistant-message-body">
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="assistant-window-foot">
+                <input type="text" class="assistant-input">
+                <button class="assistant-send"></button>
+            </div>
+        </div>
+    </div>-->

@@ -220,6 +220,7 @@ input[type=text],[type=password],[type=email]{
     align-items:center;
     position:relative;
     font-weight:bold;
+    user-select:none;
     cursor:pointer;
     display:flex;
 }
@@ -253,6 +254,7 @@ input[type=text],[type=password],[type=email]{
 /*--Head Account Elements----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .account-holder{
     position:relative;
+    user-select:none;
     height:100%;
     width:5vw;
 }
@@ -350,18 +352,16 @@ input[type=text],[type=password],[type=email]{
 /*--Page Body----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .page-body{
     background-color:var(--background-white);
-    height:calc(100vh - 100vw / 18);
+    min-height:calc(100vh - 100vw / 18);
     position:relative;
     width:100%;
     z-index:1;
 }
 .page-text{
     background-color:var(--background-white);
-    min-height:calc(100vh - 100vw / 18);
     color:rgb(100, 100, 100);
     transform:translate(-50%);
     width:min(90vw, 60%);
-    height:fit-content;
     position:relative;
     padding-bottom:5vh;
     padding-top:5vh;
@@ -375,15 +375,21 @@ input[type=text],[type=password],[type=email]{
 }
 .screen{
     background-color:var(--background-gray-1);
+    min-height:calc(100vh - 100vw / 18);
     position:absolute;
     display:none;
-    height:100%;
     width:100%;
     left:0px;
     top:0px;
 }
 #dahsboard{
     display:block;
+}
+.tab-affected{
+    position:relative;
+}
+#main{
+    position:relative;
 }
 
 /*--Assistant Window---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/

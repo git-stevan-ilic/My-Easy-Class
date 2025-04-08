@@ -2,8 +2,9 @@
 window.onload = initLoad;
 
 function initLoad(){
-    loadAssistantLogic();
+    //loadAssistantLogic();
     loadLogInLogic();
+    loadDriveLogic();
     loadHeadLogic();
 }
 
