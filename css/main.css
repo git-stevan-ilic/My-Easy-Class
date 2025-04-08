@@ -262,7 +262,7 @@ input[type=text],[type=password],[type=email]{
     background-image:url("../assets/icons/default user.png");
     background-position:center center;
     background-repeat:no-repeat;
-    background-size:contain;
+    background-size:cover;
     position:absolute;
     overflow:hidden;
     cursor:pointer;
@@ -390,6 +390,45 @@ input[type=text],[type=password],[type=email]{
 }
 #main{
     position:relative;
+}
+
+.search-holder{
+    background-color:var(--background-gray-2);
+    border:1px solid var(--border-gray-1);
+    border-radius:var(--border-radius-1);
+    overflow:hidden;
+    width:25vw;
+    height:2vw;
+
+    justify-content:flex-start;
+    align-items:center;
+    display:flex;
+}
+.search-icon{
+    background-image:url("../assets/icons/search.png");
+    background-position:center center;
+    background-repeat:no-repeat;
+    background-size:contain;
+    user-select:none;
+    cursor:pointer;
+
+    transition:ease-in-out 0.05s;
+    aspect-ratio:1;
+    height:2vw;
+}
+.search-icon:hover{
+    transform:scale(1.05);
+}
+.search-icon:active{
+    transform:scale(0.95);
+}
+input[type=text].search-input{
+    background-color:var(--background-gray-2);
+    width:calc(100% - 2.5vw);
+    border-radius:0;
+    outline:none;
+    border:none;
+    height:2vw;
 }
 
 /*--Assistant Window---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/

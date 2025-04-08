@@ -10,46 +10,7 @@
     padding-left:2vw;
     height:3vw;
 }
-.drive-search-holder{
-    background-color:var(--background-gray-2);
-    border:1px solid var(--border-gray-1);
-    border-radius:var(--border-radius-1);
-    overflow:hidden;
-    width:25vw;
-    height:2vw;
 
-    justify-content:flex-start;
-    align-items:center;
-    display:flex;
-}
-.drive-search-icon{
-    background-image:url("../assets/icons/search.png");
-    background-position:center center;
-    background-repeat:no-repeat;
-    background-size:contain;
-    user-select:none;
-    cursor:pointer;
-
-    transition:ease-in-out 0.05s;
-    aspect-ratio:1;
-    height:2vw;
-}
-.drive-search-icon:hover{
-    transform:scale(1.05);
-}
-.drive-search-icon:active{
-    transform:scale(0.95);
-}
-#drive-search{
-    background-color:var(--background-gray-2);
-    width:calc(100% - 2.5vw);
-    border-radius:0;
-    outline:none;
-    border:none;
-    height:2vw;
-}
-
-/*--Drive Filter-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .filter{
     transition:ease-in-out 0.05s;
     color:var(--dark-blue);
@@ -75,6 +36,7 @@
     width:12vw;
     left:31vw;
     top:3vw;
+    z-index:2;
 }
 .filter-window-arrow{
     box-shadow:0.25vw 0.25vw 0.5vw rgba(0, 0, 0, 0.15);
