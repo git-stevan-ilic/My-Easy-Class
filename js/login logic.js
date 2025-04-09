@@ -25,12 +25,15 @@ function loadLogInLogic(client){
             fadeOut(".pre-main-head", 0.1, ()=>{fadeIn(".main-head", 0.1, "flex")});
             fadeOut("#pre-main", 0.1, ()=>{fadeIn("#main", 0.1, "block")});
             accountLogOff.onclick = ()=>{client.emit("google-log-out")}
+            loadCalendar();
+
             console.log(user);
         }
         else{
             icon.style.backgroundImage = "url('../assets/icons/default user.png')";
             fadeOut(".main-head", 0.1, ()=>{fadeIn(".pre-main-head", 0.1, "flex")});
             fadeOut("#main", 0.1, ()=>{fadeIn("#pre-main", 0.1, "block")});
+            document.querySelector(".calendarDIV").innerHTML = "";
             accountLogOff.onclick = null;
         }
     });

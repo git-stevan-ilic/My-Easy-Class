@@ -1,0 +1,9 @@
+.event{
+    border:1px solid #ddd;
+    padding:1rem;
+    margin:1rem 0;
+    border-radius:4px;
+}
+.event h3{
+    margin-top: 0;
+}
