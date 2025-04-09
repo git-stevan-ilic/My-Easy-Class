@@ -2,8 +2,10 @@
 window.onload = initLoad;
 
 function initLoad(){
+    const client = io();
+
     //loadAssistantLogic();
-    loadLogInLogic();
+    loadLogInLogic(client);
     loadDriveLogic();
     loadHeadLogic();
 }

@@ -10,6 +10,7 @@
     <link rel="stylesheet" type="text/css" href="../css/mail.css">
     <link rel="stylesheet" type="text/css" href="../css/main.css">
 
+    <script type="text/javascript" src="../js/socket.io.js"></script>
     <script type="text/javascript" src="../js/login logic.js"></script>
     <script type="text/javascript" src="../js/drive.js"></script>
     <script type="text/javascript" src="../js/main.js"></script>
@@ -18,7 +19,7 @@
     <div class="page-head">
         <div class="logo"></div>
         <div class="header-title">My Easy Class</div>
-        <div class="pre-main-head" style="display:none;">
+        <div class="pre-main-head">
             <div class="header-button-holder" id="sign-up-holder">
                 <div class="header-button-text">Don't have an account?</div>
                 <button id="open-sign-up">Sign Up</button>
@@ -28,7 +29,7 @@
                 <button id="open-login">Log In</button>
             </div>
         </div>
-        <div class="main-head"  style="display:flex;">
+        <div class="main-head">
             <div class="tab-holder">
                 <div class="tab selected-tab">Dashboard<div class="tab-notification"></div></div>
                 <div class="tab">Mail<div class="tab-notification"></div></div>
@@ -52,7 +53,7 @@
     </div>
     <div class="page-body">
         <div class="screen" id="pre-main">
-            <div class="screen" id="login-screen" style="display:none;">
+            <div class="screen" id="login-screen">
                 <div class="login-window">
                     <div class="login-window-l">
                         <div class="login-text-l">Focus on teaching while we do the rest</div>
@@ -127,11 +128,11 @@
                 </div>
             </div>
         </div>
-        <div class="screen" id="main" style="display:block;">
-            <div class="screen tab-affected" id="dahsboard" style="display:none;">
+        <div class="screen" id="main">
+            <div class="screen tab-affected" id="dahsboard">
 
             </div>
-            <div class="screen tab-affected" id="mail" style="display:block;">
+            <div class="screen tab-affected" id="mail">
                 <div class="mail-head">
                     <div class="new-email-button-holder">
                         <button id="new-email">New Email</button>
