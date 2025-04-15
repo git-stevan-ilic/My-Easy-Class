@@ -91,7 +91,7 @@ function headAccountLogic(){
     }
 }
 function headTabLogic(){
-    const screens = ["dahsboard", "mail", "calendar", "drive", "students", "homework"];
+    const screens = ["dahsboard-screen", "mail-screen", "calendar-screen", "drive-screen", "students-screen", "homework-screen"];
     const tabs = document.querySelectorAll(".tab");
 
     let currTab = 0;

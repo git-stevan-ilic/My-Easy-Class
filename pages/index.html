@@ -5,6 +5,8 @@
     <title>My Easy Class</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <link rel="stylesheet" type="text/css" href="../css/daygrid 4.4.2 main.min.css">
+    <link rel="stylesheet" type="text/css" href="../css/core 4.4.2 main.min.css">
     <link rel="stylesheet" type="text/css" href="../css/calendar.css">
     <link rel="stylesheet" type="text/css" href="../css/login.css">
     <link rel="stylesheet" type="text/css" href="../css/drive.css">
@@ -12,6 +14,9 @@
     <link rel="stylesheet" type="text/css" href="../css/main.css">
 
     <script type="text/javascript" src="../js/socket.io.js"></script>
+    <script type="text/javascript" src="../js/core 4.4.2 main.min.js"></script>
+    <script type="text/javascript" src="../js/daygrid 4.4.2 main.min.js"></script>
+    <script type="text/javascript" src="../js/interaction 4.4.2 main.min.js"></script>
     <script type="text/javascript" src="../js/login logic.js"></script>
     <script type="text/javascript" src="../js/calendar.js"></script>
     <script type="text/javascript" src="../js/drive.js"></script>
@@ -131,10 +136,10 @@
             </div>
         </div>
         <div class="screen" id="main">
-            <div class="screen tab-affected" id="dahsboard">
+            <div class="screen tab-affected" id="dahsboard-screen">
 
             </div>
-            <div class="screen tab-affected" id="mail">
+            <div class="screen tab-affected" id="mail-screen">
                 <div class="mail-head">
                     <div class="new-email-button-holder">
                         <button id="new-email">New Email</button>
@@ -216,10 +221,10 @@
                     </div>
                 </div>
             </div>
-            <div class="screen tab-affected" id="calendar">
-                <div class="calendarDIV"></div>
+            <div class="screen tab-affected" id="calendar-screen">
+                <div id="calendar"></div>
             </div>
-            <div class="screen tab-affected" id="drive">
+            <div class="screen tab-affected" id="drive-screen">
                 <div class="drive-head">
                     <div class="search-holder">
                         <div class="search-icon"></div>
@@ -231,11 +236,12 @@
                         <div class="filter-window">
                             <div class="filter-window-body">
                                 <div class="filter-window-text">File Type</div>
-                                <select class="filter-select" name="filter-select">
-                                    <option value="pdf"  >pdf  </option>
-                                    <option value="doc"  >doc  </option>
-                                    <option value="txt"  >text </option>
-                                    <option value="image">image</option>
+                                <select class="filter-select" name="filter-select" value="none">
+                                    <option value="none" >None    </option>
+                                    <option value="pdf"  >PDF     </option>
+                                    <option value="doc"  >Document</option>
+                                    <option value="image">Image   </option>
+                                    <option value="video">Video   </option>
                                 </select>
                             </div>
                             <div class="filter-window-foot">
@@ -245,47 +251,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="drive-body">
-                    <div class="drive-divider">
-                        <div class="drive-divider-line-small"></div>
-                        <div class="drive-divider-date">29/01/2025</div>
-                        <div class="drive-divider-line-big"></div>
-                    </div>
-                    <div class="drive-holder">
-                        <div class="drive-item">
-                            <div class="drive-item-image"></div>
-                            <div class="drive-item-title">Lession 1: Introduction to English</div>
-                            <div class="drive-item-date">29/01/2025</div>
-                        </div>
-                        <div class="drive-item">
-                            <div class="drive-item-image"></div>
-                            <div class="drive-item-title">Lession 1: Introduction to English</div>
-                            <div class="drive-item-date">29/01/2025</div>
-                        </div>
-                        <div class="drive-item">
-                            <div class="drive-item-image"></div>
-                            <div class="drive-item-title">Lession 1: Introduction to English</div>
-                            <div class="drive-item-date">29/01/2025</div>
-                        </div>
-                    </div>
-                    <div class="drive-divider">
-                        <div class="drive-divider-line-small"></div>
-                        <div class="drive-divider-date">29/01/2025</div>
-                        <div class="drive-divider-line-big"></div>
-                    </div>
-                    <div class="drive-holder">
-                        <div class="drive-item">
-                            <div class="drive-item-image"></div>
-                            <div class="drive-item-title">Lession 1: Introduction to English</div>
-                            <div class="drive-item-date">29/01/2025</div>
-                        </div>
-                    </div>
-                </div>
+                <div class="drive-body"></div>
             </div>
-            <div class="screen tab-affected" id="students">
+            <div class="screen tab-affected" id="students-screen">
                 <div class="wip">Work in Progress</div>
             </div>
-            <div class="screen tab-affected" id="homework">
+            <div class="screen tab-affected" id="homework-screen">
                 <div class="wip">Work in Progress</div>
             </div>
         </div>

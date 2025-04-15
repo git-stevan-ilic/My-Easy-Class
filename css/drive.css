@@ -110,6 +110,12 @@
 .drive-body{
     width:100%;
 }
+.no-files{
+    color:var(--gray-1);
+    margin-left:2vw;
+    margin-top:1vw;
+    font-size:2vw;
+}
 
 .drive-divider{
     justify-content:flex-start;
@@ -143,6 +149,7 @@
 .drive-holder{
     justify-content:flex-start;
     align-items:flex-start;
+    flex-wrap:wrap;
     display:flex;
 
     width:calc(100% - 1vw);
@@ -157,6 +164,7 @@
     margin-bottom:0.5vw;
     margin-right:0.5vw;
     cursor:pointer;
+    flex-shrink:0;
     padding:0.5vw;
     width:10vw;
 }
@@ -182,8 +190,10 @@
     color:var(--dark-blue);
     margin-bottom:0.5vw;
     margin-top:0.5vw;
+    
+    word-break:break-all;
     font-weight:bold;
 }
-.drive-item-date{
+.drive-item-info{
     color:var(--gray-1);
 }

@@ -1,5 +1,8 @@
 /*--Initial------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 function loadLogInLogic(client){
+    switchLoginSignin();
+    googleLogin(client);
+
     let rememberMe = false;
     const rememberMeCheck = document.querySelector("#remember-me-check");
     rememberMeCheck.onclick = ()=>{
@@ -12,40 +15,16 @@ function loadLogInLogic(client){
             rememberMe = false;
         }
     }
-
-    const accountLogOff = document.querySelector("#account-log-off");
-    const signinGoogle = document.querySelector(".signin-google");
-    const icon = document.querySelector(".account-icon");
-
-    signinGoogle.onclick = ()=>{client.emit("google-log-in")}
-    client.on("google-redirect", (url)=>{window.location.href = url});
-    client.on("google-status", (user)=>{
-        if(user){
-            if(user.photos.length > 0) icon.style.backgroundImage = "url('"+user.photos[0].value+"')";
-            fadeOut(".pre-main-head", 0.1, ()=>{fadeIn(".main-head", 0.1, "flex")});
-            fadeOut("#pre-main", 0.1, ()=>{fadeIn("#main", 0.1, "block")});
-            accountLogOff.onclick = ()=>{client.emit("google-log-out")}
-            loadCalendar();
-
-            console.log(user);
-        }
-        else{
-            icon.style.backgroundImage = "url('../assets/icons/default user.png')";
-            fadeOut(".main-head", 0.1, ()=>{fadeIn(".pre-main-head", 0.1, "flex")});
-            fadeOut("#main", 0.1, ()=>{fadeIn("#pre-main", 0.1, "block")});
-            document.querySelector(".calendarDIV").innerHTML = "";
-            accountLogOff.onclick = null;
-        }
-    });
-
-    /*const loginHolder = document.querySelector("#login-holder");
+}
+function switchLoginSignin(){
+    const loginHolder = document.querySelector("#login-holder");
     const signUpHolder = document.querySelector("#sign-up-holder");
     const signinScreen = document.querySelector("#signin-screen");
     const signinWindow = document.querySelector(".signin-window");
     const loginScreen = document.querySelector("#login-screen");
-    const loginWindow = document.querySelector(".login-window");*/
+    const loginWindow = document.querySelector(".login-window");
 
-    /*document.querySelector("#open-sign-up").onclick = ()=>{
+    document.querySelector("#open-sign-up").onclick = ()=>{
         signUpHolder.style.display = "none";
         loginHolder.style.display = "flex";
 
@@ -62,8 +41,8 @@ function loadLogInLogic(client){
                 signinWindow.onanimationend = null;
             }
         }
-    }*/
-    /*document.querySelector("#open-login").onclick = ()=>{
+    }
+    document.querySelector("#open-login").onclick = ()=>{
         signUpHolder.style.display = "flex";
         loginHolder.style.display = "none";
 
@@ -80,5 +59,32 @@ function loadLogInLogic(client){
                 loginWindow.onanimationend = null;
             }
         }
-    }*/
+    }
+}
+
+/*--Google Login Logic-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+function googleLogin(client){
+    const accountLogOff = document.querySelector("#account-log-off");
+    const signinGoogle = document.querySelector(".signin-google");
+    const icon = document.querySelector(".account-icon");
+
+    signinGoogle.onclick = ()=>{client.emit("google-log-in")}
+    client.on("google-redirect", (url)=>{window.location.href = url});
+    client.on("google-status", (user)=>{
+        if(user){
+            if(user.photos.length > 0) icon.style.backgroundImage = "url('"+user.photos[0].value+"')";
+            fadeOut(".pre-main-head", 0.1, ()=>{fadeIn(".main-head", 0.1, "flex")});
+            fadeOut("#pre-main", 0.1, ()=>{fadeIn("#main", 0.1, "block")});
+            accountLogOff.onclick = ()=>{client.emit("google-log-out")}
+            loadCalendar();
+            console.log(user);
+        }
+        else{
+            icon.style.backgroundImage = "url('../assets/icons/default user.png')";
+            fadeOut(".main-head", 0.1, ()=>{fadeIn(".pre-main-head", 0.1, "flex")});
+            fadeOut("#main", 0.1, ()=>{fadeIn("#pre-main", 0.1, "block")});
+            document.querySelector(".calendarDIV").innerHTML = "";
+            accountLogOff.onclick = null;
+        }
+    });
 }
