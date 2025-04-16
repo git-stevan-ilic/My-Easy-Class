@@ -51,7 +51,7 @@ function loadDriveLogic(client){
     }
 
     const driveSearch = document.querySelector("#drive-search");
-    const searchIcon = document.querySelector(".search-icon");
+    const searchIcon = document.querySelector("#drive-search-icon");
     driveSearch.value = "";
     driveSearch.oninput = ()=>{
         currSearch = driveSearch.value;

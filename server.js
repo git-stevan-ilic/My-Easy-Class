@@ -30,6 +30,8 @@ const sessionMiddleware = session({
 app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
+app.use(express.json());
+app.use(express.urlencoded({extended:true}));
 io.use(sharedsession(sessionMiddleware, {autoSave:true}));
 
 passport.use(new GoogleStrategy({
@@ -39,7 +41,9 @@ passport.use(new GoogleStrategy({
     scope:[
         "profile", "email", "https://www.googleapis.com/auth/calendar.readonly",
         "https://www.googleapis.com/auth/drive.metadata.readonly",
-        "https://www.googleapis.com/auth/drive"
+        "https://www.googleapis.com/auth/drive",
+        "https://www.googleapis.com/auth/gmail.readonly",
+        "https://www.googleapis.com/auth/gmail.modify"
     ],
     accessType:"offline"
 },
@@ -57,10 +61,111 @@ app.get("/auth/google", passport.authenticate("google", {
     scope:[
         "profile", "email", "https://www.googleapis.com/auth/calendar.readonly",
         "https://www.googleapis.com/auth/drive.metadata.readonly",
-        "https://www.googleapis.com/auth/drive"
+        "https://www.googleapis.com/auth/drive",
+        "https://www.googleapis.com/auth/gmail.readonly",
+        "https://www.googleapis.com/auth/gmail.modify"
     ],
     prompt:"consent"
 }));
+
+/*--Google Mail API----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+app.get("/api/emails", async (req, res)=>{
+    try{
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.on("tokens", (tokens)=>{
+            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
+            req.user.accessToken = tokens.access_token;
+        });
+        oauth2Client.setCredentials({
+            refresh_token:req.user.refreshToken,
+            access_token:req.user.accessToken
+        });
+
+        const gmail = google.gmail({version:"v1", auth:oauth2Client});
+        const response = await gmail.users.messages.list({userId:"me", maxResults:20, q:"in:inbox"});
+        const messages = await Promise.all(
+            response.data.messages.map(async (message)=>{
+                const msg = await gmail.users.messages.get({
+                    userId:"me",
+                    id:message.id,
+                    format:"metadata",
+                    metadataHeaders:['From', 'Subject', 'Date'],
+                    fields:"payload(headers),snippet,labelIds"
+                });
+
+                const labels = msg.data.labelIds || [];
+                return {
+                    id:message.id,
+                    from:msg.data.payload.headers.find(h => h.name === "From").value,
+                    subject:msg.data.payload.headers.find(h => h.name === "Subject").value,
+                    date:msg.data.payload.headers.find(h => h.name === "Date").value,
+                    snippet:msg.data.snippet,
+                    isStarred:labels.includes("STARRED"),
+                    isImportant:labels.includes("IMPORTANT")
+                };
+            })
+          );
+        res.json(messages);
+    }
+    catch(error){
+        console.error("Gmail error:", error);
+        res.status(500).json({error:"Failed to fetch emails"});
+    }
+});
+app.post("/api/emails/:id/star", async (req, res)=>{
+    try{
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.on("tokens", (tokens)=>{
+            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
+            req.user.accessToken = tokens.access_token;
+        });
+        oauth2Client.setCredentials({
+            refresh_token:req.user.refreshToken,
+            access_token:req.user.accessToken
+        });
+
+        const gmail = google.gmail({version:"v1", auth:oauth2Client});
+        const {id} = req.params;
+        const {markAsStarred} = req.body;
+
+        const response = await gmail.users.messages.modify({
+            userId:"me", id:id,
+            requestBody:{[markAsStarred ? "addLabelIds" : "removeLabelIds"]: ["STARRED"]}
+        });
+        res.json({success:true, newLabels:response.data.labelIds});
+    }
+    catch(error){
+        console.error("Error:", error);
+        res.status(500).json({success:false});
+    }
+});
+app.post("/api/emails/:id/importance", async (req, res)=>{
+    try{
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.on("tokens", (tokens)=>{
+            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
+            req.user.accessToken = tokens.access_token;
+        });
+        oauth2Client.setCredentials({
+            refresh_token:req.user.refreshToken,
+            access_token:req.user.accessToken
+        });
+
+        const gmail = google.gmail({version:"v1", auth:oauth2Client});
+        const {id} = req.params;
+        const {markAsImportant} = req.body;
+
+        const response = await gmail.users.messages.modify({
+            userId:"me", id:id,
+            requestBody:{[markAsImportant ? "addLabelIds" : "removeLabelIds"]: ["IMPORTANT"]}
+        });
+        res.json({success:true, newLabels:response.data.labelIds});
+    }
+    catch(error){
+        console.error("Error:", error);
+        res.status(500).json({success:false});
+    }
+});
 
 /*--Google Drive API---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 app.get("/api/drive-list", async (req, res)=>{

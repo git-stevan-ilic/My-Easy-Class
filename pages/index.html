@@ -21,6 +21,7 @@
     <script type="text/javascript" src="../js/login logic.js"></script>
     <script type="text/javascript" src="../js/calendar.js"></script>
     <script type="text/javascript" src="../js/drive.js"></script>
+    <script type="text/javascript" src="../js/mail.js"></script>
     <script type="text/javascript" src="../js/main.js"></script>
 </head>
 <body>
@@ -146,14 +147,14 @@
                         <button id="new-email">New Email</button>
                     </div>
                     <div class="search-holder" id="mail-search-holder">
-                        <div class="search-icon"></div>
+                        <div class="search-icon" id="mail-search-icon"></div>
                         <input type="text" class="search-input" id="mail-search">
                     </div>
                 </div>
                 <div class="mail-body">
                     <div class="mail-side">
                         <div class="mail-side-row">
-                            <div class="mail-side-tab">
+                            <div class="mail-side-tab mail-side-selected-tab">
                                 <div class="main-side-icon mail-side-icon-inbox"></div>
                                 <div class="main-side-text">Inbox</div>
                             </div>
@@ -178,47 +179,7 @@
                         </div>
                     </div>
                     <div class="mail-list-holder">
-                        <div class="mail-list">
-                            <div class="mail">
-                                <div class="mail-marks">
-                                    <div class="mail-rect"></div>
-                                    <div class="mail-star"></div>
-                                    <div class="mail-important"></div>
-                                </div>
-                                <div class="mail-address">
-                                    email@email.com
-                                </div>
-                                <div class="mail-content">
-                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
-                                </div>
-                            </div>
-                            <div class="mail">
-                                <div class="mail-marks">
-                                    <div class="mail-rect"></div>
-                                    <div class="mail-star"></div>
-                                    <div class="mail-important"></div>
-                                </div>
-                                <div class="mail-address">
-                                    email@email.com
-                                </div>
-                                <div class="mail-content">
-                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
-                                </div>
-                            </div>
-                            <div class="mail">
-                                <div class="mail-marks">
-                                    <div class="mail-rect"></div>
-                                    <div class="mail-star"></div>
-                                    <div class="mail-important"></div>
-                                </div>
-                                <div class="mail-address">
-                                    email@email.com
-                                </div>
-                                <div class="mail-content">
-                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
-                                </div>
-                            </div>
-                        </div>
+                        <div class="mail-list"></div>
                     </div>
                 </div>
             </div>
@@ -230,7 +191,7 @@
                     <input type="file" id="drive-file-upload">
                     <button id="drive-upload">Upload</button>
                     <div class="search-holder" id="drive-search-holder">
-                        <div class="search-icon"></div>
+                        <div class="search-icon" id="drive-search-icon"></div>
                         <input type="text" class="search-input" id="drive-search">
                     </div>
                     <div class="filter">Filter: None</div>
