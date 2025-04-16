@@ -13,6 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../css/mail.css">
     <link rel="stylesheet" type="text/css" href="../css/main.css">
 
+    <script type="text/javascript" src="../js/purify.js"></script>
     <script type="text/javascript" src="../js/socket.io.js"></script>
     <script type="text/javascript" src="../js/core 4.4.2 main.min.js"></script>
     <script type="text/javascript" src="../js/daygrid 4.4.2 main.min.js"></script>
@@ -226,7 +227,9 @@
             </div>
             <div class="screen tab-affected" id="drive-screen">
                 <div class="drive-head">
-                    <div class="search-holder">
+                    <input type="file" id="drive-file-upload">
+                    <button id="drive-upload">Upload</button>
+                    <div class="search-holder" id="drive-search-holder">
                         <div class="search-icon"></div>
                         <input type="text" class="search-input" id="drive-search">
                     </div>
@@ -305,6 +308,17 @@
                 <div class="llc-row">30 N Gould St Ste R, Sheridan, WY 82801, USA</div>
             </div>
         </div>
+    </div>
+
+    <div class="download-notification">Downloading...</div>
+    <div class="file-display">
+        <div class="file-display-head">
+            <div class="file-display-title"></div>
+            <div class="file-display-close"></div>
+            <button class="file-display-round-button" id="file-display-download"></button>
+            <button class="file-display-round-button" id="file-display-delete"></button>
+        </div>
+        <div class="file-display-body"></div>
     </div>
 </body>
 </html>

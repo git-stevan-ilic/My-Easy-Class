@@ -3,6 +3,7 @@ const express = require("express");
 const { createServer } = require("node:http");
 const { Server } = require("socket.io");
 const dotenv = require("dotenv");
+const fs = require("fs");
 dotenv.config();
 
 const passport = require("passport");
@@ -11,11 +12,14 @@ const session = require("express-session");
 const sharedsession = require("express-socket.io-session");
 const { google } = require("googleapis");
 
+const multer = require("multer");
+const upload = multer({dest:"/api/drive-upload"});
+
 const app = express();
 const server = createServer(app);
 const io = new Server(server);
 
-/*--Start Server-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*--Setup Google Services----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 const sessionMiddleware = session({
     secret:process.env.SESSION_SECRET,
     resave:false,
@@ -32,7 +36,11 @@ passport.use(new GoogleStrategy({
     clientID:process.env.GOOGLE_CLIENT_ID,
     clientSecret:process.env.GOOGLE_CLIENT_SECRET,
     callbackURL:"/auth/google/callback" || "http://localhost:"+process.env.PORT+"/auth/google/callback",
-    scope:["profile", "email", "https://www.googleapis.com/auth/calendar.readonly"],
+    scope:[
+        "profile", "email", "https://www.googleapis.com/auth/calendar.readonly",
+        "https://www.googleapis.com/auth/drive.metadata.readonly",
+        "https://www.googleapis.com/auth/drive"
+    ],
     accessType:"offline"
 },
 (accessToken, refreshToken, profile, done) => {
@@ -49,11 +57,12 @@ app.get("/auth/google", passport.authenticate("google", {
     scope:[
         "profile", "email", "https://www.googleapis.com/auth/calendar.readonly",
         "https://www.googleapis.com/auth/drive.metadata.readonly",
-        "https://www.googleapis.com/auth/drive.readonly"
+        "https://www.googleapis.com/auth/drive"
     ],
     prompt:"consent"
 }));
 
+/*--Google Drive API---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 app.get("/api/drive-list", async (req, res)=>{
     if(!req.user || !req.user.accessToken) return res.status(401).json({error:"Not authenticated"});
     try{
@@ -72,11 +81,157 @@ app.get("/api/drive-list", async (req, res)=>{
         res.json(response.data.files);
     }
     catch(error){
-        client.emit("google-drive-error", error);
         console.error("Drive API Error:", error);
         res.status(500).json({error:"Failed to fetch drive data"});
     }
 })
+app.get("/api/drive-download/:fileId", async (req, res)=>{
+    try{
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.on("tokens", (tokens)=>{
+            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
+            req.user.accessToken = tokens.access_token;
+        });
+        oauth2Client.setCredentials({
+            refresh_token:req.user.refreshToken,
+            access_token:req.user.accessToken
+        });
+
+        const {fileId} = req.params;
+        const {format} = req.query;
+        const drive = google.drive({version:"v3", auth:oauth2Client});
+
+        const exportTypes = {
+            pdf:"application/pdf",
+            docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        };
+
+        const metadata = await drive.files.get({fileId, fields:"name, mimeType"});
+        const {name, mimeType} = metadata.data;
+
+        let response;
+        if(mimeType === "application/vnd.google-apps.document"){
+            const exportMime = exportTypes[format] || "application/pdf";
+            const extension = format || "pdf";
+      
+            res.setHeader("Content-Disposition", `attachment; filename="${name}.${extension}"`);
+            res.setHeader("Content-Type", exportMime);
+            response = await drive.files.export({fileId,mimeType:exportMime}, {responseType:"stream"});
+        }
+        else if(mimeType === "application/pdf"){
+            res.setHeader("Content-Disposition", `attachment; filename="${name}"`);
+            res.setHeader("Content-Type", "application/pdf");
+            response = await drive.files.get({fileId, alt:"media"}, {responseType:"stream"});
+        }
+        else{
+            res.setHeader("Content-Disposition", `attachment; filename="${metadata.data.name}"`);
+            res.setHeader("Content-Type", metadata.data.mimeType);
+            response = await drive.files.get({fileId, alt:"media"}, {responseType:"stream"});
+        }
+        response.data.on("error", (error)=>{
+            console.error("Error streaming file:", error);
+            res.status(500).send("Error downloading file");
+        }).pipe(res);
+    }
+    catch(error){
+        console.error("Drive API Error:", error);
+        res.status(500).json({error:"Failed to download drive data"});
+    }
+});
+app.get("/api/drive-file-content/:fileId", async (req, res)=>{
+    try{
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.on("tokens", (tokens)=>{
+            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
+            req.user.accessToken = tokens.access_token;
+        });
+        oauth2Client.setCredentials({
+            refresh_token:req.user.refreshToken,
+            access_token:req.user.accessToken
+        });
+
+        const fileId = req.params.fileId;
+        const drive = google.drive({version:"v3", auth:oauth2Client});
+        const metadata = await drive.files.get({fileId, fields:"mimeType"});
+        const mimeType = metadata.data.mimeType;
+
+        if(mimeType === "application/vnd.google-apps.document"){
+            const response = await drive.files.export({fileId,mimeType:"text/html"}, {responseType:"stream"});
+            res.setHeader("Content-Type", "text/html");
+            response.data.pipe(res);
+        }
+        else if(mimeType === "application/pdf"){
+            const response = await drive.files.get({fileId, alt:"media"}, {responseType:"stream"});
+            res.setHeader("Content-Type", "application/pdf");
+            response.data.pipe(res);
+        }
+        else if(mimeType.startsWith("image/")){
+            const response = await drive.files.get({fileId, alt:"media"}, {responseType:"stream"});
+            res.setHeader("Content-Type", mimeType);
+            response.data.pipe(res);
+        
+        }
+        else if(mimeType.startsWith("video/")){
+            const response = await drive.files.get({fileId, alt:"media"}, {responseType:"stream"});
+            res.setHeader("Content-Type", mimeType);
+            response.data.pipe(res);
+        }
+        else{
+            res.status(400).send("Unsupported file type");
+        }
+    }
+    catch(error){
+        console.error("Drive API Error:", error);
+        res.status(500).json({error:"Failed to fetch file content"});
+    }
+});
+app.post("/api/drive-upload", upload.single("file"), async (req, res)=>{
+    try{
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.on("tokens", (tokens)=>{
+            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
+            req.user.accessToken = tokens.access_token;
+        });
+        oauth2Client.setCredentials({
+            refresh_token:req.user.refreshToken,
+            access_token:req.user.accessToken
+        });
+
+        const drive = google.drive({version:"v3", auth:oauth2Client});
+        const fileMetadata = {name:req.file.originalname};
+        const media = {mimeType:req.file.mimetype, body:fs.createReadStream(req.file.path)};
+        const response = await drive.files.create({resource:fileMetadata, media:media, fields:"id, name"});
+        fs.unlinkSync(req.file.path);
+        res.status(200).json({success:true, file:response.data});
+    }
+    catch(error){
+        console.error("Upload error:", error);
+        res.status(500).json({success:false});
+    }
+});
+app.delete("/api/drive-delete/:fileId", async (req, res)=>{
+    try{
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.on("tokens", (tokens)=>{
+            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
+            req.user.accessToken = tokens.access_token;
+        });
+        oauth2Client.setCredentials({
+            refresh_token:req.user.refreshToken,
+            access_token:req.user.accessToken
+        });
+        const fileId = req.params.fileId;
+        const drive = google.drive({version:"v3", auth:oauth2Client});
+        await drive.files.delete({fileId: fileId});
+        res.status(200).json({success:true, message:"File deleted"});
+    }
+    catch(error){
+        console.error("Delete error:", error);
+        res.status(500).json({success:false, message:"Failed to delete file"});
+    }
+});
+
+/*--Google Calendar API------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 app.get("/api/calendar", async (req, res)=>{
     if(!req.user || !req.user.accessToken) return res.status(401).json({error:"Not authenticated"});
     try{
@@ -125,6 +280,7 @@ function getColorHex(colorId) {
     return colors[colorId] || "1a73e8"; // Default blue
 }
 
+/*--Start Server-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 app.use(express.static(__dirname));
 app.get("/",(req, res)=>{res.sendFile(__dirname+"/pages/index.html")});
 server.listen(process.env.PORT,()=>{console.log("Running at port "+process.env.PORT)});

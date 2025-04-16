@@ -156,6 +156,7 @@ input[type=text].login-input, input[type=password].login-input{
 .alternate-signin-holder{
     justify-content:center;
     align-items:center;
+    user-select:none;
     display:flex;
 
     margin-left:10%;

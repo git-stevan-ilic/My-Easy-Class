@@ -7,16 +7,34 @@
    
     width:calc(100% - 4vw);
     padding-right:2vw;
-    padding-left:2vw;
+    padding-left:1vw;
     height:3vw;
 }
 
+#drive-file-upload{
+    display:none;
+}
+#drive-upload{
+    background-color:var(--accent-blue-1);
+    color:var(--background-white);
+    height:calc(2vw + 2px);
+    margin-right:1vw;
+    margin-top:2vw;
+
+    font-weight:bold;
+    border:none;
+}
+#drive-search-holder{
+    margin-top:2vw;
+    width:50vw;
+}
 .filter{
     transition:ease-in-out 0.05s;
     color:var(--dark-blue);
     user-select:none;
     margin-left:1vw;
     cursor:pointer;
+    margin-top:2vw;
     width:10vw;
 }
 .filter:hover{
@@ -35,7 +53,7 @@
     display:none;
     width:12vw;
     left:31vw;
-    top:3vw;
+    top:5vw;
     z-index:2;
 }
 .filter-window-arrow{
@@ -113,7 +131,7 @@
 .no-files{
     color:var(--gray-1);
     margin-left:2vw;
-    margin-top:1vw;
+    margin-top:3vw;
     font-size:2vw;
 }
 
@@ -191,9 +209,145 @@
     margin-bottom:0.5vw;
     margin-top:0.5vw;
     
-    word-break:break-all;
+    white-space:pre-line;
+    overflow-wrap:break-word;
+    word-break:normal;
     font-weight:bold;
 }
 .drive-item-info{
     color:var(--gray-1);
+}
+
+.download-notification{
+    box-shadow:0.25vw 0.25vw 0.5vw rgba(0, 0, 0, 0.15);
+    border:1px solid var(--gray-1);
+    background-color:var(--background-white);
+    border-radius:var(--border-radius-2);
+    transition:ease-in-out 0.05s;
+    transform:translate(-50%);
+    color:var(--dark-blue);
+    position:fixed;
+    font-size:1vw;
+    padding:1vw;
+    width:6.5vw;
+    height:1vw;
+    z-index:10;
+    left:50%;
+    top:6vw;
+
+    justify-content:flex-start;
+    align-items:center;
+    display:none;
+}
+
+/*--File Display-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+.file-display{
+    background-image:linear-gradient(to bottom, rgb(0,0,0), rgba(0,0,0,0));
+    background-color:rgba(0, 0, 0, 0.5);
+    position:fixed;
+    display:none;
+    height:100%;
+    width:100%;
+    left:0px;
+    top:0px;
+    z-index:5;
+}
+.file-display-head{
+    position:relative;
+    height:4vw;
+    width:100%;
+}
+.file-display-title{
+    color:var(--background-white);
+    transform:translate(-50%);
+    position:absolute;
+    font-size:1.5vw;
+    height:100%;
+    left:50%;
+    top:0px;
+
+    justify-content:center;
+    align-items:center;
+    font-weight:bold;
+    display:flex;
+}
+.file-display-close{
+    background-image:url("../assets/icons/x.png");
+    background-position:center center;
+    background-repeat:no-repeat;
+    background-size:50%;
+
+    position:absolute;
+    user-select:none;
+    aspect-ratio:1;
+    cursor:pointer;
+    width:2vw;
+    right:1vw;
+    top:1vw;
+}
+.file-display-close:hover{
+    transform:scale(1.1);
+}
+.file-display-close:active{
+    transform:scale(1);
+}
+.file-display-round-button{
+    background-position:center center;
+    background-repeat:no-repeat;
+    background-size:50%;
+    position:absolute;
+
+    background-color:rgba(0,0,0);
+    border:1px solid rgb(0,0,0);
+    aspect-ratio:1;
+    width:2.5vw;
+    top:0.75vw;
+}
+#file-display-download{
+    background-image:url("../assets/icons/download.png");
+    left:0.5vw;
+}
+#file-display-delete{
+    background-image:url("../assets/icons/delete.png");
+    left:3.5vw;
+}
+.file-display-body{
+    height:calc(100% - 4vw);
+    overflow-x:hidden;
+    overflow-y:auto;
+    width:100%;
+}
+.file-display-error{
+    transform:translate(-50%);
+    color:var(--background-white);
+    text-align:center;
+    margin-left:50%;
+    margin-top:2vw;
+}
+.file-display-text{
+    box-shadow:0.25vw 0.25vw 0.5vw rgba(0, 0, 0, 0.15);
+    background-color:var(--background-white);
+    transform:translate(-50%);
+    margin-left:50%;
+    padding:2vw;
+    width:50vw;
+}
+.content-image{
+    transform:translate(-50%);
+    margin-left:50%;
+    max-height:90%;
+    width:auto;
+}
+.content-video{
+    transform:translate(-50%);
+    margin-left:50%;
+    max-height:90%;
+    width:auto;
+}
+.content-pdf{
+    transform:translate(-50%);
+    margin-left:50%;
+    margin-top:0px;
+    height:95%;
+    width:50vw;
 }

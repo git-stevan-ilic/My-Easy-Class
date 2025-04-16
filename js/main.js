@@ -6,7 +6,7 @@ function initLoad(){
 
     //loadAssistantLogic();
     loadLogInLogic(client);
-    loadDriveLogic();
+    loadDriveLogic(client);
     loadHeadLogic();
 }
 
