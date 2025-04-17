@@ -39,7 +39,7 @@ passport.use(new GoogleStrategy({
     clientSecret:process.env.GOOGLE_CLIENT_SECRET,
     callbackURL:"/auth/google/callback" || "http://localhost:"+process.env.PORT+"/auth/google/callback",
     scope:[
-        "profile", "email", "https://www.googleapis.com/auth/calendar.readonly",
+        "profile", "email", "https://www.googleapis.com/auth/calendar",
         "https://www.googleapis.com/auth/drive.metadata.readonly",
         "https://www.googleapis.com/auth/drive",
         "https://www.googleapis.com/auth/gmail.readonly",
@@ -60,7 +60,7 @@ passport.deserializeUser((user, done) => done(null, user));
 app.get("/auth/google/callback", passport.authenticate("google", {failureRedirect:"/login"}), (req, res) => res.redirect("/"));
 app.get("/auth/google", passport.authenticate("google", {
     scope:[
-        "profile", "email", "https://www.googleapis.com/auth/calendar.readonly",
+        "profile", "email", "https://www.googleapis.com/auth/calendar",
         "https://www.googleapis.com/auth/drive.metadata.readonly",
         "https://www.googleapis.com/auth/drive",
         "https://www.googleapis.com/auth/gmail.readonly",
@@ -483,12 +483,17 @@ app.get("/api/calendar", async (req, res)=>{
         });
 
         const calendar = google.calendar({version:"v3", auth:oauth2Client});
+        const currDate = new Date();
+        const lastMonthFirstDay = new Date(currDate.getFullYear(), currDate.getMonth() - 1, 1);
+        const nextMonthLastDay = new Date(currDate.getFullYear(), currDate.getMonth() + 2, 0);
+
         const response = await calendar.events.list({
             calendarId:"primary",
-            timeMin:(new Date()).toISOString(),
-            maxResults:10,
+            timeMin:lastMonthFirstDay.toISOString(),
+            timeMax:nextMonthLastDay.toISOString(),
             singleEvents:true,
-            orderBy:"startTime"
+            orderBy:"startTime",
+            maxResults:2500
         });
 
         const events = response.data.items.map(event => ({
@@ -496,7 +501,8 @@ app.get("/api/calendar", async (req, res)=>{
             title:event.summary,
             start:event.start.dateTime || event.start.date,
             end:event.end.dateTime || event.end.date,
-            color:event.colorId ? `#${getColorHex(event.colorId)}` : "#1a73e8"
+            color:event.colorId ? `#${getColorHex(event.colorId)}` : "#1a73e8",
+            isPast: new Date(event.end.dateTime || event.end.date) < new Date()
         }));
 
         res.json(events);
@@ -507,7 +513,70 @@ app.get("/api/calendar", async (req, res)=>{
         res.status(500).json({error:"Failed to fetch calendar events"});
     }
 });
-function getColorHex(colorId) {
+app.post("/api/calendar/add", async (req, res)=>{
+    if(!req.user || !req.user.accessToken) return res.status(401).json({error:"Not authenticated"});
+    try{
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.on("tokens", (tokens)=>{
+            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
+            req.user.accessToken = tokens.access_token;
+        });
+        oauth2Client.setCredentials({
+            refresh_token:req.user.refreshToken,
+            access_token:req.user.accessToken
+        });
+
+        const calendar = google.calendar({version:"v3", auth:oauth2Client});
+        const event = {
+            summary:req.body.title,
+            description:req.body.description,
+            start:{
+                dateTime:req.body.start,
+                timeZone:req.body.timeZone || "UTC"
+            },
+            end:{
+                dateTime:req.body.end,
+                timeZone:req.body.timeZone || "UTC"
+            },
+            reminders:{useDefault:true}
+        };
+        
+        const response = await calendar.events.insert({calendarId:"primary", requestBody:event});
+        res.json({id:response.data.id, htmlLink:response.data.htmlLink, created:response.data.created});
+    }
+    catch(error){
+        console.error("Calendar event add error: ", error);
+        res.status(500).json({error:"Failed to add event", details:error.response?.data?.error});
+    }
+});
+app.delete("/api/calendar-delete/:id", async (req, res)=>{
+    if(!req.user || !req.user.accessToken) return res.status(401).json({error:"Not authenticated"});
+    try{
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.on("tokens", (tokens)=>{
+            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
+            req.user.accessToken = tokens.access_token;
+        });
+        oauth2Client.setCredentials({
+            refresh_token:req.user.refreshToken,
+            access_token:req.user.accessToken
+        });
+
+        const calendar = google.calendar({version:"v3", auth:oauth2Client});
+        await calendar.events.delete({
+            calendarId:"primary",
+            eventId:req.params.id,
+            sendUpdates:req.query.notify ? "all" : "none"
+        });
+
+        res.json({success:true, message:"Event deleted successfully"});
+    }
+    catch(error){
+        console.error("Calendar event delete error: ", error);
+        res.status(500).json({error:"Failed to delete event", details:error.response?.data?.error});
+    }
+});
+function getColorHex(colorId){
     const colors = {
         "1":"a4bdfc", // Lavender
         "2":"7ae7bf", // Sage

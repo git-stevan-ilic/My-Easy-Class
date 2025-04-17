@@ -133,10 +133,10 @@
             </div>
         </div>
         <div class="screen" id="main">
-            <div class="screen tab-affected" id="dahsboard-screen" style="display:none;">
+            <div class="screen tab-affected" id="dahsboard-screen">
 
             </div>
-            <div class="screen tab-affected" id="mail-screen" style="display:block;">
+            <div class="screen tab-affected" id="mail-screen">
                 <div class="mail-head">
                     <div class="new-email-button-holder">
                         <button id="new-email">New Email</button>
@@ -208,7 +208,31 @@
                 </div>
             </div>
             <div class="screen tab-affected" id="calendar-screen">
-                <div id="calendar"></div>
+                <div class="calendar-head">
+                    <button id="calendar-today">Today</button>
+                    <div class="calendar-page-arrow" id="calendar-month-b">&#x3c;</div>
+                    <div class="calendar-page-arrow" id="calendar-month-f">&#x3e;</div>
+                    <input type="date" class="calendar-date" id="calendar-date">
+                    <div class="calendar-date-display"></div>
+                </div>
+                <div class="calendar-body">
+                    <div class="calendar"></div>
+                    <div class="calendar-event-window">
+                        <div class="calendar-event-window-head">
+                            <div class="calendar-event-head-button" id="calendar-event-delete"></div>
+                            <div class="calendar-event-head-button" id="calendar-event-close"></div>
+                        </div>
+                        <div class="calendar-event-window-body">
+                            <div class="calendar-event-color-holder">
+                                <div class="calendar-event-color"></div>
+                            </div>
+                            <div class="calendar-event-data">
+                                <div class="calendar-event-data-title"></div>
+                                <div class="calendar-event-data-date"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="screen tab-affected" id="drive-screen">
                 <div class="drive-head">
