@@ -7,6 +7,7 @@
 
     <link rel="stylesheet" type="text/css" href="../css/dashboard.css">
     <link rel="stylesheet" type="text/css" href="../css/calendar.css">
+    <link rel="stylesheet" type="text/css" href="../css/aboutme.css">
     <link rel="stylesheet" type="text/css" href="../css/login.css">
     <link rel="stylesheet" type="text/css" href="../css/drive.css">
     <link rel="stylesheet" type="text/css" href="../css/mail.css">
@@ -14,6 +15,7 @@
 
     <script type="text/javascript" src="../js/login logic.js"></script>
     <script type="text/javascript" src="../js/socket.io.js"></script>
+    <script type="text/javascript" src="../js/about me.js"></script>
     <script type="text/javascript" src="../js/calendar.js"></script>
     <script type="text/javascript" src="../js/purify.js"></script>
     <script type="text/javascript" src="../js/drive.js"></script>
@@ -279,10 +281,43 @@
                 <div class="drive-body"></div>
             </div>
             <div class="screen tab-affected" id="students-screen">
-                <div class="wip">Work in Progress</div>
+
             </div>
             <div class="screen tab-affected" id="homework-screen">
                 <div class="wip">Work in Progress</div>
+            </div>
+            <div class="screen" id="about-me-screen">
+                <div class="about-me-info-holder">
+                    <div class="about-me-image"></div>
+                    <div class="about-me-info">
+                        <div class="about-me-title">About Me</div>
+                        <div class="about-me-name"></div>
+                        <div class="about-me-email"></div>
+                        <div class="about-me-info-row">
+                            <div class="about-me-info-title">Job title:</div>
+                            <div class="about-me-info-value">Not provided</div>
+                        </div>
+                        <div class="about-me-info-row">
+                            <div class="about-me-info-title">Location:</div>
+                            <div class="about-me-info-value">Not provided</div>
+                        </div>
+                        <div class="about-me-info-row">
+                            <div class="about-me-info-title">Education:</div>
+                            <div class="about-me-info-value">Not provided</div>
+                        </div>
+                        <div class="about-me-info-row">
+                            <div class="about-me-info-title">History:</div>
+                            <div class="about-me-info-value">Not provided</div>
+                        </div>
+                    </div>
+                </div>
+                <button class="about-me-button" id="edit-info">Edit Info</button>
+                <div class="about-me-button-holder">
+                    <button class="about-me-button" id="about-me-send-email">Send Email</button>
+                    <button class="about-me-button" id="about-me-cv">Download CV</button>
+                    <div class="about-me-share"></div>
+                </div>
+                <div class="about-me-desc">No description provided</div>
             </div>
         </div>
     </div>

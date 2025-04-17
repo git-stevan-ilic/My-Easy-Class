@@ -75,15 +75,19 @@ function googleLogin(client){
             document.querySelector("#dahsboard-screen").style.display = "block";
             if(user.photos.length > 0){
                 document.querySelector(".dashboard-account-image").style.backgroundImage = "url('"+user.photos[0].value+"')";
+                document.querySelector(".about-me-image").style.backgroundImage = "url('"+user.photos[0].value+"')";
                 icon.style.backgroundImage = "url('"+user.photos[0].value+"')";
             }
             fadeOut(".pre-main-head", 0.1, ()=>{fadeIn(".main-head", 0.1, "flex")});
             fadeOut("#pre-main", 0.1, ()=>{fadeIn("#main", 0.1, "block")});
             accountLogOff.onclick = ()=>{client.emit("google-log-out")}
+            loadAboutMeLogic(user);
             loadDriveLogic(client);
             loadMailLogic();
             loadCalendar();
 
+            document.querySelector(".about-me-name").innerText = user.displayName;
+            document.querySelector(".about-me-email").innerText = user.emails[0].value;
             document.querySelector(".dashboard-account-name").innerText = user.displayName;
             document.querySelector(".dashboard-account-email").innerText = user.emails[0].value;
             document.querySelector(".dashboard-account-desc").innerText = "No description provided";

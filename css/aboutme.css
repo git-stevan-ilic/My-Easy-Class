@@ -1,0 +1,119 @@
+/*--About Me Initial---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+.about-me-info-holder{
+    justify-content:flex-start;
+    align-items:center;
+    display:flex;
+
+    padding:2vw;
+    height:40%;
+    width:80%;
+}
+.about-me-image{
+    background-image:url("../assets/icons/default user.png");
+    background-position:center center;
+    background-repeat:no-repeat;
+    background-size:cover;
+
+    border:1px solid var(--border-gray-1);
+    border-radius:100%;
+    aspect-ratio:1;
+    flex-shrink:0;
+    width:12vw;
+}
+#edit-info{
+    position:absolute;
+    right:1vw;
+    top:1vw;
+}
+
+/*--About Me Info------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+.about-me-info{
+    color:var(--dark-blue);
+    margin-left:2vw;
+    height:100%;
+    width:100%;
+}
+.about-me-title{
+    font-weight:bold;
+    font-size:1.75vw;
+}
+.about-me-name{
+    font-weight:bold;
+    margin-top:0.5vw;
+    font-size:1.5vw;
+    width:100%;
+}
+.about-me-email{
+    font-weight:bold;
+    margin-bottom:0.5vw;
+    font-size:1.15vw;
+    width:100%;
+}
+.about-me-info-row{
+    justify-content:flex-start;
+    align-items:center;
+    display:flex;
+
+    height:1.5vw;
+    width:100%;
+}
+.about-me-info-title{
+    justify-content:flex-start;
+    align-items:center;
+    display:flex;
+
+    flex-shrink:0;
+    width:6vw;
+}
+.about-me-info-value{
+    justify-content:flex-start;
+    align-items:center;
+    display:flex;
+
+    width:100%;
+}
+
+/*--About Me Bottom----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+.about-me-button-holder{
+    justify-content:flex-start;
+    align-items:center;
+    display:flex;
+
+    margin-bottom:2vw;
+    margin-left:2vw;
+}
+.about-me-button-holder > *{
+    margin-right:0.5vw;
+}
+.about-me-button{
+    background-color:var(--accent-blue-1);
+    color:var(--background-white);
+    font-weight:bold;
+    user-select:none;
+    border:none;
+    height:2vw;
+    width:10vw;
+}
+.about-me-share{
+    background-image:url("../assets/icons/share.png");
+    background-position:center center;
+    background-repeat:no-repeat;
+    background-size:contain;
+    user-select:none;
+    cursor:pointer;
+
+    transition:ease-in-out 0.1s;
+    aspect-ratio:1;
+    width:2vw;
+}
+.about-me-share:hover{
+    transform:scale(1.1);
+}
+.about-me-share:active{
+    transform:scale(1);
+}
+.about-me-desc{
+    color:var(--dark-blue);
+    width:calc(100% - 4vw);
+    margin-left:2vw;
+}

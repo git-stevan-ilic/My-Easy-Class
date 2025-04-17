@@ -185,6 +185,7 @@
     flex-shrink:0;
     padding:0.5vw;
     width:10vw;
+    height:12vw;
 }
 .drive-item:hover{
     transform:scale(1.025);
@@ -205,9 +206,11 @@
     background-size:30%;
 }
 .drive-item-title{
+    height:calc(100% - 8.5vw);
     color:var(--dark-blue);
     margin-bottom:0.5vw;
     margin-top:0.5vw;
+    
     
     white-space:pre-line;
     overflow-wrap:break-word;
@@ -216,6 +219,7 @@
 }
 .drive-item-info{
     color:var(--gray-1);
+    height:2.5vw;
 }
 
 .download-notification{

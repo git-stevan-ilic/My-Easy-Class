@@ -59,7 +59,10 @@ function headAccountLogic(){
     }
     accountAboutMe.onclick = ()=>{
         sendInteruptEvent();
-        console.log("about me");
+        const closeTabsEvent = new Event("close-all-tabs");
+        window.dispatchEvent(closeTabsEvent);
+        closeAccountOptions();
+        document.querySelector("#about-me-screen").style.display = "block";
     }
     accountLogOff.onclick = ()=>{
         sendInteruptEvent();
@@ -97,7 +100,7 @@ function headTabLogic(){
     for(let i = 0; i < tabs.length; i++){
         tabs[i].onclick = ()=>{
             if(currTab !== i){
-                const screensToClose = document.querySelectorAll(".tab-affected");
+                const screensToClose = document.querySelector("#main").children;
                 for(let j = 0; j < screensToClose.length; j++) screensToClose[j].style.display = "none";
                 document.getElementById(screens[i]).style.display = "block";
                
@@ -111,7 +114,7 @@ function headTabLogic(){
         }
     }
     window.addEventListener("close-all-tabs", ()=>{
-        const screensToClose = document.querySelectorAll(".tab-affected");
+        const screensToClose = document.querySelector("#main").children;
         for(let j = 0; j < screensToClose.length; j++) screensToClose[j].style.display = "none";
         currTab = -1;
 
