@@ -5,21 +5,16 @@
     <title>My Easy Class</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" type="text/css" href="../css/daygrid 4.4.2 main.min.css">
-    <link rel="stylesheet" type="text/css" href="../css/core 4.4.2 main.min.css">
     <link rel="stylesheet" type="text/css" href="../css/calendar.css">
     <link rel="stylesheet" type="text/css" href="../css/login.css">
     <link rel="stylesheet" type="text/css" href="../css/drive.css">
     <link rel="stylesheet" type="text/css" href="../css/mail.css">
     <link rel="stylesheet" type="text/css" href="../css/main.css">
 
-    <script type="text/javascript" src="../js/purify.js"></script>
-    <script type="text/javascript" src="../js/socket.io.js"></script>
-    <script type="text/javascript" src="../js/core 4.4.2 main.min.js"></script>
-    <script type="text/javascript" src="../js/daygrid 4.4.2 main.min.js"></script>
-    <script type="text/javascript" src="../js/interaction 4.4.2 main.min.js"></script>
     <script type="text/javascript" src="../js/login logic.js"></script>
+    <script type="text/javascript" src="../js/socket.io.js"></script>
     <script type="text/javascript" src="../js/calendar.js"></script>
+    <script type="text/javascript" src="../js/purify.js"></script>
     <script type="text/javascript" src="../js/drive.js"></script>
     <script type="text/javascript" src="../js/mail.js"></script>
     <script type="text/javascript" src="../js/main.js"></script>
@@ -138,10 +133,10 @@
             </div>
         </div>
         <div class="screen" id="main">
-            <div class="screen tab-affected" id="dahsboard-screen">
+            <div class="screen tab-affected" id="dahsboard-screen" style="display:none;">
 
             </div>
-            <div class="screen tab-affected" id="mail-screen">
+            <div class="screen tab-affected" id="mail-screen" style="display:block;">
                 <div class="mail-head">
                     <div class="new-email-button-holder">
                         <button id="new-email">New Email</button>
@@ -149,6 +144,11 @@
                     <div class="search-holder" id="mail-search-holder">
                         <div class="search-icon" id="mail-search-icon"></div>
                         <input type="text" class="search-input" id="mail-search">
+                    </div>
+                    <div class="mail-page-holder">
+                        <div class="mail-page-number">1-50</div>
+                        <div class="mail-page-arrow">&#x3c;</div>
+                        <div class="mail-page-arrow">&#x3e;</div>
                     </div>
                 </div>
                 <div class="mail-body">
@@ -180,6 +180,30 @@
                     </div>
                     <div class="mail-list-holder">
                         <div class="mail-list"></div>
+                        <div class="mail-message-display">
+                            <div class="mail-message-head">
+                                <div class="mail-message-head-back">&#x3c;</div>
+                                <div class="mail-message-head-delete"></div>
+                            </div>
+                            <div class="mail-message-body">
+                                <div class="mail-message-body-subject"></div>
+                                <div class="mail-message-body-value"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="send-mail-window">
+                        <div class="send-mail-head">
+                            <div class="send-mail-title">New Message</div>
+                            <div class="send-mail-close"></div>
+                        </div>
+                        <div class="send-mail-body">
+                            <div class="send-mail-row"><input type="text" class="send-mail-text-input" id="send-mail-recipients" placeholder="Recipients"></div>
+                            <div class="send-mail-row"><input type="text" class="send-mail-text-input" id="send-mail-subject" placeholder="Subject"></div>
+                            <div class="send-mail-message"><textarea id="send-mail-message"></textarea></div>
+                        </div>
+                        <div class="send-mail-foot">
+                            <button id="send-mail">Send</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -270,7 +294,6 @@
             </div>
         </div>
     </div>
-
     <div class="download-notification">Downloading...</div>
     <div class="file-display">
         <div class="file-display-head">

@@ -43,7 +43,8 @@ passport.use(new GoogleStrategy({
         "https://www.googleapis.com/auth/drive.metadata.readonly",
         "https://www.googleapis.com/auth/drive",
         "https://www.googleapis.com/auth/gmail.readonly",
-        "https://www.googleapis.com/auth/gmail.modify"
+        "https://www.googleapis.com/auth/gmail.modify",
+        "https://www.googleapis.com/auth/gmail.send"
     ],
     accessType:"offline"
 },
@@ -63,13 +64,14 @@ app.get("/auth/google", passport.authenticate("google", {
         "https://www.googleapis.com/auth/drive.metadata.readonly",
         "https://www.googleapis.com/auth/drive",
         "https://www.googleapis.com/auth/gmail.readonly",
-        "https://www.googleapis.com/auth/gmail.modify"
+        "https://www.googleapis.com/auth/gmail.modify",
+        "https://www.googleapis.com/auth/gmail.send"
     ],
     prompt:"consent"
 }));
 
 /*--Google Mail API----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-app.get("/api/emails", async (req, res)=>{
+app.get("/api/emails/:inbox", async (req, res)=>{
     try{
         const oauth2Client = new google.auth.OAuth2();
         oauth2Client.on("tokens", (tokens)=>{
@@ -81,15 +83,16 @@ app.get("/api/emails", async (req, res)=>{
             access_token:req.user.accessToken
         });
 
+        const {inbox} = req.params;
         const gmail = google.gmail({version:"v1", auth:oauth2Client});
-        const response = await gmail.users.messages.list({userId:"me", maxResults:20, q:"in:inbox"});
+        const response = await gmail.users.messages.list({userId:"me", maxResults:50, q:"in:"+inbox});
         const messages = await Promise.all(
             response.data.messages.map(async (message)=>{
                 const msg = await gmail.users.messages.get({
                     userId:"me",
                     id:message.id,
                     format:"metadata",
-                    metadataHeaders:['From', 'Subject', 'Date'],
+                    metadataHeaders:["From", "To", "Subject", "Date"],
                     fields:"payload(headers),snippet,labelIds"
                 });
 
@@ -97,19 +100,85 @@ app.get("/api/emails", async (req, res)=>{
                 return {
                     id:message.id,
                     from:msg.data.payload.headers.find(h => h.name === "From").value,
+                    to:msg.data.payload.headers.find(h => h.name === "To").value,
                     subject:msg.data.payload.headers.find(h => h.name === "Subject").value,
                     date:msg.data.payload.headers.find(h => h.name === "Date").value,
                     snippet:msg.data.snippet,
                     isStarred:labels.includes("STARRED"),
-                    isImportant:labels.includes("IMPORTANT")
+                    isImportant:labels.includes("IMPORTANT"),
+                    isUnread:labels.includes("UNREAD")
                 };
             })
-          );
+        );
         res.json(messages);
     }
     catch(error){
         console.error("Gmail error:", error);
         res.status(500).json({error:"Failed to fetch emails"});
+    }
+});
+app.get("/api/email-content/:id", async (req, res)=>{
+    try{
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.on("tokens", (tokens)=>{
+            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
+            req.user.accessToken = tokens.access_token;
+        });
+        oauth2Client.setCredentials({
+            refresh_token:req.user.refreshToken,
+            access_token:req.user.accessToken
+        });
+
+        const {id} = req.params;
+        const gmail = google.gmail({version:"v1", auth:oauth2Client});
+        const response = await gmail.users.messages.get({userId:"me", id:id, format:"full"});
+        const payload = response.data.payload;
+        let body = "";
+
+        function findBody(parts){
+            for(const part of parts){
+                if(part.parts){
+                    const nestedBody = findBody(part.parts);
+                    if(nestedBody) return nestedBody;
+                }
+                if(part.mimeType === "text/html"){
+                    return Buffer.from(part.body.data, "base64url").toString("utf8");
+                }
+                else if(part.mimeType === "text/plain" && !body){
+                    body = Buffer.from(part.body.data, "base64url").toString("utf8");
+                }
+            }
+            return body;
+        };
+        if(payload.parts) body = findBody(payload.parts);
+        else if (payload.body?.data) body = Buffer.from(payload.body.data, "base64url").toString("utf8");
+        res.json({...response.data, parsedBody: body || "No content found"});
+    }
+    catch(error){
+        console.error("Error fetching email:", error);
+        res.status(500).json({error:"Failed to fetch email"});
+    }
+});
+app.post("/api/emails/:id/read", async (req, res)=>{
+    try{
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.on("tokens", (tokens)=>{
+            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
+            req.user.accessToken = tokens.access_token;
+        });
+        oauth2Client.setCredentials({
+            refresh_token:req.user.refreshToken,
+            access_token:req.user.accessToken
+        });
+
+        const {id} = req.params;
+        const gmail = google.gmail({version:"v1", auth:oauth2Client});
+        const response = await gmail.users.messages.modify({userId:"me", id:id, requestBody:{removeLabelIds:["UNREAD"]}});
+        res.json({success:true, message:"Email marked as read"});
+    }
+    catch(error){
+        console.error("Error marking email as read:", error);
+        res.status(500).json({error:"Failed to update email status"});
     }
 });
 app.post("/api/emails/:id/star", async (req, res)=>{
@@ -164,6 +233,69 @@ app.post("/api/emails/:id/importance", async (req, res)=>{
     catch(error){
         console.error("Error:", error);
         res.status(500).json({success:false});
+    }
+});
+app.post("/api/send-mail", async (req, res)=>{
+    try{
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.on("tokens", (tokens)=>{
+            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
+            req.user.accessToken = tokens.access_token;
+        });
+        oauth2Client.setCredentials({
+            refresh_token:req.user.refreshToken,
+            access_token:req.user.accessToken
+        });
+
+        const {recipients, subject, message} = req.body;
+        const rawEmail = [
+            "From:'My Easy Class' <"+req.user.email+">",
+            "To:"+recipients,
+            "Subject:"+subject,
+            "MIME-Version:1.0",
+            "Content-Type:text/html; charset=utf-8",
+            "",
+            message,
+        ].join('\n');
+
+        const encodedEmail = Buffer.from(rawEmail)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+
+        const gmail = google.gmail({version:"v1", auth:oauth2Client});
+        const response = await gmail.users.messages.send({userId:"me", requestBody:{raw:encodedEmail}});
+        res.json({success:true, message:"Email sent!"});
+    }
+    catch(error){
+        console.error("Error sending email:", error);
+        res.status(500).json({error:"Failed to send email"});
+    }
+});
+app.delete("/api/emails/:id", async (req, res)=>{
+    try{
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.on("tokens", (tokens)=>{
+            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
+            req.user.accessToken = tokens.access_token;
+        });
+        oauth2Client.setCredentials({
+            refresh_token:req.user.refreshToken,
+            access_token:req.user.accessToken
+        });
+
+        const {id} = req.params;
+        const gmail = google.gmail({version:"v1", auth:oauth2Client});
+        await gmail.users.messages.trash({userId:"me", id:id});
+        res.json({success:true, message:"Email moved to Trash"});
+    }
+    catch(error){
+        console.error("Delete error:", error);
+        res.status(500).json({ 
+            success:false,
+            message:error.message.includes("404") ? 'Email not found' : 'Failed to delete email'
+        });
     }
 });
 

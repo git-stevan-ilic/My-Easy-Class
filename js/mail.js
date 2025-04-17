@@ -10,7 +10,7 @@ function loadMailLogic(){
                 mailSideTab[selectedTab].classList.remove("mail-side-selected-tab");
                 mailSideTab[i].classList.add("mail-side-selected-tab");
                 selectedTab = i;
-                generateMailElements(emails, tabs[selectedTab], searchInput);
+                loadInbox(tabs[selectedTab]);
             } 
         }
     }
@@ -27,45 +27,12 @@ function loadMailLogic(){
         generateMailElements(emails, tabs[selectedTab], searchInput);
     }
 
-    loadInbox();
+    loadSendMessage();
+    loadInbox("inbox");
     window.addEventListener("received-emails", (e)=>{
         emails = e.detail.newEmails;
         generateMailElements(emails, tabs[selectedTab], searchInput);
     });
-    window.addEventListener("update-important", (e)=>{
-        const emailId = e.detail.emailId;
-        const isImportant = e.detail.isImportant;
-        for(let i = 0; i < emails.length; i++){
-            if(emails[i].id === emailId){
-                emails[i].isImportant = isImportant;
-                generateMailElements(emails, tabs[selectedTab], searchInput);
-                break;
-            }
-        }
-    });
-    window.addEventListener("update-starred", (e)=>{
-        const emailId = e.detail.emailId;
-        const isStarred = e.detail.isStarred;
-        for(let i = 0; i < emails.length; i++){
-            if(emails[i].id === emailId){
-                emails[i].isStarred = isStarred;
-                generateMailElements(emails, tabs[selectedTab], searchInput);
-                break;
-            }
-        }
-    });
-}
-async function loadInbox(){
-    try{
-        const response = await fetch("/api/emails");
-        const emails = await response.json();
-
-        const receivedEmailsEvent = new CustomEvent("received-emails", {detail:{newEmails:emails}});
-        window.dispatchEvent(receivedEmailsEvent);
-    }
-    catch(error){
-        console.log("Load inbox error: ", inbox);
-    }
 }
 
 /*--Generate Mail Elements---------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -83,14 +50,6 @@ function generateMailElements(emails, tab, searchInput){
     else{
         let anyDisplayed = false;
         for(let i = 0; i < emails.length; i++){
-            let tabCondition = false;
-            switch(tab){
-                default: tabCondition = false; break;
-                case "inbox": tabCondition = true; break;
-                case "starred": tabCondition = emails[i].isStarred; break;
-                case "important": tabCondition = emails[i].isImportant; break;
-            }
-
             let searchCondition = true;
             if(searchInput !== ""){
                 const searchParam = searchInput.toLowerCase();
@@ -100,8 +59,8 @@ function generateMailElements(emails, tab, searchInput){
                 searchCondition = (emailFrom.indexOf(searchParam) !== -1) || (emailSubject.indexOf(searchParam) !== -1) || (emailSnippet.indexOf(searchParam) !== -1)
             }
 
-            if(tabCondition && searchCondition){
-                const mailOptions = genetateMailOptions(emails[i]);
+            if(searchCondition){
+                const mailOptions = genetateMailOptions(emails[i], tab);
                 const mailMarks = generateMailMarks(emails[i]);
                 const mail = document.createElement("div");
                 const mailAddress = document.createElement("div");
@@ -114,10 +73,13 @@ function generateMailElements(emails, tab, searchInput){
                 mailContent.className = "mail-content";
                 mailSubject.className = "mail-subject";
                 mailSnippet.className = "mail-snippet";
+                if(!emails[i].isUnread) mail.classList.add("mail-read");
         
-                mailAddress.innerText = emails[i].from;
+                if(tab === "sent") mailAddress.innerText = emails[i].to;
+                else mailAddress.innerText = emails[i].from;
                 mailSubject.innerText = emails[i].subject;
                 mailSnippet.innerText = emails[i].snippet;
+                mail.id = "mail-"+emails[i].id;
         
                 mail.appendChild(mailMarks);
                 mail.appendChild(mailAddress);
@@ -127,12 +89,14 @@ function generateMailElements(emails, tab, searchInput){
                 mailContent.appendChild(mailSnippet);
                 mailList.appendChild(mail);
                 anyDisplayed = true;
+
+                mail.onclick = ()=>{getEmailContent(emails[i], tab)}
             }
         }
         if(!anyDisplayed) emptyInbox();
     }
 }
-function genetateMailOptions(email){
+function genetateMailOptions(email, tab){
     const mailOptions = document.createElement("div");
     const mailDelete = document.createElement("div");
 
@@ -140,8 +104,9 @@ function genetateMailOptions(email){
     mailDelete.className = "mail-delete";
 
     mailOptions.appendChild(mailDelete);
-    mailDelete.onclick = ()=>{
-        console.log(email);
+    mailDelete.onclick = (e)=>{
+        e.stopPropagation();
+        deleteEmail(email.id, tab);
     }
 
     return mailOptions;
@@ -163,10 +128,12 @@ function generateMailMarks(email){
     mailMarks.appendChild(mailStar);
     mailMarks.appendChild(mailImportant);
 
-    mailRect.onclick = ()=>{
+    mailRect.onclick = (e)=>{
+        e.stopPropagation();
         console.log(email);
     }
-    mailStar.onclick = async ()=>{
+    mailStar.onclick = async (e)=>{
+        e.stopPropagation();
         const isMarked = mailStar.classList.contains("mail-star-marked");
         try{
             const response = await fetch("/api/emails/"+email.id+"/star", {
@@ -184,21 +151,14 @@ function generateMailMarks(email){
                     mailStar.classList.remove("mail-star-marked");
                     isStarred = false;
                 }
-
-                const updateStarred = new CustomEvent("update-starred", {
-                    detail:{
-                        isStarred:isStarred,
-                        emailId:email.id
-                    }
-                });
-                window.dispatchEvent(updateStarred);
             }
         }
         catch(error){
             console.error("Toggle error:", error);
         }
     }
-    mailImportant.onclick = async ()=>{
+    mailImportant.onclick = async (e)=>{
+        e.stopPropagation();
         const isMarked = mailImportant.classList.contains("mail-important-marked");
         try{
             const response = await fetch("/api/emails/"+email.id+"/importance", {
@@ -216,14 +176,6 @@ function generateMailMarks(email){
                     mailImportant.classList.remove("mail-important-marked");
                     isImportant = false;
                 }
-
-                const updateImportant = new CustomEvent("update-important", {
-                    detail:{
-                        isImportant:isImportant,
-                        emailId:email.id
-                    }
-                });
-                window.dispatchEvent(updateImportant);
             }
         }
         catch(error){
@@ -232,4 +184,142 @@ function generateMailMarks(email){
     }
 
     return mailMarks;
+}
+function generateMailDisplay(email, tab){
+    const mailMessageDisplay = document.querySelector(".mail-message-display");
+    const mailList = document.querySelector(".mail-list");
+    mailMessageDisplay.style.display = "block";
+    mailList.style.display = "none";
+
+    const mailSubject = document.querySelector(".mail-message-body-subject");
+    const mailValue = document.querySelector(".mail-message-body-value");
+    mailSubject.innerText = email.subject;
+
+    const mailDelete = document.querySelector(".mail-message-head-delete");
+    const mailBack = document.querySelector(".mail-message-head-back");
+    mailDelete.onclick = ()=>{
+        deleteEmail(email.id, tab);
+        mailBack.click();
+    }
+    mailBack.onclick = ()=>{
+        mailMessageDisplay.style.display = "none";
+        mailList.style.display = "block";
+        mailSubject.innerText = "";
+        mailDelete.onclick = null;
+        mailValue.innerHTML = "";
+    }
+
+    if(email.isUnread) markEmailRead(email.id, tab);
+}
+function loadSendMessage(){
+    const sendMailRecipients = document.querySelector("#send-mail-recipients");
+    const sendMailSubject = document.querySelector("#send-mail-subject");
+    const sendMailMessage = document.querySelector("#send-mail-message");
+
+    const sendMailWindow = document.querySelector(".send-mail-window");
+    const sendMailClose = document.querySelector(".send-mail-close");
+    const sendMailButton = document.querySelector("#send-mail");
+    const newEmail = document.querySelector("#new-email");
+    sendMailWindow.style.display = "none";
+
+    newEmail.onclick = ()=>{
+        if(sendMailWindow.style.display === "none"){
+            sendMailRecipients.value = "";
+            sendMailSubject.value = "";
+            sendMailMessage.value = "";
+
+            sendMailWindow.style.animation = "new-mail-in ease-in-out 0.2s forwards";
+            sendMailWindow.style.display = "block";
+            sendMailWindow.onanimationend = ()=>{
+                sendMailWindow.style.animation = "none";
+                sendMailWindow.onanimationend = null;
+            }
+        }
+    }
+    sendMailClose.onclick = ()=>{
+        sendMailWindow.style.animation = "new-mail-out ease-in-out 0.2s forwards";
+        sendMailWindow.onanimationend = ()=>{
+            sendMailWindow.style.animation = "none";
+            sendMailWindow.style.display = "none";
+            sendMailWindow.onanimationend = null;
+
+            sendMailRecipients.value = "";
+            sendMailSubject.value = "";
+            sendMailMessage.value = "";
+        }
+    }
+    sendMailButton.onclick = ()=>{
+        sendMail(sendMailRecipients.value, sendMailSubject.value, sendMailMessage.value);
+    }
+}
+
+/*--Mail Manipulation--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+async function loadInbox(inbox){
+    try{
+        const response = await fetch("/api/emails/"+inbox);
+        const emails = await response.json();
+
+        const receivedEmailsEvent = new CustomEvent("received-emails", {detail:{newEmails:emails}});
+        window.dispatchEvent(receivedEmailsEvent);
+    }
+    catch(error){
+        console.log("Load inbox error: ", inbox);
+    }
+}
+async function deleteEmail(emailID, tab){
+    if(!confirm("Move this email to Trash?")) return;
+    try{
+        const response = await fetch("/api/emails/"+emailID, {method:"DELETE"});
+        const result = await response.json();
+        if(result.success) loadInbox(tab);
+        else{
+            console.log(result.message);
+            alert("Deletion Error");
+        }
+    }
+    catch(error){
+        console.log(error);
+        alert("Deletion Error");
+    }
+}
+async function getEmailContent(email, tab){
+    try{
+        const response = await fetch("/api/email-content/"+email.id);
+        const emailResponse = await response.json();
+
+        const mailValue = document.querySelector(".mail-message-body-value");
+        const cleanHTML = DOMPurify.sanitize(emailResponse.parsedBody, {
+            USE_PROFILES:{html:true},
+            FORBID_TAGS:["style", "script", "img"]
+        });
+        mailValue.innerHTML = cleanHTML;
+        generateMailDisplay(email, tab);
+    }
+    catch(error){
+        console.log(error);
+        alert("Fetching email error");
+    }
+}
+async function markEmailRead(emailID, tab){
+    const response = await fetch("/api/emails/"+emailID+"/read", {method:"POST"});
+    const result = await response.json();
+    if(result.success) loadInbox(tab);
+}
+async function sendMail(recipients, subject, message){
+    try{
+        const response = await fetch("/api/send-mail", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({recipients, subject, message}),
+        });
+        if(!response.ok) alert("Failed to send email");
+        else{
+            alert("Email sent successfully");
+            document.querySelector(".send-mail-close").click();
+        }
+    }
+    catch(error){
+        console.log("Sending email error:", error);
+        alert("Sending email error");
+    }
 }
