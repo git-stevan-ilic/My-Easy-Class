@@ -134,6 +134,7 @@ function generateDriveData(files, filter, fileName){
         }
     }
     generateDriveElements(allDates);
+    generateDashboardDriveElements(allDates);
 }
 function convertByteSize(bytes){
     const units = ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
@@ -210,6 +211,32 @@ function generateDriveHolder(files){
         driveItem.onclick = ()=>{displayFile(files[i].id, files[i].name, files[i].mimeType)}
     }
     return holder;
+}
+function generateDashboardDriveElements(allDates){
+    const recentFilesDIV = document.querySelector("#recent-files");
+
+    let recentFiles = [];
+    for(let i = 0; i < allDates.length; i++){
+        const index1 = allDates[i].date.indexOf("/");
+        const index2 = allDates[i].date.lastIndexOf("/");
+        const d = allDates[i].date.slice(0, index1).padStart(2, "0");
+        const m = allDates[i].date.slice(index1+1, index2).padStart(2, "0");
+        const y = allDates[i].date.slice(index2+1);
+        const currDate = new Date(y+"-"+m+"-"+d);
+        const diffDays = (new Date() - currDate)/100/60/60/24;
+        if(diffDays < 31) recentFiles.push(allDates[i]);
+    }
+
+    if(recentFiles.length === 0) recentFilesDIV.innerHTML = "No recent files";
+    else{
+        for(let i = 0; i < recentFiles.length; i++){
+            recentFilesDIV.innerHTML = "";
+            const holder = generateDriveHolder(recentFiles[i].files);
+            for(let j = holder.children.length-1; j >= 0; j--){
+                recentFilesDIV.appendChild(holder.lastChild);
+            }
+        }
+    }
 }
 
 /*--File Manipulation--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/

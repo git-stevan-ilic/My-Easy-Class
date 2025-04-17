@@ -162,6 +162,7 @@ function generateCalendarDates(date){
     }
 }
 function generateCalendarEvents(events){
+    generateDashboardCalendarEvents(events);
     for(let i = 0; i < events.length; i++){
         try{
             const newEvent = document.createElement("div");
@@ -180,6 +181,40 @@ function generateCalendarEvents(events){
         }
         catch{
             console.log("Event not in scope", events[i])
+        }
+    }
+}
+function generateDashboardCalendarEvents(events){
+    let upcoming = [];
+    for(let i = 0; i < events.length; i++){
+        const eventDate = new Date(events[i].start);
+        const dayDiff = (eventDate - new Date())/1000/60/60/24;
+        if(dayDiff < 31 && dayDiff > 0) upcoming.push(events[i]);
+    }
+
+    const upcomingEvents = document.querySelector("#upcoming-events");
+    if(upcoming.length === 0) upcomingEvents.innerHTML = "No upcoming events";
+    else{
+        upcomingEvents.innerHTML = "";
+        for(let i = 0; i < upcoming.length; i++){
+            const dashboardEvent = document.createElement("div");
+            const dashboardEventName = document.createElement("div");
+            const dashboardEventDate = document.createElement("div");
+            
+            dashboardEvent.className = "dashboatd-event";
+            dashboardEventName.className = "dashboatd-event-name";
+            dashboardEventDate.className = "dashboatd-event-date";
+            dashboardEventName.innerText = upcoming[i].title;
+            dashboardEventDate.innerText = generateEventTime(upcoming[i].start);
+    
+            dashboardEvent.appendChild(dashboardEventName);
+            dashboardEvent.appendChild(dashboardEventDate);
+            upcomingEvents.appendChild(dashboardEvent);
+
+            dashboardEvent.onclick = ()=>{
+                const tabHolder = document.querySelector(".tab-holder");
+                tabHolder.children[2].click();
+            }
         }
     }
 }
