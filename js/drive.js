@@ -242,6 +242,7 @@ function generateDashboardDriveElements(allDates){
 /*--File Manipulation--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 async function displayFile(fileId, fileName, mimeType){
     try{
+        const fileLoader = document.querySelector(".file-loader");
         const fileDisplayBody = document.querySelector(".file-display-body");
         const downloadButton = document.querySelector("#file-display-download");
         const deleteButton = document.querySelector("#file-display-delete");
@@ -258,6 +259,7 @@ async function displayFile(fileId, fileName, mimeType){
         downloadButton.onclick = ()=>{downloadFile(fileId, fileName)}
         deleteButton.onclick = ()=>{deleteFile(fileId)}
        
+        fileLoader.style.display = "block";
         while(fileDisplayBody.children.length > 0) fileDisplayBody.removeChild(fileDisplayBody.lastChild);
         const url = "/api/drive-file-content/"+fileId;
         if(mimeType === "application/vnd.google-apps.document"){
@@ -268,22 +270,40 @@ async function displayFile(fileId, fileName, mimeType){
             displayText.className = "file-display-text";
             fileDisplayBody.appendChild(displayText);
             displayText.innerHTML = DOMPurify.sanitize(html);
+            fileLoader.style.display = "none";
         }
         else if(mimeType === "application/pdf"){
             fileDisplayBody.innerHTML = `
             <iframe 
                 src="/api/drive-file-content/${fileId}"
                 class="content-pdf"
+                id="content-pdf"
+                style="opacity:0"
             ></iframe>`;
+            const pdf = document.querySelector("#content-pdf");
+            pdf.onload = ()=>{
+                fileLoader.style.display = "none";
+                pdf.style.opacity = "1"
+            }
         }
         else if(mimeType.startsWith("image/")){
-            fileDisplayBody.innerHTML = "<img src="+url+" class='content-image'>";
+            fileDisplayBody.innerHTML = "<img src="+url+" class='content-image' id='content-image' style='opacity:0'>";
+            const img = document.querySelector("#content-image");
+            img.onload = ()=>{
+                fileLoader.style.display = "none";
+                img.style.opacity = "1"
+            }
         }
         else if(mimeType.startsWith("video/")){
             fileDisplayBody.innerHTML = `
-            <video controls class="content-video">
-              <source src="${url}" type="${mimeType}">
+            <video controls class="content-video" id="content-video" style='opacity:0'>
+                <source src="${url}" type="${mimeType}">
             </video>`;
+            const vid = document.querySelector("#content-video");
+            vid.oncanplay = ()=>{
+                fileLoader.style.display = "none";
+                vid.style.opacity = "1"
+            }
         }
         fadeIn(".file-display", 0.1);
     }
