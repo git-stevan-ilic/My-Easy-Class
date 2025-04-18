@@ -84,8 +84,13 @@ app.get("/api/emails/:inbox", async (req, res)=>{
         });
 
         const {inbox} = req.params;
+        const {pageToken} = req.query;
         const gmail = google.gmail({version:"v1", auth:oauth2Client});
-        const response = await gmail.users.messages.list({userId:"me", maxResults:50, q:"in:"+inbox});
+        const response = await gmail.users.messages.list({
+            userId:"me", maxResults:50, q:"in:"+inbox,
+            pageToken: pageToken || undefined
+        });
+
         const messages = await Promise.all(
             response.data.messages.map(async (message)=>{
                 const msg = await gmail.users.messages.get({
@@ -97,12 +102,23 @@ app.get("/api/emails/:inbox", async (req, res)=>{
                 });
 
                 const labels = msg.data.labelIds || [];
+                const returnFromHeader    = msg.data.payload.headers.find(h => h.name === "From");
+                const returnToHeader      = msg.data.payload.headers.find(h => h.name === "To");
+                const returnSubjectHeader = msg.data.payload.headers.find(h => h.name === "Subject");
+                const returnDateHeader    = msg.data.payload.headers.find(h => h.name === "Date");
+
+                let returnFrom = "N/A", returnTo = "N/A", returnSubject = "No Subject", returnDate = "N/A";
+                if(returnFromHeader)    returnFrom    = returnFromHeader.value;
+                if(returnToHeader)      returnTo      = returnToHeader.value;
+                if(returnSubjectHeader) returnSubject = returnSubjectHeader.value;
+                if(returnDateHeader)    returnDate    = returnDateHeader.value;
+
                 return {
                     id:message.id,
-                    from:msg.data.payload.headers.find(h => h.name === "From").value,
-                    to:msg.data.payload.headers.find(h => h.name === "To").value,
-                    subject:msg.data.payload.headers.find(h => h.name === "Subject").value,
-                    date:msg.data.payload.headers.find(h => h.name === "Date").value,
+                    from:returnFrom,
+                    to:returnTo,
+                    subject:returnSubject,
+                    date:returnDate,
                     snippet:msg.data.snippet,
                     isStarred:labels.includes("STARRED"),
                     isImportant:labels.includes("IMPORTANT"),
@@ -110,7 +126,7 @@ app.get("/api/emails/:inbox", async (req, res)=>{
                 };
             })
         );
-        res.json(messages);
+        res.json({messages:messages, nextPageToken:response.data.nextPageToken || null});
     }
     catch(error){
         console.error("Gmail error:", error);
@@ -502,6 +518,7 @@ app.get("/api/calendar", async (req, res)=>{
             start:event.start.dateTime || event.start.date,
             end:event.end.dateTime || event.end.date,
             color:event.colorId ? `#${getColorHex(event.colorId)}` : "#1a73e8",
+            description:event.description || "No description",
             isPast: new Date(event.end.dateTime || event.end.date) < new Date()
         }));
 
@@ -540,7 +557,7 @@ app.post("/api/calendar/add", async (req, res)=>{
             },
             reminders:{useDefault:true}
         };
-        
+
         const response = await calendar.events.insert({calendarId:"primary", requestBody:event});
         res.json({id:response.data.id, htmlLink:response.data.htmlLink, created:response.data.created});
     }
@@ -549,7 +566,54 @@ app.post("/api/calendar/add", async (req, res)=>{
         res.status(500).json({error:"Failed to add event", details:error.response?.data?.error});
     }
 });
-app.delete("/api/calendar-delete/:id", async (req, res)=>{
+app.put("/api/calendar/edit/:id", async (req, res)=>{
+    if(!req.user || !req.user.accessToken) return res.status(401).json({error:"Not authenticated"});
+    try{
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.on("tokens", (tokens)=>{
+            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
+            req.user.accessToken = tokens.access_token;
+        });
+        oauth2Client.setCredentials({
+            refresh_token:req.user.refreshToken,
+            access_token:req.user.accessToken
+        });
+
+        const calendar = google.calendar({version:"v3", auth:oauth2Client});
+        const updatedEvent = {
+            summary:req.body.title,
+            description:req.body.description,
+            start:{
+                dateTime:req.body.startDateTime,
+                timeZone:req.body.timeZone || "America/Los_Angeles"
+            },
+            end:{
+                dateTime:req.body.endDateTime,
+                timeZone:req.body.timeZone || "America/Los_Angeles"
+            },
+            attendees:req.body.attendees || [],
+            reminders:req.body.reminders || {
+                useDefault:false,
+                overrides: [
+                    {method:"email", minutes:24*60},
+                    {method:"popup", minutes:30},
+                ],
+            },
+        };
+
+        const response = await calendar.events.update({
+            calendarId:"primary",
+            eventId:req.params.id,
+            requestBody:updatedEvent,
+        });
+        res.json(response);
+    }
+    catch(error){
+        console.error("Calendar event update error: ", error);
+        res.status(500).json({error:"Failed to update event", details:error.response?.data?.error});
+    }
+});
+app.delete("/api/calendar/delete/:id", async (req, res)=>{
     if(!req.user || !req.user.accessToken) return res.status(401).json({error:"Not authenticated"});
     try{
         const oauth2Client = new google.auth.OAuth2();

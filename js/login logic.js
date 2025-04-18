@@ -72,7 +72,7 @@ function googleLogin(client){
     client.on("google-redirect", (url)=>{window.location.href = url});
     client.on("google-status", (user)=>{
         if(user){
-            document.querySelector("#dahsboard-screen").style.display = "block";
+            //document.querySelector("#dahsboard-screen").style.display = "block";
             if(user.photos.length > 0){
                 document.querySelector(".dashboard-account-image").style.backgroundImage = "url('"+user.photos[0].value+"')";
                 document.querySelector(".about-me-image").style.backgroundImage = "url('"+user.photos[0].value+"')";

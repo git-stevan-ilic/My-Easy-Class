@@ -78,7 +78,7 @@ button:active{
     border:none;
 }
 
-input[type=text],[type=password],[type=email]{
+input[type=text],[type=password],[type=email],[type=time]{
     background-color:var(--background-gray-1);
     border:1px solid var(--border-gray-1);
     border-radius:var(--border-radius-1);
@@ -381,6 +381,25 @@ input[type=text],[type=password],[type=email]{
     min-height:calc(100vh - 100vw / 18);
     position:absolute;
     display:none;
+    width:100%;
+    left:0px;
+    top:0px;
+}
+.screen-mask{
+    position:absolute;
+    display:none;
+    
+    height:100%;
+    width:100%;
+    left:0px;
+    top:0px;
+    z-index:10;
+}
+.screen-mask-background{
+    background-image:linear-gradient(to bottom, var(--accent-blue-1), var(--accent-blue-2));
+    position:absolute;
+    opacity:0.5;
+    height:100%;
     width:100%;
     left:0px;
     top:0px;

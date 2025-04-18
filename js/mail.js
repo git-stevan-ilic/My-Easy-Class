@@ -1,6 +1,7 @@
 /*--Initial------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 function loadMailLogic(){
     let emails = [], selectedTab = 0, searchInput = "";
+    let nextPageToken = [undefined], pageIndex = 0, maxPageIndex = -1;
     let tabs = ["inbox", "starred", "important", "sent"];
 
     const mailSideTab = document.querySelectorAll(".mail-side-tab");
@@ -10,7 +11,11 @@ function loadMailLogic(){
                 mailSideTab[selectedTab].classList.remove("mail-side-selected-tab");
                 mailSideTab[i].classList.add("mail-side-selected-tab");
                 selectedTab = i;
-                loadInbox(tabs[selectedTab]);
+
+                pageIndex = 0;
+                maxPageIndex = -1;
+                nextPageToken = [undefined]
+                loadInbox(tabs[selectedTab], nextPageToken[pageIndex]);
             } 
         }
     }
@@ -28,11 +33,66 @@ function loadMailLogic(){
     }
 
     loadSendMessage();
-    loadInbox("inbox");
-    window.addEventListener("received-emails", (e)=>{
-        emails = e.detail.newEmails;
-        generateMailElements(emails, tabs[selectedTab], searchInput);
+    loadInbox("inbox", nextPageToken[pageIndex]);
+    window.addEventListener("reload-emails", ()=>{
+        loadInbox(tabs[selectedTab], nextPageToken[pageIndex]);
     });
+    window.addEventListener("received-emails", (e)=>{
+        let tokenFound = false;
+        for(let i = 0; i < nextPageToken.length; i++){
+            if(nextPageToken[i] === e.detail.nextPageToken){
+                tokenFound = true;
+                break;
+            }
+        }
+        if(!tokenFound) nextPageToken.push(e.detail.nextPageToken);
+        emails = e.detail.messages;
+        
+        if(e.detail.nextPageToken === null || e.detail.nextPageToken === undefined) maxPageIndex = nextPageToken.length-2;
+        displayMailPageNum(pageIndex, e.detail.nextPageToken, emails.length, maxPageIndex);
+        generateMailElements(emails, tabs[selectedTab], searchInput);
+        canClickPrev = true;
+        canClickNext = true;
+    });
+
+    let canClickPrev = true, canClickNext = true;
+    const prevPage = document.querySelector("#prev-mail-page");
+    const nextPage = document.querySelector("#next-mail-page");
+    prevPage.onclick = ()=>{
+        if(!canClickPrev) return;
+        pageIndex--;
+        if(pageIndex < 0){
+            pageIndex = 0;
+            return;
+        }
+        canClickPrev = false;
+        loadInbox(tabs[selectedTab], nextPageToken[pageIndex]);
+    }
+    nextPage.onclick = ()=>{
+        if(!canClickNext) return;
+        pageIndex++;
+        if(pageIndex > maxPageIndex && maxPageIndex !== -1){
+            pageIndex = maxPageIndex;
+            return;
+        }
+        canClickNext = false;
+        loadInbox(tabs[selectedTab], nextPageToken[pageIndex]);
+    }
+}
+function displayMailPageNum(pageIndex, nextPage, lastPageNum, maxPageIndex){
+    const mailPageNumber = document.querySelector(".mail-page-number");
+    let currNum = pageIndex * 50 + 1;
+    let nextNum = (pageIndex + 1) * 50;
+    if(nextPage === null) nextNum = currNum + lastPageNum - 1;
+    mailPageNumber.innerText = currNum + "-" + nextNum;
+
+    const prevPageButton = document.querySelector("#prev-mail-page");
+    if(pageIndex === 0) prevPageButton.classList.add("mail-page-arrow-disabled");
+    else prevPageButton.classList.remove("mail-page-arrow-disabled");
+
+    const nextPageButton = document.querySelector("#next-mail-page");
+    if(pageIndex === maxPageIndex) nextPageButton.classList.add("mail-page-arrow-disabled");
+    else nextPageButton.classList.remove("mail-page-arrow-disabled");
 }
 
 /*--Generate Mail Elements---------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -254,12 +314,19 @@ function loadSendMessage(){
 }
 
 /*--Mail Manipulation--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-async function loadInbox(inbox){
+async function loadInbox(inbox, nextPageToken){
     try{
-        const response = await fetch("/api/emails/"+inbox);
+        let url = "/api/emails/"+inbox;
+        if(nextPageToken) url = "/api/emails/"+inbox+"?pageToken="+nextPageToken;
+        const response = await fetch(url);
         const emails = await response.json();
 
-        const receivedEmailsEvent = new CustomEvent("received-emails", {detail:{newEmails:emails}});
+        const receivedEmailsEvent = new CustomEvent("received-emails", {
+            detail:{
+                nextPageToken:emails.nextPageToken,
+                messages:emails.messages
+            }
+        });
         window.dispatchEvent(receivedEmailsEvent);
     }
     catch(error){
@@ -271,7 +338,10 @@ async function deleteEmail(emailID, tab){
     try{
         const response = await fetch("/api/emails/"+emailID, {method:"DELETE"});
         const result = await response.json();
-        if(result.success) loadInbox(tab);
+        if(result.success){
+            const reloadEmails = new Event("reload-emails");
+            window.dispatchEvent(reloadEmails);
+        }
         else{
             console.log(result.message);
             alert("Deletion Error");
@@ -303,7 +373,10 @@ async function getEmailContent(email, tab){
 async function markEmailRead(emailID, tab){
     const response = await fetch("/api/emails/"+emailID+"/read", {method:"POST"});
     const result = await response.json();
-    if(result.success) loadInbox(tab);
+    if(result.success){
+        const reloadEmails = new Event("reload-emails");
+        window.dispatchEvent(reloadEmails);
+    }
 }
 async function sendMail(recipients, subject, message){
     try{

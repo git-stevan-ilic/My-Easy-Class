@@ -2,7 +2,7 @@
 function loadCalendar(){
     let date = getCurrDate();
     generateCalendarElements(date);
-    loadCalendarEvents();
+    loadCalendarEvents(date);
 
     document.querySelector(".calendar-event-window").style.display = "none";
     const calendarDateDisplay = document.querySelector(".calendar-date-display");
@@ -15,7 +15,7 @@ function loadCalendar(){
         date = calendarDate.value;
         displayCurrDate(date);
         generateCalendarElements(date);
-        loadCalendarEvents();
+        loadCalendarEvents(date);
         closeEventWindow();
     }
 
@@ -27,7 +27,7 @@ function loadCalendar(){
         calendarDate.value = date;
         displayCurrDate(date);
         generateCalendarElements(date);
-        loadCalendarEvents();
+        loadCalendarEvents(date);
         closeEventWindow();
     }
 
@@ -37,7 +37,7 @@ function loadCalendar(){
         calendarDate.value = date;
         displayCurrDate(date);
         generateCalendarElements(date);
-        loadCalendarEvents();
+        loadCalendarEvents(date);
         closeEventWindow();
     });
 }
@@ -54,8 +54,9 @@ function incrementMonth(date, inc){
     const updateDate = new CustomEvent("update-date", {detail:{date:newDate}});
     window.dispatchEvent(updateDate);
 }
-function getCurrDate(){
-    const date = new Date();
+function getCurrDate(customDate){
+    let date = new Date();
+    if(customDate) date = new Date(customDate);
     const d = JSON.stringify(date.getDate()).padStart(2, "0");
     const m = JSON.stringify(date.getMonth()+1).padStart(2, "0");
     const y = JSON.stringify(date.getFullYear());
@@ -102,7 +103,6 @@ function generateCalendarDates(date){
     }
     const y = date.slice(0, indexes[0]);
     const m = date.slice(indexes[0]+1, indexes[1]);
-    const d = date.slice(indexes[1]+1);
     const mIndex = parseInt(m)-1;
 
     let leapYear = 0;
@@ -158,10 +158,10 @@ function generateCalendarDates(date){
         const currDate = currYstring + "-" + currMstring + "-" + currDstring;
         days[i+7].id = "calendar-"+currDate;
 
-        days[i+7].onclick = ()=>{createEvent(date, currDate)};
+        days[i+7].onclick = ()=>{openEditEvent(date, true, currDate)};
     }
 }
-function generateCalendarEvents(events){
+function generateCalendarEvents(events, date){
     generateDashboardCalendarEvents(events);
     for(let i = 0; i < events.length; i++){
         try{
@@ -176,12 +176,10 @@ function generateCalendarEvents(events){
             const day = document.getElementById("calendar-"+startDate);
             day.children[1].appendChild(newEvent);
 
-            newEvent.onclick = (e)=>{openEventWindow(e, events[i], newEvent.getBoundingClientRect())}
+            newEvent.onclick = (e)=>{openEventWindow(e, date, events[i], newEvent.getBoundingClientRect())}
             newEvent.id = "event-"+events[i].id;
         }
-        catch{
-            console.log("Event not in scope", events[i])
-        }
+        catch{}
     }
 }
 function generateDashboardCalendarEvents(events){
@@ -214,17 +212,28 @@ function generateDashboardCalendarEvents(events){
             dashboardEvent.onclick = ()=>{
                 const tabHolder = document.querySelector(".tab-holder");
                 tabHolder.children[2].click();
+
+                const calendarDate = document.querySelector("#calendar-date");
+                const upcomingDate = new Date(upcoming[i].start);
+                const uY = JSON.stringify(upcomingDate.getFullYear()).padStart(2, "0");
+                const uM = JSON.stringify(upcomingDate.getMonth()+1).padStart(2, "0");
+                const uD = JSON.stringify(upcomingDate.getDate()).padStart(2, "0");
+                const u = uY+"-"+uM+"-"+uD;
+
+                const updateCalendar = new CustomEvent("update-date", {detail:{date:u}});
+                window.dispatchEvent(updateCalendar);
             }
         }
     }
 }
 
 /*--Calendar Event Elements--------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function openEventWindow(e, event, coords){
+function openEventWindow(e, date, event, coords){
     e.stopPropagation();
     document.querySelector(".calendar-event-color").style.backgroundColor = event.color;
     document.querySelector(".calendar-event-data-title").innerText = event.title;
-    document.querySelector(".calendar-event-data-date").innerText = generateEventTime(event.start);
+    document.querySelector(".calendar-event-data-date").innerText = generateEventTime(new Date(event.start));
+    document.querySelector(".calendar-event-data-desc").innerText = event.description;
     fadeIn(".calendar-event-window", 0.1, "block");
 
     const eventWindow = document.querySelector(".calendar-event-window");
@@ -243,6 +252,7 @@ function openEventWindow(e, event, coords){
     eventWindow.style.left = (eventX+diffX)+"px";
     eventWindow.style.top  = (eventY+diffY)+"px";
 
+    document.querySelector("#calendar-event-edit").onclick = ()=>{openEditEvent(date, false, getCurrDate(event.start), event)}
     document.querySelector("#calendar-event-delete").onclick = ()=>{deleteEvent(event.id)}
 }
 function closeEventWindow(){
@@ -260,65 +270,112 @@ function generateEventTime(date){
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const currDate = new Date(date);
 
-    let dayIndex = currDate.getDay();
-    let monthIndex = currDate.getMonth();
-    let day = currDate.getDate();
-    let time = "";
+    const dayIndex = currDate.getDay();
+    const monthIndex = currDate.getMonth();
+    const day = currDate.getDate();
 
-    let timeIndex = date.indexOf("T");
-    if(timeIndex !== -1){
-        let plusIndex = date.indexOf("+");
-        time = " - "+date.slice(timeIndex+1, plusIndex);
+    const hours = JSON.stringify(currDate.getHours()).padStart(2, "0")
+    const minutes = JSON.stringify(currDate.getMinutes()).padStart(2, "0")
+    return days[dayIndex]+", "+months[monthIndex]+" "+day+" - "+hours+":"+minutes;
+}
+function openEditEvent(date, isNew, currDate, event){
+    const windowHead = document.querySelector(".edit-calendar-event-window-head");
+    const editTimeConfirm = document.querySelector("#edit-time-confirm");
+    document.querySelector("#edit-time-cancel").onclick = closeEditEvent;
+    
+    if(!isNew){
+        const tempDate = new Date(event.start);
+        const h = JSON.stringify(tempDate.getHours()).padStart(2, "0");
+        const m = JSON.stringify(tempDate.getMinutes()).padStart(2, "0");
+
+        document.querySelector("#edit-event-name").value = event.title;
+        document.querySelector("#edit-event-desc").value = event.description;
+        document.querySelector("#edit-event-time").value = h+":"+m;
+        editTimeConfirm.onclick = ()=>{confirmEventEdit(event.id, currDate)}
+        windowHead.innerText = "Edit Event";
+        closeEventWindow();
+    }
+    else{
+        editTimeConfirm.onclick = ()=>{confirmEventAdd(date, currDate)}
+        windowHead.innerText = "New Event";
     }
 
-    return days[dayIndex]+", "+months[monthIndex]+" "+day+time;
+    fadeIn("#edit-calendar-event" , 0.2);
+}
+function closeEditEvent(){
+    fadeOut("#edit-calendar-event" , 0.2, ()=>{
+        document.querySelector("#edit-time-confirm").onclick = null;
+        document.querySelector("#edit-event-name").value = "";
+        document.querySelector("#edit-event-desc").value = "";
+        document.querySelector("#edit-event-time").value = "";
+    });
+}
+function confirmEventAdd(date, currDate){
+    const name = document.querySelector("#edit-event-name").value;
+    const desc = document.querySelector("#edit-event-desc").value;
+    const time = document.querySelector("#edit-event-time").value;
+
+    if(!name || !desc || !time){
+        alert("Fill out all fields");
+        return;
+    }
+    const currDateTime = currDate+"T"+document.querySelector("#edit-event-time").value;
+    createEvent(date, currDateTime, name, desc);
+}
+function confirmEventEdit(eventID, currDate){
+    const name = document.querySelector("#edit-event-name").value;
+    const desc = document.querySelector("#edit-event-desc").value;
+    const time = document.querySelector("#edit-event-time").value;
+
+    if(!name || !desc || !time){
+        alert("Fill out all fields");
+        return;
+    }
+    const currDateTime = currDate+"T"+document.querySelector("#edit-event-time").value+":00+00:00";
+    editEvent(eventID, name, desc, currDateTime);
 }
 
 /*--Calendar Events----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-async function loadCalendarEvents(){
+async function loadCalendarEvents(date){
     try{
         const response = await fetch("/api/calendar");
         const events = await response.json();
-        generateCalendarEvents(events);
+        generateCalendarEvents(events, date);
     }
     catch(error){
         console.log("Load calendar events error:", error);
         alert("Error loading calendar events");
     }
 }
-async function createEvent(date, currDate){
-    const title = prompt("Event title");
-    if(title !== ""){
-        const eventData = {
-            title:title,
-            description:"",
-            start:new Date(currDate),
-            end:new Date(currDate)
-        };
-    
-        try {
-            const response = await fetch("/api/calendar/add", {
-                method:"POST",
-                headers:{"Content-Type":"application/json"},
-                body:JSON.stringify(eventData)
-            });
-    
-            if(!response.ok) alert("Failed to create event");
-            else{
-                const updateDate = new CustomEvent("update-date", {detail:{date:date}});
-                window.dispatchEvent(updateDate);
-            }
+async function createEvent(date, currDate, title, description){
+    const eventData = {
+        title:title, description:description,
+        start:new Date(currDate).toISOString(),
+        end:new Date(currDate).toISOString()
+    };
+    try {
+        const response = await fetch("/api/calendar/add", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify(eventData)
+        });
+
+        if(!response.ok) alert("Failed to create event");
+        else{
+            const updateDate = new CustomEvent("update-date", {detail:{date:date}});
+            window.dispatchEvent(updateDate);
+            closeEditEvent();
         }
-        catch(error){
-            console.error("Create event error", error);
-            alert("Error creating event");
-        }
+    }
+    catch(error){
+        console.error("Create event error", error);
+        alert("Error creating event");
     }
 }
 async function deleteEvent(eventID){
     if(!confirm("Are you sure you want to delete this event?")) return;
     try{
-        const response = await fetch("/api/calendar-delete/"+eventID, {
+        const response = await fetch("/api/calendar/delete/"+eventID, {
             method:"DELETE", headers:{"Content-Type":"application/json"}
         });
         if(!response.ok) alert("Event deletion error");
@@ -330,5 +387,22 @@ async function deleteEvent(eventID){
     catch(error){
         console.error("Delete event error ", error);
         alert("Event deletion error");
+    }
+}
+async function editEvent(eventID, title, description, time){
+    const updatedData = {
+        title:title, description:description,
+        startDateTime:time, endDateTime:time
+    }
+    const response = await fetch("/api/calendar/edit/"+eventID, {
+        method:"PUT",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(updatedData),
+    });
+    
+    const result = await response.json();
+    if(result.status === 200){
+        document.querySelector("#calendar-today").click();
+        closeEditEvent();
     }
 }

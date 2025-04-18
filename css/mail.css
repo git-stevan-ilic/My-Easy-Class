@@ -58,6 +58,16 @@
 .mail-page-arrow:active{
     transform:scale(1);
 }
+.mail-page-arrow-disabled{
+    color:var(--gray-1);
+    cursor:default;
+}
+.mail-page-arrow-disabled:hover{
+    transform:none;
+}
+.mail-page-arrow-disabled:active{
+    transform:none;
+}
 
 /*--Mail Body----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .mail-body{

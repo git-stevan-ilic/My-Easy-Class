@@ -7,7 +7,8 @@
 
     <link rel="stylesheet" type="text/css" href="../css/dashboard.css">
     <link rel="stylesheet" type="text/css" href="../css/calendar.css">
-    <link rel="stylesheet" type="text/css" href="../css/aboutme.css">
+    <link rel="stylesheet" type="text/css" href="../css/about me.css">
+    <link rel="stylesheet" type="text/css" href="../css/students.css">
     <link rel="stylesheet" type="text/css" href="../css/login.css">
     <link rel="stylesheet" type="text/css" href="../css/drive.css">
     <link rel="stylesheet" type="text/css" href="../css/mail.css">
@@ -15,6 +16,7 @@
 
     <script type="text/javascript" src="../js/login logic.js"></script>
     <script type="text/javascript" src="../js/socket.io.js"></script>
+    <script type="text/javascript" src="../js/students.js"></script>
     <script type="text/javascript" src="../js/about me.js"></script>
     <script type="text/javascript" src="../js/calendar.js"></script>
     <script type="text/javascript" src="../js/purify.js"></script>
@@ -162,8 +164,8 @@
                     </div>
                     <div class="mail-page-holder">
                         <div class="mail-page-number">1-50</div>
-                        <div class="mail-page-arrow">&#x3c;</div>
-                        <div class="mail-page-arrow">&#x3e;</div>
+                        <div class="mail-page-arrow mail-page-arrow-disabled" id="prev-mail-page">&#x3c;</div>
+                        <div class="mail-page-arrow" id="next-mail-page">&#x3e;</div>
                     </div>
                 </div>
                 <div class="mail-body">
@@ -222,7 +224,7 @@
                     </div>
                 </div>
             </div>
-            <div class="screen tab-affected" id="calendar-screen">
+            <div class="screen tab-affected" id="calendar-screen"  style="display:block;">
                 <div class="calendar-head">
                     <button id="calendar-today">Today</button>
                     <div class="calendar-page-arrow" id="calendar-month-b">&#x3c;</div>
@@ -234,6 +236,7 @@
                     <div class="calendar"></div>
                     <div class="calendar-event-window">
                         <div class="calendar-event-window-head">
+                            <div class="calendar-event-head-button" id="calendar-event-edit"></div>
                             <div class="calendar-event-head-button" id="calendar-event-delete"></div>
                             <div class="calendar-event-head-button" id="calendar-event-close"></div>
                         </div>
@@ -244,6 +247,7 @@
                             <div class="calendar-event-data">
                                 <div class="calendar-event-data-title"></div>
                                 <div class="calendar-event-data-date"></div>
+                                <div class="calendar-event-data-desc"></div>
                             </div>
                         </div>
                     </div>
@@ -280,8 +284,56 @@
                 </div>
                 <div class="drive-body"></div>
             </div>
-            <div class="screen tab-affected" id="students-screen">
-
+            <div class="screen tab-affected" id="students-screen" style="display:none;">
+                <div class="class-list-window">
+                    <div class="class-list-window-row">
+                        <div class="class-list-window-icon"></div>
+                        <div class="class-list-window-text">All Students</div>
+                        <div class="class-list-window-num" id="class-list-all-students">0</div>
+                    </div>
+                    <div class="class-list-window-row">
+                        <div class="class-list-window-icon"></div>
+                        <div class="class-list-window-text">Ungrouped</div>
+                        <div class="class-list-window-num" id="class-list-ungrouped">0</div>
+                    </div>
+                    <div class="class-list-window-button-holder">
+                        <button id="create-class">Create Class</button>
+                    </div>
+                </div>
+                <div class="students-main">
+                    <div class="students-main-head">
+                        <div class="class-title"></div>
+                        <button id="add-students">Add Students</button>
+                        <div class="add-student-drop-down">
+                            <div class="add-student-row">
+                                <div class="add-student-icon"></div>
+                                <div class="add-student-text">Invite by e-mail</div>
+                            </div>
+                            <div class="add-student-row">
+                                <div class="add-student-icon"></div>
+                                <div class="add-student-text">Invite from my students</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="students-main-body">
+                        <div class="class-window">
+                            <div class="class-window-tab-holder">
+                                <div class="class-window-tab class-window-selected-tab">Students</div>
+                                <div class="class-window-tab">Assignments</div>
+                            </div>
+                            <div class="class-window-search-holder">
+                                <div class="class-window-search-icon"></div>
+                                <input type="text" class="search-input" id="class-window-search">
+                            </div>
+                            <div class="class-window-student-list">
+                                <div class="class-window-student">
+                                    <div class="class-window-student-icon"></div>
+                                    <div class="class-window-student-name"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="screen tab-affected" id="homework-screen">
                 <div class="wip">Work in Progress</div>
@@ -366,6 +418,7 @@
             </div>
         </div>
     </div>
+
     <div class="download-notification">Downloading...</div>
     <div class="file-display">
         <div class="file-display-head">
@@ -375,6 +428,30 @@
             <button class="file-display-round-button" id="file-display-delete"></button>
         </div>
         <div class="file-display-body"></div>
+    </div>
+    <div class="screen-mask" id="edit-calendar-event">
+        <div class="screen-mask-background"></div>
+        <div class="edit-calendar-event-window">
+            <div class="edit-calendar-event-window-head">New Event</div>
+            <div class="edit-calendar-event-window-body">
+                <div class="edit-calendar-event-window-row">
+                    <div class="edit-calendar-event-window-row-titile">Name</div>
+                    <input class="edit-calendar-event-text" type="text" id="edit-event-name">
+                </div>
+                <div class="edit-calendar-event-window-row">
+                    <div class="edit-calendar-event-window-row-titile">Description</div>
+                    <input class="edit-calendar-event-text" type="text" id="edit-event-desc">
+                </div>
+                <div class="edit-calendar-event-window-row">
+                    <div class="edit-calendar-event-window-row-titile">Time</div>
+                    <input type="time" id="edit-event-time">
+                </div>
+            </div>
+            <div class="edit-calendar-event-window-foot">
+                <button id="edit-time-confirm">Confirm</button>
+                <button id="edit-time-cancel">Cancel</button>
+            </div>
+        </div>
     </div>
 </body>
 </html>
