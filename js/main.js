@@ -7,6 +7,20 @@ function initLoad(){
     //loadAssistantLogic();
     loadLogInLogic(client);
     loadHeadLogic();
+
+    let notificationTimeout;
+    window.addEventListener("notification", (e)=>{
+        clearTimeout(notificationTimeout);
+        document.querySelector(".notification").innerText = e.detail.text;
+        fadeIn(".notification", 0.1, "block", ()=>{
+            notificationTimeout = setTimeout(()=>{
+                fadeOut(".notification", 0.1);
+            }, 2000);
+        });
+    });
+    document.querySelector(".dashboard-account-share").onclick = ()=>{
+        notification("Link Error");
+    }
 }
 
 function fadeIn(query, durration, type, callabck){
@@ -29,6 +43,15 @@ function fadeOut(query, durration, callabck){
         element.onanimationend = null;
         if(callabck) callabck();
     }
+}
+function notification(text){
+    const data = {detail:{text:text}};
+    const notification = new CustomEvent("notification", data);
+    window.dispatchEvent(notification);
+}
+function isValidEmail(email){
+    let re = /\S+@\S+\.\S+/;
+    return re.test(email);
 }
 
 /*--Head Logic---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/

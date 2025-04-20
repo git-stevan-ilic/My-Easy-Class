@@ -2,6 +2,7 @@
 const express = require("express");
 const { createServer } = require("node:http");
 const { Server } = require("socket.io");
+const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const fs = require("fs");
 dotenv.config();

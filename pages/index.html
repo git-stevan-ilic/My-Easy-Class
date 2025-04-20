@@ -20,6 +20,7 @@
     <script type="text/javascript" src="../js/about me.js"></script>
     <script type="text/javascript" src="../js/calendar.js"></script>
     <script type="text/javascript" src="../js/purify.js"></script>
+    <script type="text/javascript" src="../js/qrcode.js"></script>
     <script type="text/javascript" src="../js/drive.js"></script>
     <script type="text/javascript" src="../js/mail.js"></script>
     <script type="text/javascript" src="../js/main.js"></script>
@@ -224,7 +225,7 @@
                     </div>
                 </div>
             </div>
-            <div class="screen tab-affected" id="calendar-screen"  style="display:block;">
+            <div class="screen tab-affected" id="calendar-screen">
                 <div class="calendar-head">
                     <button id="calendar-today">Today</button>
                     <div class="calendar-page-arrow" id="calendar-month-b">&#x3c;</div>
@@ -284,38 +285,57 @@
                 </div>
                 <div class="drive-body"></div>
             </div>
-            <div class="screen tab-affected" id="students-screen" style="display:none;">
+            <div class="screen tab-affected" id="students-screen" style="display:block;">
                 <div class="class-list-window">
-                    <div class="class-list-window-row">
-                        <div class="class-list-window-icon"></div>
-                        <div class="class-list-window-text">All Students</div>
-                        <div class="class-list-window-num" id="class-list-all-students">0</div>
+                    <div class="search-holder" id="class-search-icon-holder">
+                        <div class="search-icon" id="class-search-icon"></div> 
+                        <input type="text" class="search-input" id="class-search">
                     </div>
-                    <div class="class-list-window-row">
-                        <div class="class-list-window-icon"></div>
-                        <div class="class-list-window-text">Ungrouped</div>
-                        <div class="class-list-window-num" id="class-list-ungrouped">0</div>
+                    <div class="class-list-holder">
+                        <div class="class-list"></div>
                     </div>
                     <div class="class-list-window-button-holder">
-                        <button id="create-class">Create Class</button>
+                        <button class="blue-button" id="create-class">Create Class</button>
+                    </div>
+                    <div class="class-list-window-input-holder">
+                        <input type="text" id="new-class-input" placeholder="New class name">
+                        <div class="new-class-input-button-holder">
+                            <button id="new-class-confirm">Confirm</button>
+                            <button id="new-class-cancel">Cancel</button>
+                        </div>
                     </div>
                 </div>
+
+
+
                 <div class="students-main">
                     <div class="students-main-head">
-                        <div class="class-title"></div>
-                        <button id="add-students">Add Students</button>
+                        <div class="class-title">All Students</div>
+                        <div class="class-head-buttons">
+                            <button class="blue-button" id="new-lession">New Lession</button>
+                            <button class="blue-button" id="add-students">Add Students</button>
+                        </div>
+                        
                         <div class="add-student-drop-down">
                             <div class="add-student-row">
-                                <div class="add-student-icon"></div>
-                                <div class="add-student-text">Invite by e-mail</div>
+                                <div class="add-student-icon add-student-email-icon"></div>
+                                <div class="add-student-text" id="invite-email">Invite by e-mail</div>
                             </div>
                             <div class="add-student-row">
-                                <div class="add-student-icon"></div>
-                                <div class="add-student-text">Invite from my students</div>
+                                <div class="add-student-icon add-student-link-icon"></div>
+                                <div class="add-student-text" id="invite-link">Invite by link</div>
+                            </div>
+                            <div class="add-student-row">
+                                <div class="add-student-icon add-student-qr-icon"></div>
+                                <div class="add-student-text" id="invite-qr">Invite by QR code</div>
+                            </div>
+                            <div class="add-student-row">
+                                <div class="add-student-icon add-student-list-icon"></div>
+                                <div class="add-student-text" id="invite-list">Invite from my students</div>
                             </div>
                         </div>
                     </div>
-                    <div class="students-main-body">
+                    <!--<div class="students-main-body">
                         <div class="class-window">
                             <div class="class-window-tab-holder">
                                 <div class="class-window-tab class-window-selected-tab">Students</div>
@@ -332,8 +352,11 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div>-->
                 </div>
+
+
+
             </div>
             <div class="screen tab-affected" id="homework-screen">
                 <div class="wip">Work in Progress</div>
@@ -454,6 +477,37 @@
             </div>
         </div>
     </div>
+    <div class="screen-mask" id="invite-email-screen">
+        <div class="screen-mask-background"></div>
+        <div class="invite-email-window">
+            <div class="invite-email-window-head">
+                <div class="invite-window-close" id="invite-email-window-close"></div>
+                Invite students through email:
+            </div>
+            <div class="invite-email-window-body">
+                <input type="email" id="invite-email-input">
+                <button class="blue-button" id="invite-email-button">Invite</button>
+            </div>
+            <div class="invite-email-window-title">Invited:</div>
+            <div class="invite-email-window-foot">
+                <div class="invite-list">
+                    No invites sent
+                    <!--<div class="invited">sample@sample.com</div>
+                    <div class="invited">sample@sample.com</div>
+                    <div class="invited">sample@sample.com</div>
+                    <div class="invited">sample@sample.com</div>-->
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="screen-mask" id="invite-qr-screen">
+        <div class="screen-mask-background"></div>
+        <div class="invite-qr-window">
+            <div class="invite-window-close" id="invite-qr-window-close"></div>
+            <div class="invite-qr"></div>
+        </div>
+    </div>
+    <div class="notification"></div>
 </body>
 </html>
 

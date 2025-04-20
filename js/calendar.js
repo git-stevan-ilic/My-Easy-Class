@@ -344,7 +344,6 @@ async function loadCalendarEvents(date){
     }
     catch(error){
         console.log("Load calendar events error:", error);
-        alert("Error loading calendar events");
     }
 }
 async function createEvent(date, currDate, title, description){

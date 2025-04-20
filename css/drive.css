@@ -250,12 +250,12 @@
     position:absolute;
     display:none;
     aspect-ratio:1;
-    width:5vw;
+    width:3vw;
     left:50%;
     top:calc(10vh + 3vw);
 
-    border:1vw solid var(--background-white);
-    border-bottom:1vw solid rgba(0,0,0,0);
+    border:0.5vw solid var(--background-white);
+    border-bottom:0.5vw solid rgba(0,0,0,0);
 }
 @keyframes file-loader-spin{
     from {transform:translate(-50%, -50%) rotate(0deg)}

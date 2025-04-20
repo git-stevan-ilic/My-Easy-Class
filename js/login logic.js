@@ -83,6 +83,7 @@ function googleLogin(client){
             accountLogOff.onclick = ()=>{client.emit("google-log-out")}
             loadAboutMeLogic(user);
             loadDriveLogic(client);
+            loadStudentsLogic();
             loadMailLogic();
             loadCalendar();
 

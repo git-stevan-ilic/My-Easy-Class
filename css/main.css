@@ -29,6 +29,21 @@ body{
     margin:0px;
    
 }
+.notification{
+    box-shadow:0.25vw 0.25vw 0.5vw rgba(0, 0, 0, 0.15);
+    background-color:var(--background-white);
+    border:1px solid var(--border-gray-1);
+    border-radius:var(--border-radius-2);
+    transform:translate(-50%, -50%);
+    color:var(--dark-blue);
+    font-size:1.25vw;
+    position:fixed;
+    display:none;
+    padding:1vw;
+    z-index:20;
+    left:50%;
+    top:5vw;
+}
 
 @font-face{
     font-family:"Inter";

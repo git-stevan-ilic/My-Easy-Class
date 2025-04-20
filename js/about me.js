@@ -9,4 +9,7 @@ function loadAboutMeLogic(user){
         const emailValue = user.emails[0].value;
         document.querySelector("#send-mail-recipients").value = emailValue;
     }
+    document.querySelector(".about-me-share").onclick = ()=>{
+        notification("Link Error");
+    }
 }
