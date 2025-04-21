@@ -49,7 +49,7 @@
                 <div class="tab">Homework<div class="tab-notification"></div></div>
             </div>
             <div class="account-holder">
-                <div class="account-icon"></div>
+                <div class="account-icon user-icon"></div>
                 <div class="account-drop-down">
                     <div class="account-drop-down-arrow"></div>
                     <div class="account-drop-down-window">
@@ -141,7 +141,7 @@
         <div class="screen" id="main">
             <div class="screen tab-affected" id="dahsboard-screen">
                 <div class="dashboard-account-display">
-                    <div class="dashboard-account-image"></div>
+                    <div class="dashboard-account-image user-icon"></div>
                     <div class="dashboard-account-name"></div>
                     <div class="dashboard-account-email"></div>
                     <div class="dashboard-account-desc"></div>
@@ -285,7 +285,7 @@
                 </div>
                 <div class="drive-body"></div>
             </div>
-            <div class="screen tab-affected" id="students-screen" style="display:block;">
+            <div class="screen tab-affected" id="students-screen">
                 <div class="class-list-window">
                     <div class="search-holder" id="class-search-icon-holder">
                         <div class="search-icon" id="class-search-icon"></div> 
@@ -349,28 +349,28 @@
             <div class="screen tab-affected" id="homework-screen">
                 <div class="wip">Work in Progress</div>
             </div>
-            <div class="screen" id="about-me-screen">
+            <div class="screen" id="about-me-screen" style="display:block;">
                 <div class="about-me-info-holder">
-                    <div class="about-me-image"></div>
+                    <div class="about-me-image user-icon"></div>
                     <div class="about-me-info">
                         <div class="about-me-title">About Me</div>
                         <div class="about-me-name"></div>
                         <div class="about-me-email"></div>
                         <div class="about-me-info-row">
                             <div class="about-me-info-title">Job title:</div>
-                            <div class="about-me-info-value">Not provided</div>
+                            <div class="about-me-info-value" id="about-me-job">Not provided</div>
                         </div>
                         <div class="about-me-info-row">
                             <div class="about-me-info-title">Location:</div>
-                            <div class="about-me-info-value">Not provided</div>
+                            <div class="about-me-info-value" id="about-me-location">Not provided</div>
                         </div>
                         <div class="about-me-info-row">
                             <div class="about-me-info-title">Education:</div>
-                            <div class="about-me-info-value">Not provided</div>
+                            <div class="about-me-info-value" id="about-me-education">Not provided</div>
                         </div>
                         <div class="about-me-info-row">
                             <div class="about-me-info-title">History:</div>
-                            <div class="about-me-info-value">Not provided</div>
+                            <div class="about-me-info-value" id="about-me-history">Not provided</div>
                         </div>
                     </div>
                 </div>
@@ -380,7 +380,7 @@
                     <button class="about-me-button" id="about-me-cv">Download CV</button>
                     <div class="about-me-share"></div>
                 </div>
-                <div class="about-me-desc">No description provided</div>
+                <div class="about-me-desc" id="about-me-desc">No description provided</div>
             </div>
         </div>
     </div>
@@ -506,6 +506,68 @@
             </div>
             <div class="invite-list-window-foot">
                 <button class="blue-button" id="move-to-class">Move to class</button>
+            </div>
+        </div>
+    </div>
+    <div class="screen-mask" id="about-me-edit-screen">
+        <div class="screen-mask-background"></div>
+        <div class="about-me-edit-window">
+            <div class="about-me-edit-window-head">Edit your profile info</div>
+            <div class="about-me-edit-window-body">
+                <div class="edit-window-icon user-icon">
+                    <div class="edit-window-icon-mask">
+                        <div class="edit-window-icon-picture-icon"></div>
+                    </div>
+                </div>
+                <input type="file" id="input-icon" accept="image/*">
+                <div class="edit-window-form">
+                    <div class="edit-window-row">
+                        <div class="edit-window-row-label">Name</div>
+                        <div class="edit-window-row-value">
+                            <input class="edit-window-input" type="text" id="edit-input-name">
+                        </div>
+                    </div>
+                    <div class="edit-window-row">
+                        <div class="edit-window-row-label">Job title</div>
+                        <div class="edit-window-row-value">
+                            <input class="edit-window-input" type="text" id="edit-input-job">
+                        </div>
+                    </div>
+                    <div class="edit-window-row">
+                        <div class="edit-window-row-label">Location</div>
+                        <div class="edit-window-row-value">
+                            <input class="edit-window-input" type="text" id="edit-input-location">
+                        </div>
+                    </div>
+                    <div class="edit-window-row">
+                        <div class="edit-window-row-label">Education</div>
+                        <div class="edit-window-row-value">
+                            <input class="edit-window-input" type="text" id="edit-input-education">
+                        </div>
+                    </div>
+                    <div class="edit-window-row">
+                        <div class="edit-window-row-label">History</div>
+                        <div class="edit-window-row-value">
+                            <input class="edit-window-input" type="text" id="edit-input-history">
+                        </div>
+                    </div>
+                    <div class="edit-window-row">
+                        <div class="edit-window-row-label">CV</div>
+                        <div class="edit-window-row-value">
+                            <input class="edit-window-input" type="file" id="input-cv" accept=".doc, .docx">
+                        </div>
+                    </div>
+                    <div class="edit-window-row">
+                        <div class="edit-window-row-label">Description</div>
+                        <div class="edit-window-row-value">
+                            <textarea class="edit-window-textarea" id="edit-input-desc"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="about-me-edit-window-foot">
+                <button id="about-me-edit-save">Save</button>
+                <button id="about-me-edit-cancel">Cancel</button>
             </div>
         </div>
     </div>

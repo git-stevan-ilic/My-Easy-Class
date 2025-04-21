@@ -131,7 +131,7 @@ app.get("/api/emails/:inbox", async (req, res)=>{
     }
     catch(error){
         console.error("Gmail error:", error);
-        res.status(500).json({error:"Failed to fetch emails"});
+        res.status(error.status).json({error:"Failed to fetch emails"});
     }
 });
 app.get("/api/email-content/:id", async (req, res)=>{
@@ -173,7 +173,7 @@ app.get("/api/email-content/:id", async (req, res)=>{
     }
     catch(error){
         console.error("Error fetching email:", error);
-        res.status(500).json({error:"Failed to fetch email"});
+        res.status(error.status).json({error:"Failed to fetch email"});
     }
 });
 app.post("/api/emails/:id/read", async (req, res)=>{
@@ -195,7 +195,7 @@ app.post("/api/emails/:id/read", async (req, res)=>{
     }
     catch(error){
         console.error("Error marking email as read:", error);
-        res.status(500).json({error:"Failed to update email status"});
+        res.status(error.status).json({error:"Failed to update email status"});
     }
 });
 app.post("/api/emails/:id/star", async (req, res)=>{
@@ -222,7 +222,7 @@ app.post("/api/emails/:id/star", async (req, res)=>{
     }
     catch(error){
         console.error("Error:", error);
-        res.status(500).json({success:false});
+        res.status(error.status).json({success:false});
     }
 });
 app.post("/api/emails/:id/importance", async (req, res)=>{
@@ -249,7 +249,7 @@ app.post("/api/emails/:id/importance", async (req, res)=>{
     }
     catch(error){
         console.error("Error:", error);
-        res.status(500).json({success:false});
+        res.status(error.status).json({success:false});
     }
 });
 app.post("/api/send-mail", async (req, res)=>{
@@ -290,7 +290,7 @@ app.post("/api/send-mail", async (req, res)=>{
     }
     catch(error){
         console.error("Error sending email:", error);
-        res.status(500).json({error:"Failed to send email"});
+        res.status(error.status).json({error:"Failed to send email"});
     }
 });
 app.delete("/api/emails/:id", async (req, res)=>{
@@ -312,7 +312,7 @@ app.delete("/api/emails/:id", async (req, res)=>{
     }
     catch(error){
         console.error("Delete error:", error);
-        res.status(500).json({ 
+        res.status(error.status).json({ 
             success:false,
             message:error.message.includes("404") ? 'Email not found' : 'Failed to delete email'
         });
@@ -339,7 +339,7 @@ app.get("/api/drive-list", async (req, res)=>{
     }
     catch(error){
         console.error("Drive API Error:", error);
-        res.status(500).json({error:"Failed to fetch drive data"});
+        res.status(error.status).json({error:"Failed to fetch drive data"});
     }
 })
 app.get("/api/drive-download/:fileId", async (req, res)=>{
@@ -387,12 +387,12 @@ app.get("/api/drive-download/:fileId", async (req, res)=>{
         }
         response.data.on("error", (error)=>{
             console.error("Error streaming file:", error);
-            res.status(500).send("Error downloading file");
+            res.status(error.status).send("Error downloading file");
         }).pipe(res);
     }
     catch(error){
         console.error("Drive API Error:", error);
-        res.status(500).json({error:"Failed to download drive data"});
+        res.status(error.status).json({error:"Failed to download drive data"});
     }
 });
 app.get("/api/drive-file-content/:fileId", async (req, res)=>{
@@ -439,7 +439,7 @@ app.get("/api/drive-file-content/:fileId", async (req, res)=>{
     }
     catch(error){
         console.error("Drive API Error:", error);
-        res.status(500).json({error:"Failed to fetch file content"});
+        res.status(error.status).json({error:"Failed to fetch file content"});
     }
 });
 app.post("/api/drive-upload", upload.single("file"), async (req, res)=>{
@@ -463,7 +463,7 @@ app.post("/api/drive-upload", upload.single("file"), async (req, res)=>{
     }
     catch(error){
         console.error("Upload error:", error);
-        res.status(500).json({success:false});
+        res.status(error.status).json({success:false});
     }
 });
 app.delete("/api/drive-delete/:fileId", async (req, res)=>{
@@ -484,7 +484,7 @@ app.delete("/api/drive-delete/:fileId", async (req, res)=>{
     }
     catch(error){
         console.error("Delete error:", error);
-        res.status(500).json({success:false, message:"Failed to delete file"});
+        res.status(error.status).json({success:false, message:"Failed to delete file"});
     }
 });
 
@@ -531,7 +531,7 @@ app.get("/api/calendar", async (req, res)=>{
     catch(error){
         client.emit("google-calendar-error", error);
         console.error("Calendar API Error:", error);
-        res.status(500).json({error:"Failed to fetch calendar events"});
+        res.status(error.status).json({error:"Failed to fetch calendar events"});
     }
 });
 app.post("/api/calendar/add", async (req, res)=>{
@@ -567,7 +567,7 @@ app.post("/api/calendar/add", async (req, res)=>{
     }
     catch(error){
         console.error("Calendar event add error: ", error);
-        res.status(500).json({error:"Failed to add event", details:error.response?.data?.error});
+        res.status(error.status).json({error:"Failed to add event", details:error.response?.data?.error});
     }
 });
 app.put("/api/calendar/edit/:id", async (req, res)=>{
@@ -614,7 +614,7 @@ app.put("/api/calendar/edit/:id", async (req, res)=>{
     }
     catch(error){
         console.error("Calendar event update error: ", error);
-        res.status(500).json({error:"Failed to update event", details:error.response?.data?.error});
+        res.status(error.status).json({error:"Failed to update event", details:error.response?.data?.error});
     }
 });
 app.delete("/api/calendar/delete/:id", async (req, res)=>{
@@ -641,7 +641,7 @@ app.delete("/api/calendar/delete/:id", async (req, res)=>{
     }
     catch(error){
         console.error("Calendar event delete error: ", error);
-        res.status(500).json({error:"Failed to delete event", details:error.response?.data?.error});
+        res.status(error.status).json({error:"Failed to delete event", details:error.response?.data?.error});
     }
 });
 function getColorHex(colorId){

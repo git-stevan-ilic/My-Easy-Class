@@ -488,8 +488,6 @@
     width:calc(100% - 2vw);
     color:var(--dark-blue);
     padding:1vw;
-
-    height:calc(23vw + 2px);
 }
 .class-window-tab-holder{
     background-color:var(--background-gray-2);

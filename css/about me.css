@@ -118,3 +118,119 @@
     width:calc(100% - 4vw);
     margin-left:2vw;
 }
+
+/*--About Me Edit------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+.about-me-edit-window{
+    box-shadow:0.25vw 0.25vw 0.5vw rgba(0, 0, 0, 0.15);
+    background-color:var(--background-white);
+    border:1px solid var(--border-gray-1);
+    border-radius:var(--border-radius-2);
+    transform:translate(-50%);
+    color:var(--dark-blue);
+    position:absolute;
+    padding:1vw;
+    width:50vw;
+    left:50%;
+    top:5vh;
+}
+.about-me-edit-window-head{
+    justify-content:flex-start;
+    align-items:flex-start;
+    font-weight:bold;
+    display:flex;
+
+    font-size:1.5vw;
+    height:3vw;
+    width:100%;
+}
+.about-me-edit-window-body{
+    height:fit-content;
+    margin-bottom:3vw;
+    width:100%;
+}
+.edit-window-row-label{
+    font-weight:bold;
+}
+.about-me-edit-window-foot{
+    justify-content:space-evenly;
+    align-items:center;
+    display:flex;
+
+    transform:translate(-50%);
+    margin-left:50%;
+    height:2vw;
+    width:50%;
+}
+
+.edit-window-icon{
+    border:1px solid var(--border-gray-1);
+    border-radius:100%;
+    position:absolute;
+    aspect-ratio:1;
+    right:2.5vw;
+    width:15vw;
+    top:5vw;
+
+    transition:ease-in-out 0.1s;
+    background-position:center center;
+    background-repeat:no-repeat;
+    background-size:cover;
+    overflow:hidden;
+    cursor:pointer;
+}
+.edit-window-icon:hover > *{
+    display:block;
+}
+.edit-window-icon-mask{
+    background-image:linear-gradient(to bottom, rgb(0,0,0,0) 1%, rgb(0,0,0,1));
+    position:absolute;
+    display:none;
+    height:50%;
+    width:100%;
+    left:0px;
+    top:50%;
+}
+.edit-window-icon-picture-icon{
+    background-image:url("../assets/icons/image.png");
+    background-position:center center;
+    background-repeat:no-repeat;
+    background-size:contain;
+    position:absolute;
+
+    transform:translate(-50%, -50%);
+    aspect-ratio:1;
+    height:2vw;
+    left:50%;
+    top:60%;
+}
+#input-icon{
+    position:absolute;
+    height:0px;
+    opacity:0;
+    top:0px;
+}
+
+.edit-window-form{
+    height:fit-content;
+    width:60%;
+}
+.edit-window-row{
+    margin-bottom:1vw;
+    width:100%;
+}
+.edit-window-input{
+    width:100%;
+}
+.edit-window-textarea{
+    background-color:var(--background-gray-1);
+    border:1px solid var(--border-gray-1);
+    border-radius:var(--border-radius-1);
+
+    color:var(--dark-blue);
+    font-family:"Inter";
+    font-size:1vw;
+
+    resize:none;
+    height:10vw;
+    width:100%;
+}
