@@ -120,7 +120,7 @@ function generateMailElements(emails, tab, searchInput){
             }
 
             if(searchCondition){
-                const mailOptions = genetateMailOptions(emails[i], tab);
+                const mailOptions = genetateMailOptions(emails[i]);
                 const mailMarks = generateMailMarks(emails[i]);
                 const mail = document.createElement("div");
                 const mailAddress = document.createElement("div");
@@ -150,13 +150,13 @@ function generateMailElements(emails, tab, searchInput){
                 mailList.appendChild(mail);
                 anyDisplayed = true;
 
-                mail.onclick = ()=>{getEmailContent(emails[i], tab)}
+                mail.onclick = ()=>{getEmailContent(emails[i])}
             }
         }
         if(!anyDisplayed) emptyInbox();
     }
 }
-function genetateMailOptions(email, tab){
+function genetateMailOptions(email){
     const mailOptions = document.createElement("div");
     const mailDelete = document.createElement("div");
 
@@ -166,7 +166,7 @@ function genetateMailOptions(email, tab){
     mailOptions.appendChild(mailDelete);
     mailDelete.onclick = (e)=>{
         e.stopPropagation();
-        deleteEmail(email.id, tab);
+        deleteEmail(email.id);
     }
 
     return mailOptions;
@@ -245,7 +245,7 @@ function generateMailMarks(email){
 
     return mailMarks;
 }
-function generateMailDisplay(email, tab){
+function generateMailDisplay(email){
     const mailMessageDisplay = document.querySelector(".mail-message-display");
     const mailList = document.querySelector(".mail-list");
     mailMessageDisplay.style.display = "block";
@@ -258,7 +258,7 @@ function generateMailDisplay(email, tab){
     const mailDelete = document.querySelector(".mail-message-head-delete");
     const mailBack = document.querySelector(".mail-message-head-back");
     mailDelete.onclick = ()=>{
-        deleteEmail(email.id, tab);
+        deleteEmail(email.id);
         mailBack.click();
     }
     mailBack.onclick = ()=>{
@@ -269,7 +269,7 @@ function generateMailDisplay(email, tab){
         mailValue.innerHTML = "";
     }
 
-    if(email.isUnread) markEmailRead(email.id, tab);
+    if(email.isUnread) markEmailRead(email.id);
 }
 function loadSendMessage(){
     const sendMailRecipients = document.querySelector("#send-mail-recipients");
@@ -309,7 +309,7 @@ function loadSendMessage(){
         }
     }
     sendMailButton.onclick = ()=>{
-        sendMail(sendMailRecipients.value, sendMailSubject.value, sendMailMessage.value);
+        sendMail(sendMailRecipients.value, sendMailSubject.value, sendMailMessage.value, "mail");
     }
 }
 
@@ -333,7 +333,7 @@ async function loadInbox(inbox, nextPageToken){
         console.log("Load inbox error: ", inbox);
     }
 }
-async function deleteEmail(emailID, tab){
+async function deleteEmail(emailID){
     if(!confirm("Move this email to Trash?")) return;
     try{
         const response = await fetch("/api/emails/"+emailID, {method:"DELETE"});
@@ -352,7 +352,7 @@ async function deleteEmail(emailID, tab){
         alert("Deletion Error");
     }
 }
-async function getEmailContent(email, tab){
+async function getEmailContent(email){
     try{
         const response = await fetch("/api/email-content/"+email.id);
         const emailResponse = await response.json();
@@ -363,14 +363,14 @@ async function getEmailContent(email, tab){
             FORBID_TAGS:["style", "script", "img"]
         });
         mailValue.innerHTML = cleanHTML;
-        generateMailDisplay(email, tab);
+        generateMailDisplay(email);
     }
     catch(error){
         console.log(error);
         alert("Fetching email error");
     }
 }
-async function markEmailRead(emailID, tab){
+async function markEmailRead(emailID){
     const response = await fetch("/api/emails/"+emailID+"/read", {method:"POST"});
     const result = await response.json();
     if(result.success){
@@ -378,7 +378,7 @@ async function markEmailRead(emailID, tab){
         window.dispatchEvent(reloadEmails);
     }
 }
-async function sendMail(recipients, subject, message){
+async function sendMail(recipients, subject, message, appPart){
     try{
         const response = await fetch("/api/send-mail", {
             method:"POST",
@@ -387,8 +387,17 @@ async function sendMail(recipients, subject, message){
         });
         if(!response.ok) alert("Failed to send email");
         else{
-            alert("Email sent successfully");
-            document.querySelector(".send-mail-close").click();
+            switch(appPart){
+                default:break;
+                case "mail":
+                    alert("Email sent successfully");
+                    document.querySelector(".send-mail-close").click();
+                    break;
+                case "invite":
+                    const inviteEmailSent = new CustomEvent("invite-email-sent", {detail:{email:recipients}});
+                    window.dispatchEvent(inviteEmailSent);
+                    break;
+            }
         }
     }
     catch(error){

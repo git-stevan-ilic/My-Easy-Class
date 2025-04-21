@@ -81,9 +81,9 @@ function googleLogin(client){
             fadeOut(".pre-main-head", 0.1, ()=>{fadeIn(".main-head", 0.1, "flex")});
             fadeOut("#pre-main", 0.1, ()=>{fadeIn("#main", 0.1, "block")});
             accountLogOff.onclick = ()=>{client.emit("google-log-out")}
+            loadStudentsLogic(user);
             loadAboutMeLogic(user);
             loadDriveLogic(client);
-            loadStudentsLogic();
             loadMailLogic();
             loadCalendar();
 

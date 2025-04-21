@@ -265,14 +265,17 @@ app.post("/api/send-mail", async (req, res)=>{
         });
 
         const {recipients, subject, message} = req.body;
+        const encodedHtml = Buffer.from(message).toString("base64");
+        const formattedBody = encodedHtml.match(/.{1,76}/g).join('\n');
         const rawEmail = [
             "From:'My Easy Class' <"+req.user.email+">",
             "To:"+recipients,
             "Subject:"+subject,
             "MIME-Version:1.0",
             "Content-Type:text/html; charset=utf-8",
+            "Content-Transfer-Encoding: base64",
             "",
-            message,
+            formattedBody
         ].join('\n');
 
         const encodedEmail = Buffer.from(rawEmail)

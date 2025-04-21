@@ -305,17 +305,13 @@
                         </div>
                     </div>
                 </div>
-
-
-
                 <div class="students-main">
                     <div class="students-main-head">
                         <div class="class-title">All Students</div>
                         <div class="class-head-buttons">
-                            <button class="blue-button" id="new-lession">New Lession</button>
+                            <!--<button class="blue-button" id="new-lession">New Lession</button>-->
                             <button class="blue-button" id="add-students">Add Students</button>
                         </div>
-                        
                         <div class="add-student-drop-down">
                             <div class="add-student-row">
                                 <div class="add-student-icon add-student-email-icon"></div>
@@ -335,28 +331,20 @@
                             </div>
                         </div>
                     </div>
-                    <!--<div class="students-main-body">
-                        <div class="class-window">
-                            <div class="class-window-tab-holder">
-                                <div class="class-window-tab class-window-selected-tab">Students</div>
-                                <div class="class-window-tab">Assignments</div>
-                            </div>
-                            <div class="class-window-search-holder">
-                                <div class="class-window-search-icon"></div>
-                                <input type="text" class="search-input" id="class-window-search">
-                            </div>
-                            <div class="class-window-student-list">
-                                <div class="class-window-student">
-                                    <div class="class-window-student-icon"></div>
-                                    <div class="class-window-student-name"></div>
-                                </div>
-                            </div>
+                    <div class="class-window">
+                        <div class="class-window-tab-holder">
+                            <div class="class-window-tab class-window-selected-tab">Students</div>
+                            <div class="class-window-tab">Assignments</div>
                         </div>
-                    </div>-->
+                        <div class="search-holder" id="student-search-icon-holder">
+                            <div class="search-icon" id="student-search-icon"></div> 
+                            <input type="text" class="search-input" id="student-search" placeholder="Search for students">
+                        </div>
+                        <div class="class-window-student-list-holder">
+                            <div class="class-window-student-list"></div>
+                        </div>
+                    </div>
                 </div>
-
-
-
             </div>
             <div class="screen tab-affected" id="homework-screen">
                 <div class="wip">Work in Progress</div>
@@ -490,13 +478,7 @@
             </div>
             <div class="invite-email-window-title">Invited:</div>
             <div class="invite-email-window-foot">
-                <div class="invite-list">
-                    No invites sent
-                    <!--<div class="invited">sample@sample.com</div>
-                    <div class="invited">sample@sample.com</div>
-                    <div class="invited">sample@sample.com</div>
-                    <div class="invited">sample@sample.com</div>-->
-                </div>
+                <div class="invite-list"></div>
             </div>
         </div>
     </div>
@@ -505,6 +487,25 @@
         <div class="invite-qr-window">
             <div class="invite-window-close" id="invite-qr-window-close"></div>
             <div class="invite-qr"></div>
+        </div>
+    </div>
+    <div class="screen-mask" id="invite-list-screen">
+        <div class="screen-mask-background"></div>
+        <div class="invite-list-window">
+            <div class="invite-window-close" id="invite-list-window-close"></div>
+            <div class="invite-list-window-head">Select which students to add to class:</div>
+            <div class="invite-list-window-body">
+                <div class="search-holder" id="invite-list-search-icon-holder">
+                    <div class="search-icon" id="invite-list-search-icon"></div> 
+                    <input type="text" class="search-input" id="invite-list-search">
+                </div>
+                <div class="student-list-holder">
+                    <div class="student-list"></div>
+                </div>
+            </div>
+            <div class="invite-list-window-foot">
+                <button class="blue-button" id="move-to-class">Move to class</button>
+            </div>
         </div>
     </div>
     <div class="notification"></div>
