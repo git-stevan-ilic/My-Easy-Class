@@ -7,12 +7,12 @@ function loadStudentsLogic(user){
         {name:"Ungrouped", students:[
             {id:"0", name:"test 1"}, {id:"1", name:"test 2"}, {id:"2", name:"test 3"}
         ]}
-    ];
-    let classNameSearch = "", currClass = 0;
+    ], currClass = 0;
+    let classNameSearch = "", studentListSearch = "", inviteStudendSearch = "";
     generateClasses(classNameSearch, classes);
     generateNewClassLogic();
     addStudentEvents(user);
-    displayCurrClass(classes[currClass]);
+    displayCurrClass(classes[currClass], studentListSearch);
 
     const classSearchIcon = document.querySelector("#class-search-icon");
     const classSearch = document.querySelector("#class-search");
@@ -24,7 +24,34 @@ function loadStudentsLogic(user){
     classSearch.oninput = ()=>{
         classNameSearch = classSearch.value;
         generateClasses(classNameSearch, classes);
-    }   
+    }
+
+    const studentSearchIcon = document.querySelector("#student-search-icon");
+    const studentSearch = document.querySelector("#student-search");
+    studentSearch.value = "";
+    studentSearchIcon.onclick = ()=>{
+        studentListSearch = studentSearch.value;
+        displayCurrClass(classes[currClass], studentListSearch);
+    }
+    studentSearch.oninput = ()=>{
+        studentListSearch = studentSearch.value;
+        displayCurrClass(classes[currClass], studentListSearch);
+    }
+
+    const inviteListSearchIcon = document.querySelector("#invite-list-search-icon");
+    const inviteListSearch = document.querySelector("#invite-list-search");
+    inviteListSearchIcon.onclick = ()=>{
+        inviteStudendSearch = inviteListSearch.value;
+        let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
+        let availableStudents = classes[0].students.filter(item => !currClassIDs.has(item.id)); 
+        inviteListSearchApply(availableStudents, inviteStudendSearch);
+    }
+    inviteListSearch.oninput = ()=>{
+        inviteStudendSearch = inviteListSearch.value;
+        let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
+        let availableStudents = classes[0].students.filter(item => !currClassIDs.has(item.id)); 
+        inviteListSearchApply(availableStudents, inviteStudendSearch);
+    }
 
     window.addEventListener("new-class", (e)=>{
         const eventName = e.detail.name;
@@ -40,13 +67,13 @@ function loadStudentsLogic(user){
             classes.push({name:eventName, students:[]});
             generateClasses(classNameSearch, classes);
             currClass = classes.length - 1;
-            displayCurrClass(classes[currClass]);
+            displayCurrClass(classes[currClass], studentListSearch);
         }
     });
     window.addEventListener("request-student-list", ()=>{
         let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
         let availableStudents = classes[0].students.filter(item => !currClassIDs.has(item.id)); 
-        generateInviteStudentList(availableStudents);
+        generateInviteStudentList(availableStudents, inviteStudendSearch);
     });
     window.addEventListener("add-students-list", (e)=>{
         let addedStudentIDs = e.detail.students;
@@ -67,20 +94,49 @@ function loadStudentsLogic(user){
                 }
             }
         }
-        console.log(classes[currClass].students, addedStudents)
         document.querySelector("#invite-list-window-close").click();
         classes[currClass].students = classes[currClass].students.concat(addedStudents);
         generateClasses(classNameSearch, classes);
-        displayCurrClass(classes[currClass]);
+        displayCurrClass(classes[currClass], studentListSearch);
     });
     window.addEventListener("display-curr-class", ()=>{
-        displayCurrClass(classes[currClass]);
+        displayCurrClass(classes[currClass], studentListSearch);
     });
     window.addEventListener("change-curr-class", (e)=>{
         currClass = e.detail.newCurrClass;
-        displayCurrClass(classes[currClass]);
+        displayCurrClass(classes[currClass], studentListSearch);
+    });
+    window.addEventListener("delete-student", (e)=>{
+        for(let i = 0; i < classes.length; i++){
+            for(let j = 0; j < classes[i].students.length; j++){
+                if(classes[i].students[j].id === e.detail.id){
+                    classes[i].students.splice(j, 1);
+                    break;
+                }
+            }
+        }
+        generateClasses(classNameSearch, classes);
+        displayCurrClass(classes[currClass], studentListSearch);
+    });
+    window.addEventListener("remove-student", (e)=>{
+        for(let i = 0; i < classes.length; i++){
+            if(classes[i].name === e.detail.currClass.name){
+                for(let j = 0; j < classes[i].students.length; j++){
+                    if(classes[i].students[j].id === e.detail.id){
+                        let removedStudent = classes[i].students.splice(j, 1);
+                        classes[1].students = classes[1].students.concat(removedStudent);
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        generateClasses(classNameSearch, classes);
+        displayCurrClass(classes[currClass], studentListSearch);
     });
 }
+
+/*--Add Students-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 function addStudentEvents(user){
     const dropMenu = document.querySelector(".add-student-drop-down");
     const inviteList = document.querySelector(".invite-list");
@@ -138,6 +194,7 @@ function addStudentEvents(user){
     }
     document.querySelector("#invite-list").onclick = ()=>{
         const requestStudentList = new Event("request-student-list");
+        document.querySelector("#invite-list-search").value = "";
         window.dispatchEvent(requestStudentList);
         fadeIn("#invite-list-screen", 0.1);
         closeDropDown();
@@ -183,47 +240,87 @@ function addStudentEvents(user){
         addStudentDropDown = false;
     }
 }
-function generateInviteStudentList(students){
+function generateInviteStudentList(students, inviteStudendSearch){
+    let displayedStudents = []
+    for(let i = 0; i < students.length; i++){
+        let searchResult = students[i].name.toLowerCase().indexOf(inviteStudendSearch)
+        if(searchResult !== -1 || inviteStudendSearch === ""){
+            displayedStudents.push(students[i])
+        }
+    }
+
     const list = document.querySelector(".student-list");
-    while(list.children.length > 0) list.removeChild(list.lastChild);
-    if(students.length === 0) list.innerHTML = "No available students";
-    else{
-        list.innerHTML = "";
-        for(let i = 0; i < students.length; i++){
-            const studentCheckMark = document.createElement("div");
-            const studentCheck = document.createElement("div");
-            const studentIcon = document.createElement("div");
-            const studentName = document.createElement("div");
-            const student = document.createElement("div");
-          
-            studentCheckMark.className = "student-check-mark";
-            studentCheck.className = "student-check";
-            studentIcon.className = "student-icon";
-            studentName.className = "student-name";
-            student.className = "student";
-    
-            studentName.innerText = students[i].name;
-            student.dataset.id = students[i].id;
-            student.dataset.checked = false;
-    
-            studentCheck.appendChild(studentCheckMark);
-            student.appendChild(studentCheck);
-            student.appendChild(studentIcon);
-            student.appendChild(studentName);
-            list.appendChild(student);
-    
-            studentCheck.onclick = ()=>{
-                if(student.dataset.checked === "true"){
-                    studentCheckMark.style.display = "none";
-                    student.dataset.checked = false;
-                }
-                else{
-                    studentCheckMark.style.display = "block";
-                    student.dataset.checked = true;
-                }
+    for(let i = 0; i < students.length; i++){
+        const studentCheckMark = document.createElement("div");
+        const studentCheck = document.createElement("div");
+        const studentIcon = document.createElement("div");
+        const studentName = document.createElement("div");
+        const student = document.createElement("div");
+      
+        studentCheckMark.className = "student-check-mark";
+        studentCheck.className = "student-check";
+        studentIcon.className = "student-icon";
+        studentName.className = "student-name";
+        student.className = "student";
+        student.style.display = "none";
+
+        studentName.innerText = students[i].name;
+        student.dataset.id = students[i].id;
+        student.dataset.checked = false;
+
+        studentCheck.appendChild(studentCheckMark);
+        student.appendChild(studentCheck);
+        student.appendChild(studentIcon);
+        student.appendChild(studentName);
+        list.appendChild(student);
+
+        studentCheck.onclick = ()=>{
+            if(student.dataset.checked === "true"){
+                studentCheckMark.style.display = "none";
+                student.dataset.checked = false;
+            }
+            else{
+                studentCheckMark.style.display = "block";
+                student.dataset.checked = true;
+            }
+        }
+
+        for(let j = 0; j < displayedStudents.length; j++){
+            if(displayedStudents[j].id === students[i].id){
+                student.style.display = "flex";
             }
         }
     }
+
+    const noIniteList = document.querySelector(".no-inite-list");
+    if(displayedStudents.length === 0) noIniteList.style.display = "flex";
+    else noIniteList.style.display = "none";
+}
+function inviteListSearchApply(students, inviteStudendSearch){
+    let displayedStudents = []
+    for(let i = 0; i < students.length; i++){
+        let searchResult = students[i].name.toLowerCase().indexOf(inviteStudendSearch)
+        if(searchResult !== -1 || inviteStudendSearch === ""){
+            displayedStudents.push(students[i])
+        }
+    }
+
+    const list = document.querySelector(".student-list");
+    for(let i = 0; i < list.children.length; i++){
+        let matched = false;
+        for(let j = 0; j < displayedStudents.length; j++){
+            if(displayedStudents[j].id === list.children[i].dataset.id){
+                matched = true;
+                break;
+            }
+        }
+        if(matched) list.children[i].style.display = "flex";
+        else list.children[i].style.display = "none";
+    }
+
+    const noIniteList = document.querySelector(".no-inite-list");
+    if(displayedStudents.length === 0) noIniteList.style.display = "flex";
+    else noIniteList.style.display = "none";
 }
 
 /*--Classes List-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -300,30 +397,61 @@ function generateNewClassLogic(){
         newClassCancel.click();
     }
 }
-function displayCurrClass(currClass){
+function displayCurrClass(currClass, studentListSearch){
     document.querySelector(".class-title").innerText = currClass.name;
     const studentList = document.querySelector(".class-window-student-list");
     while(studentList.children.length > 0) studentList.removeChild(studentList.lastChild);
     if(currClass.students.length === 0) studentList.innerHTML = "No students in classroom";
     else{
-        studentList.innerHTML = "";
+        let displayedStudents = [];
         for(let i = 0; i < currClass.students.length; i++){
-            const student = document.createElement("div");
-            const studentIcon = document.createElement("div");
-            const studentName = document.createElement("div");
-            const studentDelete = document.createElement("div");
+            let conditionName = currClass.students[i].name.toLowerCase();
+            let containCondition = conditionName.indexOf(studentListSearch.toLowerCase()) !== -1; 
+            if(studentListSearch === "" || containCondition){
+                displayedStudents.push(currClass.students[i]);
+            }
+        }
+        if(displayedStudents.length === 0) studentList.innerHTML = "No students in classroom";
+        else{
+            studentList.innerHTML = "";
+            for(let i = 0; i <displayedStudents.length; i++){
+                const student = document.createElement("div");
+                const studentIcon = document.createElement("div");
+                const studentName = document.createElement("div");
+            
+                student.className = "class-window-student";
+                studentIcon.className = "class-window-student-icon";
+                studentName.className = "class-window-student-name";
+                studentName.innerText = displayedStudents[i].name;
+    
+                student.appendChild(studentIcon);
+                student.appendChild(studentName);
+                studentList.appendChild(student);
 
-            student.className = "class-window-student";
-            studentIcon.className = "class-window-student-icon";
-            studentName.className = "class-window-student-name";
-            studentDelete.className = "class-window-student-delete";
-            studentName.innerText = currClass.students[i].name;
 
-            student.appendChild(studentIcon);
-            student.appendChild(studentName);
-            student.appendChild(studentDelete);
-            studentList.appendChild(student);
+                const studentDelete = document.createElement("div");
+                studentDelete.className = "class-window-student-delete";
+                student.appendChild(studentDelete);
+                if(currClass.name === "All Students" || currClass.name === "Ungrouped"){
+                    studentDelete.onclick = ()=>{
+                        if(confirm("Are you sure you want to remove this student from all classes?")){
+                            const data = {detail:{id:displayedStudents[i].id}}
+                            const deleteStudentEvent = new CustomEvent("delete-student", data);
+                            window.dispatchEvent(deleteStudentEvent);
+                        }
+                    }
+                }
+                else{
+                    studentDelete.classList.add("class-window-student-remove");
+                    studentDelete.onclick = ()=>{
+                        if(confirm("Are you sure you want to remove this student from this class?")){
+                            const data = {detail:{id:displayedStudents[i].id, currClass:currClass}}
+                            const deleteStudentEvent = new CustomEvent("remove-student", data);
+                            window.dispatchEvent(deleteStudentEvent);
+                        }
+                    }
+                }
+            }
         }
     }
-    console.log(currClass)
 }
