@@ -2,20 +2,15 @@
 const express = require("express");
 const { createServer } = require("node:http");
 const { Server } = require("socket.io");
-const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const fs = require("fs");
 dotenv.config();
 
-const axios = require('axios');
-const cookieParser = require('cookie-parser');
+const axios = require("axios");
+const cookieParser = require("cookie-parser");
 const session = require("express-session");
-const cors = require('cors');
-
-
-
-const multer = require("multer");
-const upload = multer({dest:"/api/drive-upload"});
+const querystring = require("querystring");
+const cors = require("cors");
 
 const app = express();
 const server = createServer(app);
@@ -41,6 +36,9 @@ app.use(passport.session());
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 io.use(sharedsession(sessionMiddleware, {autoSave:true}));
+
+const multer = require("multer");
+const upload = multer({dest:"/api/drive-upload"});
 
 passport.use(new GoogleStrategy({
     clientID:process.env.GOOGLE_CLIENT_ID,
@@ -78,255 +76,11 @@ app.get("/auth/google", passport.authenticate("google", {
     prompt:"consent"
 }));
 
-
-
-
-
-
-
-
-
-
-
-
-
 /*--Setup Zoom Services------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-/*const axios = require("axios");
-const jwt = require("jsonwebtoken");
-const cors = require("cors");
-app.use(cors());
 
-const ZOOM_CLIENT_ID = process.env.ZOOM_CLIENT_ID;
-const ZOOM_CLIENT_SECRET = process.env.ZOOM_CLIENT_SECRET;
 
-function generateZoomToken(){
-  return jwt.sign({iss:ZOOM_CLIENT_ID, exp:Math.floor(Date.now() / 1000) + 3600}, ZOOM_CLIENT_SECRET);
-}
-*/
-/*
-app.get("/api/zoom/create-meeting", async (req, res) => {
-    try{
-        console.log(0)
-        const token = generateZoomToken();  console.log(1)
-        const {data} = await axios.post(
-            "https://api.zoom.us/v2/users/me/meetings",{
-                topic:"My Meeting",
-                type:1,
-                settings:{
-                host_video:true,
-                participant_video:true
-            }
-        },{
-            headers: {
-                "Authorization":"Bearer "+ token,
-                "Content-Type":"application/json"
-            }
-        });
-        console.log(2)
-      
-        
-        res.json({
-            join_url:data.joinURL,
-            meetingID:data.id,
-            password:data.password
-        });
-    }
-    catch(error){
-        console.log("Zoom Error: "+error);
-        res.status(500).json({error:error.message});
-    }
-});
-*/
-/*
-const zoomus = require("zoomus")({
-    client_id:process.env.ZOOM_CLIENT_ID,
-    client_secret:process.env.ZOOM_CLIENT_SECRET
-});
 
-app.get("/auth/zoom", (req, res)=>{
-    const zoomAuthURL = "https://zoom.us/oauth/authorize?response_type=code&client_id="+ZOOM_CLIENT_ID+"&redirect_uri="+ZOOM_REDIRECT_URI;
-    res.redirect(zoomAuthURL);
-});
-app.get("/auth/zoom/callback", async (req, res)=>{
-    try {
-        const {code} = req.query;
-        const {data} = await zoomus.auth.getToken(code);
-        // Store access_token and refresh_token securely
-        res.redirect("/dashboard");
-    }
-    catch(error){
-        console.error("Zoom Auth Failed", error);
-        res.status(500).send("Zoom Auth Failed");
-    }
-});
-*/
-/*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-/*app.post("/api/zoom/create-meeting", async (req, res)=>{
-    try{
-        const meeting = await zoomus.meeting.create({
-            topic:"My Meeting",
-            type:1, // Instant meeting
-            settings:{
-                host_video:true,
-                participant_video:true
-            }
-        });
-        res.json({success:true, meeting});
-    }
-    catch(error){
-        console.log("Zoom meeting cretaion error: ", error);
-        res.status(500).json({
-            success:false,
-            error:"Failed to create meeting",
-            details:error.message
-        });
-    }
-});
 
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ error: 'Something went wrong!' });
-  });
-  app.use(express.static('public'));*/
-  app.use(cors({
-    origin: 'http://localhost:5000', // Must match frontend URL exactly
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE']
-  }));
-
-  app.get('/auth/zoom', (req, res) => {
-    // Verify user is logged in via Google
-    if (!req.user) return res.status(401).send('Not logged in');
-    
-    const authUrl = `https://zoom.us/oauth/authorize?response_type=code&client_id=${process.env.ZOOM_CLIENT_ID}&redirect_uri=${process.env.ZOOM_REDIRECT_URL}`;
-    res.redirect(authUrl);
-    });
-
-    // Handle Zoom callback
-    app.get('/zoom/callback', async (req, res) => {
-    try {
-        // Verify user session
-        if (!req.user) throw new Error('No user session');
-        
-        // Get Zoom tokens
-        const { code } = req.query;
-        const tokenResponse = await axios.post('https://zoom.us/oauth/token', null, {
-        params: { /* ... same as before ... */ }
-        });
-
-        // Store tokens with user's Google account
-        await User.updateOne(
-        { _id: req.user._id },
-        {
-            zoomTokens: {
-            access_token: tokenResponse.data.access_token,
-            refresh_token: tokenResponse.data.refresh_token,
-            expires_at: Date.now() + (tokenResponse.data.expires_in * 1000)
-            }
-        }
-        );
-
-        res.redirect('/');
-    } catch (error) {
-        res.status(500).send('Zoom connection failed');
-    }
-  });
-  
-  // 2. Handle OAuth Callback
-  app.get('/auth/zoom/callback', async (req, res) => {
-    try {
-      const { code } = req.query;
-      
-      // Get access token
-      const tokenResponse = await axios.post('https://zoom.us/oauth/token', null, {
-        params: {
-          grant_type: 'authorization_code',
-          code,
-          redirect_uri: process.env.ZOOM_REDIRECT_URI
-        },
-        auth: {
-          username: process.env.ZOOM_CLIENT_ID,
-          password: process.env.ZOOM_CLIENT_SECRET
-        }
-      });
-  
-      // Store tokens in session
-      req.session.zoomTokens = {
-        access_token: tokenResponse.data.access_token,
-        refresh_token: tokenResponse.data.refresh_token,
-        expires_at: Date.now() + (tokenResponse.data.expires_in * 1000)
-      };
-  
-      res.redirect('http://localhost:5000/');
-    } catch (error) {
-      res.status(500).send('Authentication failed');
-    }
-  });
-  
-  // 3. Create Meeting with OAuth
-  app.post('/create-meeting', async (req, res) => {
-    try {
-        console.log('Session User:', req.user); // 👈 Add this
-        console.log('Session ID:', req.sessionID); // 👈 Add this
-
-        // this
-      if (!req.session.zoomTokens?.access_token) {
-        return res.status(401).json({ error: 'Not authenticated with Zoom' });
-      }
-  
-      // Refresh token if expired
-      if (Date.now() > req.session.zoomTokens.expires_at) {
-        const newTokens = await refreshZoomToken(req.session.zoomTokens.refresh_token);
-        req.session.zoomTokens = newTokens;
-      }
-  
-      // Create meeting
-      const response = await axios.post(
-        'https://api.zoom.us/v2/users/me/meetings',
-        {
-          topic: 'OAuth Meeting',
-          type: 1,
-          settings: {
-            host_video: true,
-            participant_video: true
-          }
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${req.session.zoomTokens.access_token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-  
-      res.json(response.data);
-    } catch (error) {
-        console.error({ stack: error.stack})
-      res.status(500).json({ error: error.message });
-    }
-  });
-  
-  // Helper: Refresh access token
-  async function refreshZoomToken(refreshToken) {
-    const response = await axios.post('https://zoom.us/oauth/token', null, {
-      params: {
-        grant_type: 'refresh_token',
-        refresh_token: refreshToken
-      },
-      auth: {
-        username: process.env.ZOOM_CLIENT_ID,
-        password: process.env.ZOOM_CLIENT_SECRET
-      }
-    });
-  
-    return {
-      access_token: response.data.access_token,
-      refresh_token: response.data.refresh_token,
-      expires_at: Date.now() + (response.data.expires_in * 1000)
-    };
-  }
-
- 
 
 
 
@@ -915,6 +669,53 @@ function getColorHex(colorId){
     };
     return colors[colorId] || "1a73e8"; // Default blue
 }
+
+/*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+app.get('/auth/zoom', (req, res) => {
+    const url = `https://zoom.us/oauth/authorize?response_type=code&client_id=${process.env.ZOOM_CLIENT_ID}&redirect_uri=${process.env.ZOOM_REDIRECT_URL}`;
+    res.redirect(url);
+  });
+
+  app.get('/auth/zoom/callback', async (req, res) => {
+    const { code } = req.query;
+    const params = {
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: process.env.ZOOM_REDIRECT_URL,
+      client_id: process.env.ZOOM_CLIENT_ID,
+      client_secret: process.env.ZOOM_CLIENT_SECRET,
+    };
+  
+    try {
+      const response = await axios.post('https://zoom.us/oauth/token', querystring.stringify(params));
+      req.session.zoomAccessToken = response.data.access_token;
+      res.redirect('/');
+    } catch (error) {
+      res.send('Zoom authentication failed.');
+    }
+  });
+  app.get('/api/create-meeting', async (req, res) => {
+    if (!req.session.zoomAccessToken) return res.status(401).send('Unauthorized');
+  
+    try {
+      const meetingConfig = {
+        topic: 'My Zoom Meeting',
+        type: 1, // Instant meeting
+        settings: { host_video: true, participant_video: true },
+      };
+  
+      const response = await axios.post('https://api.zoom.us/v2/users/me/meetings', meetingConfig, {
+        headers: { Authorization: `Bearer ${req.session.zoomAccessToken}` },
+      });
+  
+      res.json(response.data);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to create meeting' });
+    }
+  });
+
+
+
 
 /*--Start Server-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 app.use(express.static(__dirname));

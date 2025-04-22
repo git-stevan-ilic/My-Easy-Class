@@ -71,7 +71,7 @@ function googleLogin(client){
     client.on("google-redirect", (url)=>{window.location.href = url});
     client.on("google-status", (user)=>{
         if(user){
-            //document.querySelector("#dahsboard-screen").style.display = "block";
+            document.querySelector("#dahsboard-screen").style.display = "block";
             if(user.photos.length > 0){
                 const userIcons = document.querySelectorAll(".user-icon");
                 for(let i = 0; i < userIcons.length; i++) userIcons[i].style.backgroundImage = "url('"+user.photos[0].value+"')";

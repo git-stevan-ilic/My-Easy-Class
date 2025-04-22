@@ -1,30 +1,10 @@
 /*--Initial------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 function loadStudentsLogic(user){
-    let lessons = [
-        [
-            {lessonName:"lesson name", content:"lesson content", students:["student1", "student2", "student3"], className:"class a"}
-        ],
-        [
-            
-        ],
-        [
-            
-        ]
-    ]
-    let currlesson = 0;
+    let lessons = [[], [], []], currlesson = 0, currClass = 0;
     let classes = [
-        {name:"All Students", students:[
-            {id:"0", name:"test 1"}, {id:"1", name:"test 2"}, {id:"2", name:"test 3"}
-        ]},
-        {name:"Ungrouped", students:[
-            {id:"0", name:"test 1"}, {id:"1", name:"test 2"}, {id:"2", name:"test 3"}
-        ]}
-    ], currClass = 0;
-
-
-
-
-    //let classes = [], lessons = [[], [], []], currClass = 0, currlesson = 0;
+        {name:"All Students", students:[]},
+        {name:"Ungrouped", students:[]}
+    ];
     let classNameSearch = "", studentListSearch = "", inviteStudendSearch = "";
     generateClasses(classNameSearch, classes);
     generateNewClassLogic();
@@ -528,7 +508,7 @@ function inviteListSearchApply(students, inviteStudendSearch){
     else noIniteList.style.display = "none";
 }
 
-/*--lessons-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*--Lessons-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 function generateLessons(lessons, currlesson){
     const listHolder = document.querySelector(".lesson-list-holder");
     while(listHolder.children.length > 0) listHolder.removeChild(listHolder.lastChild);
@@ -570,7 +550,7 @@ function generateLessons(lessons, currlesson){
                 startButton.innerHTML = "Start lesson";
                 lessonA.appendChild(startButton);
                 startButton.onclick = async ()=>{
-
+                    
                 }
 
                 const cancelButton = document.createElement("button");
@@ -609,13 +589,50 @@ function generateLessons(lessons, currlesson){
     }
 }
 
+/*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+let meetingSDK;
+async function connectZoom(){
+    window.location.href = "/auth/zoom";
+}
+async function startMeeting() {
+    const response = await fetch("/api/create-meeting");
+    const meetingData = await response.json();
 
-async function connectZoom() {
-    // Initiate Zoom OAuth flow
-    window.location.href = '/auth/zoom';
+    ZoomMtg.setZoomJSLib("https://source.zoom.us/2.13.0/lib", "/av");
+    ZoomMtg.preLoadWasm();
+    ZoomMtg.prepareWebSDK();
+
+    const config = {
+        meetingNumber:meetingData.id,
+        userName:"Your Name", // Use the user's name from Google Login
+        passWord:meetingData.password, // Only required for password-protected meetings
+        leaveUrl:"http://localhost:5000",
+        role:1, // 1 for host, 0 for participant
+    };
+
+    ZoomMtg.init({
+      leaveUrl: config.leaveUrl,
+      success: () => {
+        const zoomElement = document.getElementById("zmmtg-root");
+        zoomElement.style.position = "absolute";
+        ZoomMtg.join({
+          ...config,
+          success: (res) => console.log('Joined meeting'),
+          error: (err) => console.error('Join error:', err),
+        });
+      },
+      error: (err) => console.error('Init error:', err),
+    });
   }
 
-  async function createMeeting() {
+
+
+
+/*
+async function connectZoom() {
+    window.location.href = "/auth/zoom";
+}
+async function createMeeting() {
     try {
       const response = await fetch('http://localhost:5000/create-meeting', {
         method: 'POST',
@@ -636,4 +653,5 @@ async function connectZoom() {
       console.error('Frontend Error:', error);
       alert(error.message);
     }
-  }
+}
+*/
