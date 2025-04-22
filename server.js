@@ -14,7 +14,7 @@ const sharedsession = require("express-socket.io-session");
 const { google } = require("googleapis");
 
 const multer = require("multer");
-//const upload = multer({dest:"/api/drive-upload"});
+const upload = multer({dest:"/api/drive-upload"});
 
 const app = express();
 const server = createServer(app);
@@ -765,7 +765,7 @@ server.listen(process.env.PORT,()=>{console.log("Running at port "+process.env.P
 
 /*--Input/Output-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 io.on("connection",(client)=>{
-    /*if(client.handshake.session.passport?.user){
+    if(client.handshake.session.passport?.user){
         client.emit("google-status", client.handshake.session.passport.user);
     }
     client.on("google-log-in", ()=>{
@@ -775,5 +775,5 @@ io.on("connection",(client)=>{
         delete client.handshake.session.passport;
         client.handshake.session.save();
         client.emit("google-status", null);
-    });*/
+    });
 });
