@@ -613,26 +613,26 @@ function generateLessons(lessons, currlesson){
 
 
 async function startMeeting(){
-    /*try {
-        const response = await fetch("/api/zoom/create-meeting", {
-            method:"POST",
-            headers: {
-                "Content-Type":"application/json",
-                "Accept":"application/json"
-            }
-        });
-        const result = await response.json();
-        if(result.success){
-            document.getElementById("zoom-meeting-container").innerHTML = `
-            <p>Meeting ID: ${result.id}</p>
-            <p>Join URL: <a href="${result.join_url}" target="_blank">${result.join_url}</a></p>
-        `;
+    const zoomClient = ZoomMtgEmbedded.createClient();
+    const response = await fetch("/api/zoom/create-meeting");
+    const meetingData = await response.json();
+
+    ZoomMtgEmbedded.init({
+        debug:true,
+        zoomAppRoot:document.body,
+        language:"en-US",
+        customize: {
+            meetingInfo:["topic", "host", "mn", "pwd", "telPwd", "invite", "participant", "dc", "enctype"],
+            toolbar:{buttons:[{text:"Leave", onClick:()=>{zoomClient.leaveMeeting()}}]}
         }
-        else{
-            console.error("Zoom Meeting Response Error: ", result.error, result.details);   
-        }
-    }
-    catch(error){
-        console.error("Zoom Meeting Error: ", error);
-    }*/
+    });
+
+    zoomClient.join({
+        sdkKey:meetingData.clientID,
+        signature:generateSignature(), // Generate on backend if using SDK
+        meetingNumber:meetingData.meetingID,
+        password:meetingData.password,
+        userName: 'Your Name',
+        userEmail: 'your@email.com'
+    });
 }

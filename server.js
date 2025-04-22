@@ -72,6 +72,56 @@ app.get("/auth/google", passport.authenticate("google", {
 }));
 
 /*--Setup Zoom Services------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+const axios = require("axios");
+const jwt = require("jsonwebtoken");
+const cors = require("cors");
+app.use(cors());
+
+const ZOOM_CLIENT_ID = process.env.ZOOM_CLIENT_ID;
+const ZOOM_CLIENT_SECRET = process.env.ZOOM_CLIENT_SECRET;
+
+function generateZoomToken(){
+  return jwt.sign({iss:ZOOM_CLIENT_ID, exp:Math.floor(Date.now() / 1000) + 3600}, ZOOM_CLIENT_SECRET);
+}
+
+/*
+app.get("/api/zoom/create-meeting", async (req, res) => {
+    try{
+        console.log(0)
+        const token = generateZoomToken();  console.log(1)
+        const {data} = await axios.post(
+            "https://api.zoom.us/v2/users/me/meetings",{
+                topic:"My Meeting",
+                type:1,
+                settings:{
+                host_video:true,
+                participant_video:true
+            }
+        },{
+            headers: {
+                "Authorization":"Bearer "+ token,
+                "Content-Type":"application/json"
+            }
+        });
+        console.log(2)
+      
+        
+        res.json({
+            join_url:data.joinURL,
+            meetingID:data.id,
+            password:data.password
+        });
+    }
+    catch(error){
+        console.log("Zoom Error: "+error);
+        res.status(500).json({error:error.message});
+    }
+});
+*/
+
+
+
+
 /*
 const zoomus = require("zoomus")({
     client_id:process.env.ZOOM_CLIENT_ID,
