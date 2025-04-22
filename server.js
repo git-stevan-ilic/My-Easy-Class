@@ -765,12 +765,12 @@ server.listen(process.env.PORT,()=>{console.log("Running at port "+process.env.P
 
 /*--Input/Output-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 io.on("connection",(client)=>{
-    if(client.handshake.session.passport?.user){
+    /*if(client.handshake.session.passport?.user){
         client.emit("google-status", client.handshake.session.passport.user);
-    }
-    client.on("google-log-in", ()=>{
+    }*/
+    /*client.on("google-log-in", ()=>{
         client.emit("google-redirect", "/auth/google");
-    });
+    });*/
     client.on("google-log-out", ()=>{
         delete client.handshake.session.passport;
         client.handshake.session.save();
