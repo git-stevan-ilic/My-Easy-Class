@@ -72,7 +72,7 @@ app.get("/auth/google", passport.authenticate("google", {
 }));
 
 /*--Setup Zoom Services------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-const axios = require("axios");
+/*const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
 app.use(cors());
@@ -83,7 +83,7 @@ const ZOOM_CLIENT_SECRET = process.env.ZOOM_CLIENT_SECRET;
 function generateZoomToken(){
   return jwt.sign({iss:ZOOM_CLIENT_ID, exp:Math.floor(Date.now() / 1000) + 3600}, ZOOM_CLIENT_SECRET);
 }
-
+*/
 /*
 app.get("/api/zoom/create-meeting", async (req, res) => {
     try{
@@ -176,7 +176,7 @@ app.use((err, req, res, next) => {
   app.use(express.static('public'));*/
 
 /*--Google Mail API----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-app.get("/api/emails/:inbox", async (req, res)=>{
+/*app.get("/api/emails/:inbox", async (req, res)=>{
     try{
         const oauth2Client = new google.auth.OAuth2();
         oauth2Client.on("tokens", (tokens)=>{
@@ -421,10 +421,10 @@ app.delete("/api/emails/:id", async (req, res)=>{
             message:error.message.includes("404") ? 'Email not found' : 'Failed to delete email'
         });
     }
-});
+});*/
 
 /*--Google Drive API---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-app.get("/api/drive-list", async (req, res)=>{
+/*app.get("/api/drive-list", async (req, res)=>{
     if(!req.user || !req.user.accessToken) return res.status(401).json({error:"Not authenticated"});
     try{
         const oauth2Client = new google.auth.OAuth2();
@@ -590,10 +590,10 @@ app.delete("/api/drive-delete/:fileId", async (req, res)=>{
         console.error("Delete error:", error);
         res.status(error.status).json({success:false, message:"Failed to delete file"});
     }
-});
+});*/
 
 /*--Google Calendar API------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-app.get("/api/calendar", async (req, res)=>{
+/*app.get("/api/calendar", async (req, res)=>{
     if(!req.user || !req.user.accessToken) return res.status(401).json({error:"Not authenticated"});
     try{
         const oauth2Client = new google.auth.OAuth2();
@@ -756,7 +756,7 @@ function getColorHex(colorId){
         "4":"ff887c", // Flamingo
     };
     return colors[colorId] || "1a73e8"; // Default blue
-}
+}*/
 
 /*--Start Server-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 app.use(express.static(__dirname));
