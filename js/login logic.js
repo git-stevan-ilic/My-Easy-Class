@@ -15,6 +15,21 @@ function loadLogInLogic(client){
             rememberMe = false;
         }
     }
+    document.querySelector(".signin-zoom").onclick = ()=>{
+        notification("Databse error");
+    }
+    document.querySelector(".forgot-password").onclick = ()=>{
+        notification("Databse error");
+    }
+    document.querySelector("#login").onclick = ()=>{
+        notification("Databse error");
+    }
+    document.querySelector("#signin-confirm").onclick = ()=>{
+        notification("Databse error");
+    }
+    document.querySelector("#signin-back").onclick = ()=>{
+        document.querySelector("#open-login").click();
+    }  
 }
 function switchLoginSignin(){
     const loginHolder = document.querySelector("#login-holder");
