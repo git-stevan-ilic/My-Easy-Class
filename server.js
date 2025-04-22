@@ -7,11 +7,12 @@ const dotenv = require("dotenv");
 const fs = require("fs");
 dotenv.config();
 
-const passport = require("passport");
-const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const axios = require('axios');
+const cookieParser = require('cookie-parser');
 const session = require("express-session");
-const sharedsession = require("express-socket.io-session");
-const { google } = require("googleapis");
+const cors = require('cors');
+
+
 
 const multer = require("multer");
 const upload = multer({dest:"/api/drive-upload"});
@@ -20,15 +21,21 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server);
 
-/*--Setup Google Services----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+app.use(cookieParser());
 const sessionMiddleware = session({
     secret:process.env.SESSION_SECRET,
     resave:false,
     saveUninitialized:true,
     cookie:{secure:false} // Set to true in production with HTTPS
 });
-
 app.use(sessionMiddleware);
+
+/*--Setup Google Services----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const sharedsession = require("express-socket.io-session");
+const { google } = require("googleapis");
+
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.json());
@@ -38,7 +45,7 @@ io.use(sharedsession(sessionMiddleware, {autoSave:true}));
 passport.use(new GoogleStrategy({
     clientID:process.env.GOOGLE_CLIENT_ID,
     clientSecret:process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL:"/auth/google/callback" || "http://localhost:"+process.env.PORT+"/auth/google/callback",
+    callbackURL:GOOGLE_REDIRECT_URL,
     scope:[
         "profile", "email", "https://www.googleapis.com/auth/calendar",
         "https://www.googleapis.com/auth/drive.metadata.readonly",
@@ -181,15 +188,145 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Something went wrong!' });
   });
   app.use(express.static('public'));*/
+  app.use(cors({
+    origin: 'http://localhost:5000', // Must match frontend URL exactly
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE']
+  }));
 
+  app.get('/auth/zoom', (req, res) => {
+    // Verify user is logged in via Google
+    if (!req.user) return res.status(401).send('Not logged in');
+    
+    const authUrl = `https://zoom.us/oauth/authorize?response_type=code&client_id=${process.env.ZOOM_CLIENT_ID}&redirect_uri=${process.env.ZOOM_REDIRECT_URL}`;
+    res.redirect(authUrl);
+    });
 
+    // Handle Zoom callback
+    app.get('/zoom/callback', async (req, res) => {
+    try {
+        // Verify user session
+        if (!req.user) throw new Error('No user session');
+        
+        // Get Zoom tokens
+        const { code } = req.query;
+        const tokenResponse = await axios.post('https://zoom.us/oauth/token', null, {
+        params: { /* ... same as before ... */ }
+        });
 
+        // Store tokens with user's Google account
+        await User.updateOne(
+        { _id: req.user._id },
+        {
+            zoomTokens: {
+            access_token: tokenResponse.data.access_token,
+            refresh_token: tokenResponse.data.refresh_token,
+            expires_at: Date.now() + (tokenResponse.data.expires_in * 1000)
+            }
+        }
+        );
 
-
+        res.redirect('/');
+    } catch (error) {
+        res.status(500).send('Zoom connection failed');
+    }
+  });
   
+  // 2. Handle OAuth Callback
+  app.get('/auth/zoom/callback', async (req, res) => {
+    try {
+      const { code } = req.query;
+      
+      // Get access token
+      const tokenResponse = await axios.post('https://zoom.us/oauth/token', null, {
+        params: {
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: process.env.ZOOM_REDIRECT_URI
+        },
+        auth: {
+          username: process.env.ZOOM_CLIENT_ID,
+          password: process.env.ZOOM_CLIENT_SECRET
+        }
+      });
+  
+      // Store tokens in session
+      req.session.zoomTokens = {
+        access_token: tokenResponse.data.access_token,
+        refresh_token: tokenResponse.data.refresh_token,
+        expires_at: Date.now() + (tokenResponse.data.expires_in * 1000)
+      };
+  
+      res.redirect('http://localhost:5000/');
+    } catch (error) {
+      res.status(500).send('Authentication failed');
+    }
+  });
+  
+  // 3. Create Meeting with OAuth
+  app.post('/create-meeting', async (req, res) => {
+    try {
+        console.log('Session User:', req.user); // 👈 Add this
+        console.log('Session ID:', req.sessionID); // 👈 Add this
 
+        // this
+      if (!req.session.zoomTokens?.access_token) {
+        return res.status(401).json({ error: 'Not authenticated with Zoom' });
+      }
+  
+      // Refresh token if expired
+      if (Date.now() > req.session.zoomTokens.expires_at) {
+        const newTokens = await refreshZoomToken(req.session.zoomTokens.refresh_token);
+        req.session.zoomTokens = newTokens;
+      }
+  
+      // Create meeting
+      const response = await axios.post(
+        'https://api.zoom.us/v2/users/me/meetings',
+        {
+          topic: 'OAuth Meeting',
+          type: 1,
+          settings: {
+            host_video: true,
+            participant_video: true
+          }
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${req.session.zoomTokens.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+  
+      res.json(response.data);
+    } catch (error) {
+        console.error({ stack: error.stack})
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Helper: Refresh access token
+  async function refreshZoomToken(refreshToken) {
+    const response = await axios.post('https://zoom.us/oauth/token', null, {
+      params: {
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken
+      },
+      auth: {
+        username: process.env.ZOOM_CLIENT_ID,
+        password: process.env.ZOOM_CLIENT_SECRET
+      }
+    });
+  
+    return {
+      access_token: response.data.access_token,
+      refresh_token: response.data.refresh_token,
+      expires_at: Date.now() + (response.data.expires_in * 1000)
+    };
+  }
 
-
+ 
 
 
 

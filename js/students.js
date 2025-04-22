@@ -570,7 +570,7 @@ function generateLessons(lessons, currlesson){
                 startButton.innerHTML = "Start lesson";
                 lessonA.appendChild(startButton);
                 startButton.onclick = async ()=>{
-                    startMeeting();
+
                 }
 
                 const cancelButton = document.createElement("button");
@@ -610,29 +610,30 @@ function generateLessons(lessons, currlesson){
 }
 
 
+async function connectZoom() {
+    // Initiate Zoom OAuth flow
+    window.location.href = '/auth/zoom';
+  }
 
-
-async function startMeeting(){
-    /*const zoomClient = ZoomMtgEmbedded.createClient();
-    const response = await fetch("/api/zoom/create-meeting");
-    const meetingData = await response.json();
-
-    ZoomMtgEmbedded.init({
-        debug:true,
-        zoomAppRoot:document.body,
-        language:"en-US",
-        customize: {
-            meetingInfo:["topic", "host", "mn", "pwd", "telPwd", "invite", "participant", "dc", "enctype"],
-            toolbar:{buttons:[{text:"Leave", onClick:()=>{zoomClient.leaveMeeting()}}]}
+  async function createMeeting() {
+    try {
+      const response = await fetch('http://localhost:5000/create-meeting', {
+        method: 'POST',
+        credentials: 'include', // 👈 Mandatory for cookies
+        headers: {
+          'Content-Type': 'application/json'
         }
-    });
-
-    zoomClient.join({
-        sdkKey:meetingData.clientID,
-        signature:generateSignature(), // Generate on backend if using SDK
-        meetingNumber:meetingData.meetingID,
-        password:meetingData.password,
-        userName: 'Your Name',
-        userEmail: 'your@email.com'
-    });*/
-}
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Request failed');
+      }
+  
+      const meetingData = await response.json();
+      window.open(meetingData.join_url);
+    } catch (error) {
+      console.error('Frontend Error:', error);
+      alert(error.message);
+    }
+  }
