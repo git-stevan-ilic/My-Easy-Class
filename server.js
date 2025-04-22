@@ -71,6 +71,60 @@ app.get("/auth/google", passport.authenticate("google", {
     prompt:"consent"
 }));
 
+/*--Setup Zoom Services------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*
+const zoomus = require("zoomus")({
+    client_id:process.env.ZOOM_CLIENT_ID,
+    client_secret:process.env.ZOOM_CLIENT_SECRET
+});
+
+app.get("/auth/zoom", (req, res)=>{
+    const zoomAuthURL = "https://zoom.us/oauth/authorize?response_type=code&client_id="+ZOOM_CLIENT_ID+"&redirect_uri="+ZOOM_REDIRECT_URI;
+    res.redirect(zoomAuthURL);
+});
+app.get("/auth/zoom/callback", async (req, res)=>{
+    try {
+        const {code} = req.query;
+        const {data} = await zoomus.auth.getToken(code);
+        // Store access_token and refresh_token securely
+        res.redirect("/dashboard");
+    }
+    catch(error){
+        console.error("Zoom Auth Failed", error);
+        res.status(500).send("Zoom Auth Failed");
+    }
+});
+*/
+
+/*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*app.post("/api/zoom/create-meeting", async (req, res)=>{
+    try{
+        const meeting = await zoomus.meeting.create({
+            topic:"My Meeting",
+            type:1, // Instant meeting
+            settings:{
+                host_video:true,
+                participant_video:true
+            }
+        });
+        res.json({success:true, meeting});
+    }
+    catch(error){
+        console.log("Zoom meeting cretaion error: ", error);
+        res.status(500).json({
+            success:false,
+            error:"Failed to create meeting",
+            details:error.message
+        });
+    }
+});
+
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Something went wrong!' });
+  });
+  app.use(express.static('public'));*/
+
 /*--Google Mail API----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 app.get("/api/emails/:inbox", async (req, res)=>{
     try{

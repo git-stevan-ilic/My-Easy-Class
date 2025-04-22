@@ -1,5 +1,17 @@
 /*--Initial------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 function loadStudentsLogic(user){
+    let lessons = [
+        [
+            {lessonName:"lesson name", content:"lesson content", students:["student1", "student2", "student3"], className:"class a"}
+        ],
+        [
+            
+        ],
+        [
+            
+        ]
+    ]
+    let currlesson = 0;
     let classes = [
         {name:"All Students", students:[
             {id:"0", name:"test 1"}, {id:"1", name:"test 2"}, {id:"2", name:"test 3"}
@@ -8,11 +20,17 @@ function loadStudentsLogic(user){
             {id:"0", name:"test 1"}, {id:"1", name:"test 2"}, {id:"2", name:"test 3"}
         ]}
     ], currClass = 0;
+
+
+
+
+    //let classes = [], lessons = [[], [], []], currClass = 0, currlesson = 0;
     let classNameSearch = "", studentListSearch = "", inviteStudendSearch = "";
     generateClasses(classNameSearch, classes);
     generateNewClassLogic();
     addStudentEvents(user);
     displayCurrClass(classes[currClass], studentListSearch);
+    generateLessons(lessons[currlesson], currlesson);
 
     const classSearchIcon = document.querySelector("#class-search-icon");
     const classSearch = document.querySelector("#class-search");
@@ -51,6 +69,58 @@ function loadStudentsLogic(user){
         let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
         let availableStudents = classes[0].students.filter(item => !currClassIDs.has(item.id)); 
         inviteListSearchApply(availableStudents, inviteStudendSearch);
+    }
+
+    const lessonTabs = document.querySelectorAll(".lesson-tab");
+    for(let i = 0; i < lessonTabs.length; i++){
+        lessonTabs[i].onclick = ()=>{
+            if(!lessonTabs[i].classList.contains("lesson-selected-tab")){
+                document.querySelector(".lesson-selected-tab").classList.remove("lesson-selected-tab");
+                lessonTabs[i].classList.add("lesson-selected-tab");
+                currlesson = i;
+                generateLessons(lessons[currlesson], currlesson);
+            }
+        }
+    }
+
+    const newLessonName = document.querySelector("#new-lesson-input-name");
+    const newLessonContent = document.querySelector("#new-lesson-input-content");
+    const newLessonDate = document.querySelector("#new-lesson-input-date");
+    const newLessonTime = document.querySelector("#new-lesson-input-time");
+    document.querySelector("#new-lesson").onclick = ()=>{
+        newLessonName.value = "";
+        newLessonContent.value = "";
+        newLessonDate.value = "";
+        newLessonTime.value = "";
+        fadeIn("#new-lesson-screen", 0.1, "block");
+    }
+    document.querySelector("#new-button-cancel").onclick = ()=>{
+        fadeOut("#new-lesson-screen", 0.1, ()=>{
+            newLessonName.value = "";
+            newLessonContent.value = "";
+            newLessonDate.value = "";
+            newLessonTime.value = "";
+        });
+    }
+    document.querySelector("#new-button-confirm").onclick = ()=>{
+        if(newLessonName.value === "" || newLessonContent.value === "" || newLessonDate.value === "" || newLessonTime.value === ""){
+            alert("Input all values");
+            return;
+        }
+        let studentNames = [];
+        for(let i = 0; i < classes[currClass].students.length; i++){
+            studentNames.push(classes[currClass].students[i].name);
+        }
+        lessons[0].push({
+            lessonName:newLessonName.value,
+            content:newLessonContent.value,
+            students:studentNames,
+            className:classes[currClass].name,
+            date:newLessonDate.value,
+            time:newLessonTime.value
+        });
+        document.querySelector("#new-button-cancel").click();
+        generateLessons(lessons[currlesson], currlesson);
     }
 
     window.addEventListener("new-class", (e)=>{
@@ -104,6 +174,8 @@ function loadStudentsLogic(user){
     });
     window.addEventListener("change-curr-class", (e)=>{
         currClass = e.detail.newCurrClass;
+        studentListSearch = "";
+        studentSearch.value = studentListSearch;
         displayCurrClass(classes[currClass], studentListSearch);
     });
     window.addEventListener("delete-student", (e)=>{
@@ -134,6 +206,139 @@ function loadStudentsLogic(user){
         generateClasses(classNameSearch, classes);
         displayCurrClass(classes[currClass], studentListSearch);
     });
+}
+
+/*--Classes List-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+function generateClasses(classNameSearch, classes){
+    const classList = document.querySelector(".class-list");
+    while(classList.children.length > 0) classList.removeChild(classList.lastChild);
+    classList.innerHTML = "";
+
+    let filteredClasses = [];
+    for(let i = 0; i < classes.length; i++){
+        let containsName = (classes[i].name).toLowerCase().indexOf(classNameSearch.toLowerCase()) !== -1;
+        if(classNameSearch === "" || containsName) filteredClasses.push(classes[i]);
+    }
+
+    if(filteredClasses.length === 0){
+        classList.innerHTML = "No classes present";
+        return;
+    }
+    for(let i = 0; i < classes.length; i++){
+        let containsName = (classes[i].name).toLowerCase().indexOf(classNameSearch.toLowerCase()) !== -1;
+        if(classNameSearch === "" || containsName){
+            const row  = document.createElement("div");  row.className = "class-list-window-row";
+            const icon = document.createElement("div"); icon.className = "class-list-window-icon";
+            const text = document.createElement("div"); text.className = "class-list-window-text";
+            const num  = document.createElement("div");  num.className = "class-list-window-num";
+    
+          
+            num.innerText = classes[i].students.length;
+            text.innerText = classes[i].name;
+            if(i === 1) icon.classList.add("class-list-window-icon-user");
+    
+            row.appendChild(icon);
+            row.appendChild(text);
+            row.appendChild(num);
+            classList.appendChild(row);
+
+            row.onclick = ()=>{
+                const changeCurrClassData = {detail:{newCurrClass:i}}
+                const changeCurrClass = new CustomEvent("change-curr-class", changeCurrClassData);
+                window.dispatchEvent(changeCurrClass);
+            }
+        }
+    }
+    
+    const displayCurrClass = new Event("display-curr-class");
+    window.dispatchEvent(displayCurrClass);
+}
+function generateNewClassLogic(){
+    const createClassHolder = document.querySelector(".class-list-window-button-holder");
+    const newClassHolder = document.querySelector(".class-list-window-input-holder");
+    const newClassConfirm = document.querySelector("#new-class-confirm");
+    const newClassCancel = document.querySelector("#new-class-cancel");
+    const newClassInput = document.querySelector("#new-class-input");
+    const createClass = document.querySelector("#create-class");
+    
+    createClass.onclick = ()=>{
+        newClassInput.value = "";
+        createClassHolder.style.display = "none";
+        newClassHolder.style.display = "block";
+    }
+    newClassCancel.onclick = ()=>{
+        newClassInput.value = "";
+        newClassHolder.style.display = "none";
+        createClassHolder.style.display = "flex";
+    }
+    newClassConfirm.onclick = ()=>{
+        if(!newClassInput.value){
+            alert("Input a class name");
+            return;
+        }
+        const eventData = {detail:{name:newClassInput.value}}
+        const newClassData = new CustomEvent("new-class", eventData);
+        window.dispatchEvent(newClassData);
+        newClassCancel.click();
+    }
+}
+function displayCurrClass(currClass, studentListSearch){
+    document.querySelector(".class-title").innerText = currClass.name;
+    const studentList = document.querySelector(".class-window-student-list");
+    while(studentList.children.length > 0) studentList.removeChild(studentList.lastChild);
+    if(currClass.students.length === 0) studentList.innerHTML = "No students in classroom";
+    else{
+        let displayedStudents = [];
+        for(let i = 0; i < currClass.students.length; i++){
+            let conditionName = currClass.students[i].name.toLowerCase();
+            let containCondition = conditionName.indexOf(studentListSearch.toLowerCase()) !== -1; 
+            if(studentListSearch === "" || containCondition){
+                displayedStudents.push(currClass.students[i]);
+            }
+        }
+        if(displayedStudents.length === 0) studentList.innerHTML = "No students in classroom";
+        else{
+            studentList.innerHTML = "";
+            for(let i = 0; i <displayedStudents.length; i++){
+                const student = document.createElement("div");
+                const studentIcon = document.createElement("div");
+                const studentName = document.createElement("div");
+            
+                student.className = "class-window-student";
+                studentIcon.className = "class-window-student-icon";
+                studentName.className = "class-window-student-name";
+                studentName.innerText = displayedStudents[i].name;
+    
+                student.appendChild(studentIcon);
+                student.appendChild(studentName);
+                studentList.appendChild(student);
+
+
+                const studentDelete = document.createElement("div");
+                studentDelete.className = "class-window-student-delete";
+                student.appendChild(studentDelete);
+                if(currClass.name === "All Students" || currClass.name === "Ungrouped"){
+                    studentDelete.onclick = ()=>{
+                        if(confirm("Are you sure you want to remove this student from all classes?")){
+                            const data = {detail:{id:displayedStudents[i].id}}
+                            const deleteStudentEvent = new CustomEvent("delete-student", data);
+                            window.dispatchEvent(deleteStudentEvent);
+                        }
+                    }
+                }
+                else{
+                    studentDelete.classList.add("class-window-student-remove");
+                    studentDelete.onclick = ()=>{
+                        if(confirm("Are you sure you want to remove this student from this class?")){
+                            const data = {detail:{id:displayedStudents[i].id, currClass:currClass}}
+                            const deleteStudentEvent = new CustomEvent("remove-student", data);
+                            window.dispatchEvent(deleteStudentEvent);
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 /*--Add Students-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -323,135 +528,111 @@ function inviteListSearchApply(students, inviteStudendSearch){
     else noIniteList.style.display = "none";
 }
 
-/*--Classes List-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function generateClasses(classNameSearch, classes){
-    const classList = document.querySelector(".class-list");
-    while(classList.children.length > 0) classList.removeChild(classList.lastChild);
-    classList.innerHTML = "";
+/*--lessons-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+function generateLessons(lessons, currlesson){
+    const listHolder = document.querySelector(".lesson-list-holder");
+    while(listHolder.children.length > 0) listHolder.removeChild(listHolder.lastChild);
+    for(let i = 0; i < lessons.length; i++){
+        const  lesson = document.createElement("div"); 
+        const lessonN = document.createElement("div"); 
+        const lessonC = document.createElement("div"); 
+        const lessonS = document.createElement("div"); 
+        const lessonA = document.createElement("div"); 
 
-    let filteredClasses = [];
-    for(let i = 0; i < classes.length; i++){
-        let containsName = (classes[i].name).toLowerCase().indexOf(classNameSearch.toLowerCase()) !== -1;
-        if(classNameSearch === "" || containsName) filteredClasses.push(classes[i]);
-    }
+        lesson.className  = "lesson";
+        lessonN.className = "lesson-list-element lesson-name";
+        lessonC.className = "lesson-list-element lesson-content";
+        lessonS.className = "lesson-list-element lesson-students";
+        lessonA.className = "lesson-list-element lesson-action";
 
-    if(filteredClasses.length === 0){
-        classList.innerHTML = "No classes present";
-        return;
-    }
-    for(let i = 0; i < classes.length; i++){
-        let containsName = (classes[i].name).toLowerCase().indexOf(classNameSearch.toLowerCase()) !== -1;
-        if(classNameSearch === "" || containsName){
-            const row  = document.createElement("div");  row.className = "class-list-window-row";
-            const icon = document.createElement("div"); icon.className = "class-list-window-icon";
-            const text = document.createElement("div"); text.className = "class-list-window-text";
-            const num  = document.createElement("div");  num.className = "class-list-window-num";
-    
-          
-            num.innerText = classes[i].students.length;
-            text.innerText = classes[i].name;
-            if(i === 1) icon.classList.add("class-list-window-icon-user");
-    
-            row.appendChild(icon);
-            row.appendChild(text);
-            row.appendChild(num);
-            classList.appendChild(row);
+        let studentText = "Class: "+lessons[i].className+"<br>";
+        for(let j = 0; j < lessons[i].students.length; j++){
+            let comma = ", ";
+            if(j === lessons[i].students.length - 1) comma = "";
+            studentText += lessons[i].students[j]+comma;
+        }
 
-            row.onclick = ()=>{
-                const changeCurrClassData = {detail:{newCurrClass:i}}
-                const changeCurrClass = new CustomEvent("change-curr-class", changeCurrClassData);
-                window.dispatchEvent(changeCurrClass);
-            }
+        lessonN.innerHTML = lessons[i].lessonName;
+        lessonC.innerHTML = lessons[i].content;
+        lessonS.innerHTML = studentText;
+
+        lesson.appendChild(lessonN);
+        lesson.appendChild(lessonC);
+        lesson.appendChild(lessonS);
+        lesson.appendChild(lessonA);
+        listHolder.appendChild(lesson);
+
+        switch(currlesson){
+            default:break;
+            case 0:
+                const startButton = document.createElement("button");
+                startButton.className = "action-button";
+                startButton.innerHTML = "Start lesson";
+                lessonA.appendChild(startButton);
+                startButton.onclick = async ()=>{
+                   
+                }
+
+                const cancelButton = document.createElement("button");
+                cancelButton.className = "action-button";
+                cancelButton.innerHTML = "Cancel lesson";
+                lessonA.appendChild(cancelButton);
+                cancelButton.onclick = ()=>{
+                    /*if(confirm("Are you sure you want to cancel this lesson?")){
+                        const cancellesson = new CustomEvent("cancel-lesson", {detail:{index:i}});
+                        window.dispatchEvent(cancellesson);
+                    }*/
+                    alert("database error");
+                }
+                break;
+            case 1:
+                const commentButton = document.createElement("button");
+                commentButton.className = "action-button";
+                commentButton.innerHTML = "Comment Students";
+                lessonA.appendChild(commentButton);
+                commentButton.onclick = ()=>{
+                    alert("database error");
+                }
+                break;
+            case 2:
+                const rescheduleButton = document.createElement("button");
+                rescheduleButton.className = "action-button";
+                rescheduleButton.innerHTML = "Reschedule lesson";
+                lessonA.appendChild(rescheduleButton);
+                rescheduleButton.onclick = ()=>{
+                    //const reschedulelesson = new CustomEvent("reschedule-lesson", {detail:{index:i}});
+                    //window.dispatchEvent(reschedulelesson);
+                    alert("database error");
+                }
+                break;
         }
     }
-    
-    const displayCurrClass = new Event("display-curr-class");
-    window.dispatchEvent(displayCurrClass);
 }
-function generateNewClassLogic(){
-    const createClassHolder = document.querySelector(".class-list-window-button-holder");
-    const newClassHolder = document.querySelector(".class-list-window-input-holder");
-    const newClassConfirm = document.querySelector("#new-class-confirm");
-    const newClassCancel = document.querySelector("#new-class-cancel");
-    const newClassInput = document.querySelector("#new-class-input");
-    const createClass = document.querySelector("#create-class");
-    
-    createClass.onclick = ()=>{
-        newClassInput.value = "";
-        createClassHolder.style.display = "none";
-        newClassHolder.style.display = "block";
-    }
-    newClassCancel.onclick = ()=>{
-        newClassInput.value = "";
-        newClassHolder.style.display = "none";
-        createClassHolder.style.display = "flex";
-    }
-    newClassConfirm.onclick = ()=>{
-        if(!newClassInput.value){
-            alert("Input a class name");
-            return;
-        }
-        const eventData = {detail:{name:newClassInput.value}}
-        const newClassData = new CustomEvent("new-class", eventData);
-        window.dispatchEvent(newClassData);
-        newClassCancel.click();
-    }
-}
-function displayCurrClass(currClass, studentListSearch){
-    document.querySelector(".class-title").innerText = currClass.name;
-    const studentList = document.querySelector(".class-window-student-list");
-    while(studentList.children.length > 0) studentList.removeChild(studentList.lastChild);
-    if(currClass.students.length === 0) studentList.innerHTML = "No students in classroom";
-    else{
-        let displayedStudents = [];
-        for(let i = 0; i < currClass.students.length; i++){
-            let conditionName = currClass.students[i].name.toLowerCase();
-            let containCondition = conditionName.indexOf(studentListSearch.toLowerCase()) !== -1; 
-            if(studentListSearch === "" || containCondition){
-                displayedStudents.push(currClass.students[i]);
+
+
+
+
+async function startMeeting(){
+    /*try {
+        const response = await fetch("/api/zoom/create-meeting", {
+            method:"POST",
+            headers: {
+                "Content-Type":"application/json",
+                "Accept":"application/json"
             }
+        });
+        const result = await response.json();
+        if(result.success){
+            document.getElementById("zoom-meeting-container").innerHTML = `
+            <p>Meeting ID: ${result.id}</p>
+            <p>Join URL: <a href="${result.join_url}" target="_blank">${result.join_url}</a></p>
+        `;
         }
-        if(displayedStudents.length === 0) studentList.innerHTML = "No students in classroom";
         else{
-            studentList.innerHTML = "";
-            for(let i = 0; i <displayedStudents.length; i++){
-                const student = document.createElement("div");
-                const studentIcon = document.createElement("div");
-                const studentName = document.createElement("div");
-            
-                student.className = "class-window-student";
-                studentIcon.className = "class-window-student-icon";
-                studentName.className = "class-window-student-name";
-                studentName.innerText = displayedStudents[i].name;
-    
-                student.appendChild(studentIcon);
-                student.appendChild(studentName);
-                studentList.appendChild(student);
-
-
-                const studentDelete = document.createElement("div");
-                studentDelete.className = "class-window-student-delete";
-                student.appendChild(studentDelete);
-                if(currClass.name === "All Students" || currClass.name === "Ungrouped"){
-                    studentDelete.onclick = ()=>{
-                        if(confirm("Are you sure you want to remove this student from all classes?")){
-                            const data = {detail:{id:displayedStudents[i].id}}
-                            const deleteStudentEvent = new CustomEvent("delete-student", data);
-                            window.dispatchEvent(deleteStudentEvent);
-                        }
-                    }
-                }
-                else{
-                    studentDelete.classList.add("class-window-student-remove");
-                    studentDelete.onclick = ()=>{
-                        if(confirm("Are you sure you want to remove this student from this class?")){
-                            const data = {detail:{id:displayedStudents[i].id, currClass:currClass}}
-                            const deleteStudentEvent = new CustomEvent("remove-student", data);
-                            window.dispatchEvent(deleteStudentEvent);
-                        }
-                    }
-                }
-            }
+            console.error("Zoom Meeting Response Error: ", result.error, result.details);   
         }
     }
+    catch(error){
+        console.error("Zoom Meeting Error: ", error);
+    }*/
 }

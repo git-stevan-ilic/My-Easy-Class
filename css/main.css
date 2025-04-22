@@ -93,7 +93,7 @@ button:active{
     border:none;
 }
 
-input[type=text],[type=password],[type=email],[type=time]{
+input[type=text],[type=password],[type=email],[type=time],[type=date]{
     background-color:var(--background-gray-1);
     border:1px solid var(--border-gray-1);
     border-radius:var(--border-radius-1);
@@ -401,7 +401,7 @@ input[type=text],[type=password],[type=email],[type=time]{
     top:0px;
 }
 .screen-mask{
-    position:absolute;
+    position:fixed;
     display:none;
     
     height:100%;
@@ -413,7 +413,7 @@ input[type=text],[type=password],[type=email],[type=time]{
 .screen-mask-background{
     background-image:linear-gradient(to bottom, var(--accent-blue-1), var(--accent-blue-2));
     position:absolute;
-    opacity:0.5;
+    opacity:0.75;
     height:100%;
     width:100%;
     left:0px;

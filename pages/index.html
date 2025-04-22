@@ -14,6 +14,13 @@
     <link rel="stylesheet" type="text/css" href="../css/mail.css">
     <link rel="stylesheet" type="text/css" href="../css/main.css">
 
+
+    <script type="text/javascript" src="https://source.zoom.us/2.13.0/lib/vendor/react.min.js"></script>
+    <script type="text/javascript" src="https://source.zoom.us/2.13.0/lib/vendor/react-dom.min.js"></script>
+    <script type="text/javascript" src="https://source.zoom.us/2.13.0/lib/vendor/redux.min.js"></script>
+    <script type="text/javascript" src="https://source.zoom.us/2.13.0/lib/vendor/redux-thunk.min.js"></script>
+    <script type="text/javascript" src="https://source.zoom.us/2.13.0/lib/vendor/lodash.min.js"></script>
+    <script type="text/javascript" src="https://source.zoom.us/2.13.0/zoom-meeting-embedded-2.13.0.min.js"></script>
     <script type="text/javascript" src="../js/login logic.js"></script>
     <script type="text/javascript" src="../js/socket.io.js"></script>
     <script type="text/javascript" src="../js/students.js"></script>
@@ -285,7 +292,7 @@
                 </div>
                 <div class="drive-body"></div>
             </div>
-            <div class="screen tab-affected" id="students-screen">
+            <div class="screen tab-affected" id="students-screen" style="display:block;">
                 <div class="class-list-window">
                     <div class="search-holder" id="class-search-icon-holder">
                         <div class="search-icon" id="class-search-icon"></div> 
@@ -309,7 +316,7 @@
                     <div class="students-main-head">
                         <div class="class-title">All Students</div>
                         <div class="class-head-buttons">
-                            <!--<button class="blue-button" id="new-lession">New Lession</button>-->
+                            <button class="blue-button" id="new-lesson">New lesson</button>
                             <button class="blue-button" id="add-students">Add Students</button>
                         </div>
                         <div class="add-student-drop-down">
@@ -345,11 +352,38 @@
                         </div>
                     </div>
                 </div>
+                <div class="lesson-holder">
+                    <div class="lesson-tab-holder">
+                        <div class="lesson-tab lesson-selected-tab">
+                            <div class="lesson-tab-icon" id="coming-tab"></div>
+                            <div class="lesson-tab-name">Coming</div>
+                        </div>
+                        <div class="lesson-tab">
+                            <div class="lesson-tab-icon" id="finished-tab"></div>
+                            <div class="lesson-tab-name">Finished</div>
+                        </div>
+                        <div class="lesson-tab">
+                            <div class="lesson-tab-icon" id="canceled-tab"></div>
+                            <div class="lesson-tab-name">Canceled</div>
+                        </div>
+                    </div>
+                    <div class="lesson-head">
+                        <div class="lesson-head-label-holder">
+                            <div class="lesson-name">lesson Name</div>
+                            <div class="lesson-content">lesson Content</div>
+                            <div class="lesson-students">Students</div>
+                            <div class="lesson-action">Teacher Action</div>
+                        </div>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-list-holder"></div>
+                    </div>
+                </div>
             </div>
             <div class="screen tab-affected" id="homework-screen">
                 <div class="wip">Work in Progress</div>
             </div>
-            <div class="screen" id="about-me-screen" style="display:block;">
+            <div class="screen" id="about-me-screen">
                 <div class="about-me-info-holder">
                     <div class="about-me-image user-icon"></div>
                     <div class="about-me-info">
@@ -568,6 +602,34 @@
             <div class="about-me-edit-window-foot">
                 <button id="about-me-edit-save">Save</button>
                 <button id="about-me-edit-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <div class="screen-mask" id="new-lesson-screen">
+        <div class="screen-mask-background"></div>
+        <div class="new-lesson-window">
+            <div class="new-lesson-window-head">New lesson</div>
+            <div class="new-lesson-window-body">
+                <div class="new-lesson-row">
+                    <div class="new-lesson-label">Name</div>
+                    <input class="new-lesson-input" type="text"  id="new-lesson-input-name">
+                </div>
+                <div class="new-lesson-row">
+                    <div class="new-lesson-label">Content</div>
+                    <input class="new-lesson-input" type="text" id="new-lesson-input-content">
+                </div>
+                <div class="new-lesson-row">
+                    <div class="new-lesson-label">Date</div>
+                    <input class="new-lesson-input" type="date" id="new-lesson-input-date">
+                </div>
+                <div class="new-lesson-row">
+                    <div class="new-lesson-label">Time</div>
+                    <input class="new-lesson-input" type="time" id="new-lesson-input-time">
+                </div>
+            </div>
+            <div class="new-lesson-window-foot">
+                <button id="new-button-confirm">Confirm</button>
+                <button id="new-button-cancel">Cancel</button>
             </div>
         </div>
     </div>
