@@ -45,7 +45,7 @@ io.use(sharedsession(sessionMiddleware, {autoSave:true}));
 passport.use(new GoogleStrategy({
     clientID:process.env.GOOGLE_CLIENT_ID,
     clientSecret:process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL:GOOGLE_REDIRECT_URL,
+    callbackURL:process.env.GOOGLE_REDIRECT_URL,
     scope:[
         "profile", "email", "https://www.googleapis.com/auth/calendar",
         "https://www.googleapis.com/auth/drive.metadata.readonly",
