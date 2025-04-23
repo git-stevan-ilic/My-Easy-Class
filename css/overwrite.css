@@ -1,0 +1,69 @@
+body{
+    background-color:var(--background-white);
+    font-family:"Inter";
+    overflow-x:hidden;
+    overflow-y:auto;
+    font-size:1vw;
+    height:100%;
+    padding:0px;
+    margin:0px;  
+}
+button{
+    background-color:var(--background-white);
+    border-radius:var(--border-radius-1);
+    border:1px solid var(--dark-blue);
+    transform:translateY(0px);
+    color:var(--dark-blue);
+    font-size:1.25vw;
+    aspect-ratio:3.5;
+    width:8vw;
+
+    transition:ease-in-out 0.1s;
+    justify-content:center;
+    font-family:"Inter";
+    align-items:center;
+    cursor:pointer;
+    display:flex;
+}
+button:hover{
+    transform:translateY(-1px);
+}
+button:active{
+    transform:translateY(1px);
+}
+.blue-button{
+    background-color:var(--accent-blue-1);
+    color:var(--background-white);
+    width:calc(18.25vw + 2px);
+    aspect-ratio:6;
+    margin-top:1vw;
+
+    font-weight:bold;
+    border:none;
+}
+
+#meetingFrame{
+    position:absolute;
+    display:none;
+}
+#zmmtg-root{
+    position:absolute;
+    display:none;
+}
+
+.selected-tab{
+    background-color:var(--background-gray-3);
+    color:var(--dark-blue);
+    cursor:default;
+}
+.selected-tab:hover{
+    background-color:var(--background-gray-3);
+}
+.selected-tab:active{
+    background-color:var(--background-gray-3);
+}
+
+@font-face{
+    font-family:"Inter";
+    src:url("../assets/fonts/Inter Variable Font.ttf");
+}

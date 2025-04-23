@@ -3,6 +3,7 @@ window.onload = initLoad;
 
 function initLoad(){
     const client = io();
+    ZoomMeetingAPI();
 
     //loadAssistantLogic();
     loadLogInLogic(client);
@@ -21,6 +22,14 @@ function initLoad(){
     document.querySelector(".dashboard-account-share").onclick = ()=>{
         notification("Link Error");
     }
+
+    const head = document.getElementsByTagName("head")[0];
+    const link = document.createElement("link");
+    link.rel   = "stylesheet";
+    link.type  = "text/css";
+    link.href  = "../css/overwrite.css";
+    head.appendChild(link);
+    setTimeout(()=>{fadeOut(".loading-screen", 0.1)}, 200);
 }
 
 function fadeIn(query, durration, type, callabck){

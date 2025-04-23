@@ -28,6 +28,10 @@ body{
     padding:0px;
     margin:0px;  
 }
+.page{
+    height:100%;
+    width:100%;
+}
 .notification{
     box-shadow:0.25vw 0.25vw 0.5vw rgba(0, 0, 0, 0.15);
     background-color:var(--background-white);

@@ -10,7 +10,6 @@ const axios = require("axios");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const querystring = require("querystring");
-const cors = require("cors");
 
 const app = express();
 const server = createServer(app);

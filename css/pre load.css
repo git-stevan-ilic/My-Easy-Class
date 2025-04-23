@@ -1,0 +1,32 @@
+.loading-screen{
+    background-image:radial-gradient(circle, rgb(255, 255, 255), rgb(235, 235, 235));
+    background-color:rgb(255, 255, 255);
+    position:absolute;
+    height:100%;
+    width:100%;
+    left:0px;
+    top:0px;
+    z-index:10;
+}
+.loading-screen-loader{
+    border:1vw solid rgb(016, 047, 068);
+    border-bottom:1vw solid rgba(0, 0, 0, 0);
+    transform:translate(-50%, -50%);
+    border-radius:100%;
+    position:absolute;
+    aspect-ratio:1;
+    height:5vw;
+    opacity:0;
+    left:50%;
+    top:50%;
+    animation:lsl-spin linear 1s infinite, lsl-fade ease-in-out 0.2s 3s forwards;
+}
+
+@keyframes lsl-spin{
+    from {transform:translate(-50%, -50%) rotate(0deg)}
+    to   {transform:translate(-50%, -50%) rotate(360deg)}
+}
+@keyframes lsl-fade{
+    from {opacity:0;}
+    to   {opacity:1;}
+}

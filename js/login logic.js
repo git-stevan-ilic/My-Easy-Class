@@ -87,10 +87,6 @@ function googleLogin(client){
     client.on("google-status", (user)=>{
         if(user){
             document.querySelector("#dahsboard-screen").style.display = "block";
-            if(user.photos.length > 0){
-                const userIcons = document.querySelectorAll(".user-icon");
-                for(let i = 0; i < userIcons.length; i++) userIcons[i].style.backgroundImage = "url('"+user.photos[0].value+"')";
-            }
             fadeOut(".pre-main-head", 0.1, ()=>{fadeIn(".main-head", 0.1, "flex")});
             fadeOut("#pre-main", 0.1, ()=>{fadeIn("#main", 0.1, "block")});
             accountLogOff.onclick = ()=>{client.emit("google-log-out")}
@@ -105,6 +101,10 @@ function googleLogin(client){
             document.querySelector(".dashboard-account-name").innerText = user.displayName;
             document.querySelector(".dashboard-account-email").innerText = user.emails[0].value;
             document.querySelector(".dashboard-account-desc").innerText = "No description provided";
+            if(user.photos.length > 0){
+                const userIcons = document.querySelectorAll(".user-icon");
+                for(let i = 0; i < userIcons.length; i++) userIcons[i].style.backgroundImage = 'url("'+user.photos[0].value+'")';
+            }
             console.log(user);
         }
         else{
