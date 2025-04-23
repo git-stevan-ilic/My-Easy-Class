@@ -20,7 +20,7 @@ function initLoad(){
         });
     });
     document.querySelector(".dashboard-account-share").onclick = ()=>{
-        notification("Link Error");
+        notification("Link copied");
     }
 
     const head = document.getElementsByTagName("head")[0];

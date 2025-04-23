@@ -16,7 +16,7 @@ function loadLogInLogic(client){
         }
     }
     document.querySelector(".signin-zoom").onclick = ()=>{
-        notification("Databse error");
+        connectZoom();
     }
     document.querySelector(".forgot-password").onclick = ()=>{
         notification("Databse error");

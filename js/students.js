@@ -361,12 +361,12 @@ function addStudentEvents(user){
         addStudentDropDown = false;
     }
     document.querySelector("#invite-link").onclick = ()=>{
-        notification("Link Error");
+        notification("Link copied");
         closeDropDown();
     }
     document.querySelector("#invite-qr").onclick = ()=>{
         new QRCode(document.querySelector(".invite-qr"),{
-            text:"Link Error",
+            text:"this is a display link",
             width:512,
             height:512,
             colorDark:"#000000",

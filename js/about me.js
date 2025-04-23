@@ -11,7 +11,7 @@ function loadAboutMeLogic(user){
         document.querySelector("#send-mail-recipients").value = emailValue;
     }
     document.querySelector(".about-me-share").onclick = ()=>{
-        notification("Link Error");
+        notification("Link copied");
     }
     document.querySelector("#about-me-cv").onclick = ()=>{
         if(!cvFile) alert("No CV present");

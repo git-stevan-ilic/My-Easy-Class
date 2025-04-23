@@ -354,10 +354,23 @@
     border:1px solid var(--border-gray-1);
     border-radius:var(--border-radius-2);
     transform:translate(-50%, -50%);
-    position:absolute;
-    padding:2vw;
+    padding-bottom:2vw;
+    padding-right:2vw;
+    padding-left:2vw;
     left:50%;
-    top:50%;;
+    top:50%;
+    position:absolute;
+}
+.invite-qr-window-head{
+    color:var(--dark-blue);
+    margin-bottom:1vw;
+    font-size:1.5vw;
+    height:3vw;
+
+    justify-content:center;
+    align-items:center;
+    font-weight:bold;
+    display:flex;
 }
 .invite-qr{
     height:min(65vh, 65vw);
