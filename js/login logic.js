@@ -90,6 +90,8 @@ function googleLogin(client){
             fadeOut(".pre-main-head", 0.1, ()=>{fadeIn(".main-head", 0.1, "flex")});
             fadeOut("#pre-main", 0.1, ()=>{fadeIn("#main", 0.1, "block")});
             accountLogOff.onclick = ()=>{client.emit("google-log-out")}
+            fadeIn(".assistant-holder", 0.1);
+            loadAssistantLogic(client);
             loadStudentsLogic(user);
             loadAboutMeLogic(user);
             loadDriveLogic(client);
@@ -112,6 +114,7 @@ function googleLogin(client){
             for(let i = 0; i < userIcons.length; i++) userIcons[i].style.backgroundImage = "url('../assets/icons/default user.png')";
             fadeOut(".main-head", 0.1, ()=>{fadeIn(".pre-main-head", 0.1, "flex")});
             fadeOut("#main", 0.1, ()=>{fadeIn("#pre-main", 0.1, "block")});
+            fadeOut(".assistant-holder", 0.1);
             accountLogOff.onclick = null;
         }
     });

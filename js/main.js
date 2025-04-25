@@ -3,10 +3,9 @@ window.onload = initLoad;
 
 function initLoad(){
     const client = io();
-    ZoomMeetingAPI();
 
-    //loadAssistantLogic();
     loadLogInLogic(client);
+    ZoomMeetingAPI();
     loadHeadLogic();
 
     let notificationTimeout;
@@ -133,7 +132,11 @@ function headTabLogic(){
         tabs[i].onclick = ()=>{
             if(currTab !== i){
                 const screensToClose = document.querySelector("#main").children;
-                for(let j = 0; j < screensToClose.length; j++) screensToClose[j].style.display = "none";
+                for(let j = 0; j < screensToClose.length; j++){
+                    if(screensToClose[j].classList.contains("tab-affected")){
+                        screensToClose[j].style.display = "none";
+                    }
+                }
                 document.getElementById(screens[i]).style.display = "block";
                
                 if(currTab !== -1){
@@ -156,11 +159,94 @@ function headTabLogic(){
 }
 
 /*--Assistant Logic----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function loadAssistantLogic(){
+function loadAssistantLogic(client){
     const assistantClose  = document.querySelector(".assistant-window-close");
     const assistantButton = document.querySelector(".assistant-button");
     const assistantWindow = document.querySelector(".assistant-window");
+    const assistantInput  = document.querySelector(".assistant-input");
+    const assistantSend   = document.querySelector(".assistant-send");
+    assistantInput.value = "";
+    clearAsisstantChat();
 
-    assistantButton.onclick = ()=>{assistantWindow.style.animation = "assistant-window-slide-in ease-in-out 0.2s forwards"}
-    assistantClose.onclick = ()=>{assistantWindow.style.animation = "assistant-window-slide-out ease-in-out 0.2s forwards"}
+    assistantButton.onclick = ()=>{
+        assistantWindow.style.animation = "assistant-window-slide-in ease-in-out 0.2s forwards";
+        assistantInput.value = "";
+    }
+    assistantClose.onclick = ()=>{
+        assistantWindow.style.animation = "assistant-window-slide-out ease-in-out 0.2s forwards";
+        assistantInput.value = "";
+    }
+    assistantSend.onclick = ()=>{
+        if(assistantInput.value !== ""){
+            client.emit("new-chatgpt-message", assistantInput.value);
+            addMessage(false, false, assistantInput.value);
+            assistantInput.value = "";
+            startThinking();
+        }
+    }
+
+    client.on("chatgpt-message-error", (error)=>{
+        console.log(error);
+        stopThinking("AI Error");
+    });
+    client.on("chatgpt-message", (message)=>{
+        stopThinking(message);
+    });
+}
+function clearAsisstantChat(){
+    const messageList = document.querySelector(".assistant-messages-list");
+    while(messageList.children.length > 0) messageList.removeChild(messageList.lastChild);
+}
+function startThinking(){
+    const assistantInput  = document.querySelector(".assistant-input");
+    const assistantSend   = document.querySelector(".assistant-send");
+    assistantInput.disabled = true;
+    assistantSend.disabled = true;
+    addMessage(true, true, "");
+}
+function stopThinking(message){
+    const assistantInput  = document.querySelector(".assistant-input");
+    const assistantSend   = document.querySelector(".assistant-send");
+    assistantInput.disabled = false;
+    assistantSend.disabled = false;
+    
+    const thinkingBubble = document.querySelector("#thinking-bubble");
+    thinkingBubble.style.animation = "fade-out ease-in-out 0.2s forwards";
+    thinkingBubble.onanimationend = ()=>{
+        addMessage(true, false, message);
+        thinkingBubble.remove();
+    }
+}
+function addMessage(bot, thinkingBubble, message){
+    const messageWindow = document.querySelector(".assistant-window-body");
+    const messageList = document.querySelector(".assistant-messages-list");
+    const newMessage = document.createElement("div");
+    const newMessageBody = document.createElement("div");
+
+    newMessage.className = "assistant-message";
+    newMessageBody.className = "assistant-message-body";
+    newMessageBody.innerText = message;
+
+    if(bot){
+        newMessage.classList.add("bot-message");
+        newMessageBody.classList.add("bot-message-body");
+    }
+    if(thinkingBubble){
+        newMessage.id = "thinking-bubble";
+        newMessageBody.innerText = "";
+        const thinkingDotHolder = document.createElement("div");
+        thinkingDotHolder.className = "assistant-message-thinking-dot-holder";
+        newMessageBody.appendChild(thinkingDotHolder);
+
+        for(let i = 0; i < 3; i++){
+            const thinkingDot = document.createElement("div");
+            thinkingDot.className = "assistant-message-thinking-dot";
+            thinkingDot.style.animationDelay = (i*0.25)+"s";
+            thinkingDotHolder.appendChild(thinkingDot);
+        }
+    }
+
+    newMessage.appendChild(newMessageBody);
+    messageList.insertBefore(newMessage, messageList.firstChild);
+    messageWindow.scrollTop = messageWindow.scrollHeight;
 }

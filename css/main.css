@@ -85,6 +85,18 @@ button:hover{
 button:active{
     transform:translateY(1px);
 }
+button:disabled{
+    cursor:default;
+    opacity:0.5;
+}
+button:hover:disabled{
+    transform:translateY(0px);
+    opacity:0.5;
+}
+button:active:disabled{
+    transform:translateY(0px);
+    opacity:0.5;
+}
 .blue-button{
     background-color:var(--accent-blue-1);
     color:var(--background-white);
@@ -105,6 +117,9 @@ input[type=text],[type=password],[type=email],[type=time],[type=date]{
     font-family:"Inter";
     font-size:1vw;
     height:1.75vw;
+}
+input[type=text]:disabled,[type=password]:disabled,[type=email]:disabled,[type=time]:disabled,[type=date]:disabled{
+    opacity:0.5;
 }
 
 .check-holder{
@@ -474,8 +489,10 @@ input[type=text].search-input{
 /*--Assistant Window---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .assistant-holder{
     pointer-events:none;
-    position:absolute;
+    position:fixed;
+    display:none;
     height:100%;
+    z-index:10;
     width:25vw;
     right:0px;
     top:0px;
@@ -488,7 +505,7 @@ input[type=text].search-input{
     position:absolute;
     aspect-ratio:1;
     width:3vw;
-    right:1vw;
+    right:2vw;
     bottom:1vw;
 
     cursor:pointer;
@@ -539,23 +556,23 @@ input[type=text].search-input{
     background-image:url("../assets/icons/x.png");
     background-position:center center;
     background-repeat:no-repeat;
-    background-size:contain;
+    background-size:75%;
     position:absolute;
     cursor:pointer;
 
+    transform:translate(-50%, -50%);
     transition:ease-in-out 0.05s;
-    transform:translateY(-50%);
     border-radius:100%;
     aspect-ratio:1;
     width:1.5vw;
-    right:1vw;
+    right:0vw;
     top:50%;
 }
 .assistant-window-close:hover{
-    transform:translateY(calc(-50% - 1px));
+    transform:translate(-50%, -50%) scale(1.1);
 }
 .assistant-window-close:active{
-    transform:translateY(calc(-50% + 1px));
+    transform:translate(-50%, -50%) scale(1);
 }
 .assistant-window-body{
     background-color:var(--background-white);
@@ -579,6 +596,7 @@ input[type=text].search-input{
     align-items:flex-start;
     display:flex;
     width:100%;
+    animation:assistant-message-pop-in ease-in-out 0.2s;
 }
 .assistant-message-body{
     background-color:var(--accent-blue-1);
@@ -595,12 +613,27 @@ input[type=text].search-input{
 }
 .bot-message{
     transform:scaleX(-1);
+    animation:assistant-message-pop-in-bot ease-in-out 0.2s;
 }
 .bot-message-body{
     border-radius:var(--border-radius-2);
     background-color:var(--gray-1);
     border-bottom-left-radius:0px;
     transform:scaleX(-1);
+}
+.assistant-message-thinking-dot-holder{
+    justify-content:space-evenly;
+    align-items:center;
+    display:flex;
+    height:1vw;
+    width:3vw;
+}
+.assistant-message-thinking-dot{
+    background-color:var(--background-white);
+    border-radius:100%;
+    aspect-ratio:1;
+    height:0.5vw;
+    animation:assistant-message-thinking-dot ease-in-out infinite 1s;
 }
 .assistant-window-foot{
     border-top:1px solid var(--border-gray-1);
@@ -639,6 +672,22 @@ input[type=text].search-input{
 @keyframes assistant-window-slide-out{
     from {right:-1px}
     to   {right:-110%}
+}
+@keyframes assistant-message-pop-in{
+    0%   {opacity:0; transform:translateX(100%) scale(0.5);}
+    60%  {opacity:1; transform:translateX(0%) scale(1.1);}
+    100% {opacity:1; transform:scale(1);}
+}
+@keyframes assistant-message-pop-in-bot{
+    0%   {opacity:0; transform:translateX(-100%) scaleX(-1) scale(0.5);}
+    60%  {opacity:1; transform:translateX(0%) scaleX(-1) scale(1.1);}
+    100% {opacity:1; transform:scaleX(-1) scale(1);}
+}
+@keyframes assistant-message-thinking-dot{
+    0%   {transform:scale(1);}
+    25%  {transform:scale(1.5);}
+    50%  {transform:scale(1);}
+    100% {transform:scale(1);}
 }
 
 /*--Page Foot----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/

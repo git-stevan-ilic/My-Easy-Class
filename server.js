@@ -3,6 +3,7 @@ const express = require("express");
 const { createServer } = require("node:http");
 const { Server } = require("socket.io");
 const dotenv = require("dotenv");
+const openai = require("openai");
 const fs = require("fs");
 dotenv.config();
 
@@ -11,6 +12,7 @@ const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const querystring = require("querystring");
 
+const openAI = new openai({apiKey:process.env.CHATGPT_API_KEY});
 const app = express();
 const server = createServer(app);
 const io = new Server(server);
@@ -23,6 +25,7 @@ const sessionMiddleware = session({
     cookie:{secure:false} // Set to true in production with HTTPS
 });
 app.use(sessionMiddleware);
+
 
 /*--Setup Google Services----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 const passport = require("passport");
@@ -74,6 +77,7 @@ app.get("/auth/google", passport.authenticate("google", {
     ],
     prompt:"consent"
 }));
+
 
 /*--Setup Zoom Services------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
@@ -334,6 +338,7 @@ app.delete("/api/emails/:id", async (req, res)=>{
     }
 });
 
+
 /*--Google Drive API---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 app.get("/api/drive-list", async (req, res)=>{
     if(!req.user || !req.user.accessToken) return res.status(401).json({error:"Not authenticated"});
@@ -503,6 +508,7 @@ app.delete("/api/drive-delete/:fileId", async (req, res)=>{
     }
 });
 
+
 /*--Google Calendar API------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 app.get("/api/calendar", async (req, res)=>{
     if(!req.user || !req.user.accessToken) return res.status(401).json({error:"Not authenticated"});
@@ -669,13 +675,13 @@ function getColorHex(colorId){
     return colors[colorId] || "1a73e8"; // Default blue
 }
 
+
 /*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 app.get('/auth/zoom', (req, res) => {
     const url = `https://zoom.us/oauth/authorize?response_type=code&client_id=${process.env.ZOOM_CLIENT_ID}&redirect_uri=${process.env.ZOOM_REDIRECT_URL}`;
     res.redirect(url);
-  });
-
-  app.get('/auth/zoom/callback', async (req, res) => {
+});
+app.get('/auth/zoom/callback', async (req, res) => {
     const { code } = req.query;
     const params = {
       grant_type: 'authorization_code',
@@ -692,8 +698,8 @@ app.get('/auth/zoom', (req, res) => {
     } catch (error) {
       res.send('Zoom authentication failed.');
     }
-  });
-  app.get('/api/create-meeting', async (req, res) => {
+});
+app.get('/api/create-meeting', async (req, res) => {
     if (!req.session.zoomAccessToken) return res.status(401).send('Unauthorized');
   
     try {
@@ -711,9 +717,7 @@ app.get('/auth/zoom', (req, res) => {
     } catch (error) {
       res.status(500).json({ error: 'Failed to create meeting' });
     }
-  });
-
-
+});
 
 
 /*--Start Server-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -733,5 +737,25 @@ io.on("connection",(client)=>{
         delete client.handshake.session.passport;
         client.handshake.session.save();
         client.emit("google-status", null);
+    });
+
+    client.on("new-chatgpt-message", (message)=>{
+        openAI.chat.completions.create({
+            model:"gpt-3.5-turbo",
+            message:[{role:"user", content:message}]
+        })
+        .then((result)=>{
+            console.log(result);
+        })
+        .catch((error)=>{
+            console.error("AI Error: ", error);
+            client.emit("chatgpt-message-error", error);
+        });
+    });
+    client.on("chatgpt-assignment", (material)=>{
+
+    });
+    client.on("chatgpt-homework", (material)=>{
+
     });
 });
