@@ -3,7 +3,45 @@ function loadLogInLogic(client){
     switchLoginSignin();
     googleLogin(client);
 
-    let rememberMe = false;
+    client.on("user-login-fail", (errorType)=>{
+        const errorTexts = [
+            "Database Error",
+            "User not found"
+        ];
+        console.error("User login error: "+errorTexts[errorType]);
+    });
+    client.on("user-login-success", (userData)=>{
+        console.log(userData);
+
+        document.querySelector(".dashboard-account-name").innerText = userData.username;
+        document.querySelector(".dashboard-account-email").innerText = userData.email;
+        document.querySelector(".dashboard-account-desc").innerText = userData.description || "Not provided";
+
+        document.querySelector(".about-me-name").innerText = userData.username;
+        document.querySelector(".about-me-email").innerText = userData.email;
+        document.querySelector("#about-me-job").innerText = userData.jobTitle || "Not provided";
+        document.querySelector("#about-me-location").innerText = userData.location || "Not provided";
+        document.querySelector("#about-me-education").innerText = userData.education || "Not provided";
+        document.querySelector("#about-me-history").innerText = userData.history || "Not provided";
+        document.querySelector("#about-me-desc").innerText = userData.description || "Not provided";
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /*let rememberMe = false;
     const rememberMeCheck = document.querySelector("#remember-me-check");
     rememberMeCheck.onclick = ()=>{
         if(!rememberMe){
@@ -29,7 +67,7 @@ function loadLogInLogic(client){
     }
     document.querySelector("#signin-back").onclick = ()=>{
         document.querySelector("#open-login").click();
-    }  
+    }  */
 }
 function switchLoginSignin(){
     const loginHolder = document.querySelector("#login-holder");
@@ -86,7 +124,6 @@ function googleLogin(client){
     client.on("google-redirect", (url)=>{window.location.href = url});
     client.on("google-status", (user)=>{
         if(user){
-            document.querySelector("#dahsboard-screen").style.display = "block";
             fadeOut(".pre-main-head", 0.1, ()=>{fadeIn(".main-head", 0.1, "flex")});
             fadeOut("#pre-main", 0.1, ()=>{fadeIn("#main", 0.1, "block")});
             accountLogOff.onclick = ()=>{client.emit("google-log-out")}
@@ -98,15 +135,11 @@ function googleLogin(client){
             loadMailLogic();
             loadCalendar();
 
-            document.querySelector(".about-me-name").innerText = user.displayName;
-            document.querySelector(".about-me-email").innerText = user.emails[0].value;
-            document.querySelector(".dashboard-account-name").innerText = user.displayName;
-            document.querySelector(".dashboard-account-email").innerText = user.emails[0].value;
-            document.querySelector(".dashboard-account-desc").innerText = "No description provided";
             if(user.photos.length > 0){
                 const userIcons = document.querySelectorAll(".user-icon");
                 for(let i = 0; i < userIcons.length; i++) userIcons[i].style.backgroundImage = 'url("'+user.photos[0].value+'")';
             }
+            client.emit("user-login", user.emails[0].value);
             console.log(user);
         }
         else{
@@ -116,6 +149,7 @@ function googleLogin(client){
             fadeOut("#main", 0.1, ()=>{fadeIn("#pre-main", 0.1, "block")});
             fadeOut(".assistant-holder", 0.1);
             accountLogOff.onclick = null;
+            client.emit("user-logoff");
         }
     });
 }

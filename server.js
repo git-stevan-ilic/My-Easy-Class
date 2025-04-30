@@ -2,20 +2,30 @@
 const express = require("express");
 const { createServer } = require("node:http");
 const { Server } = require("socket.io");
+const { v4: uuidv4 } = require("uuid");
+const mongoose = require("mongoose");
 const dotenv = require("dotenv");
-const openai = require("openai");
 const fs = require("fs");
 dotenv.config();
 
-const axios = require("axios");
+const sharedsession = require("express-socket.io-session");
 const cookieParser = require("cookie-parser");
-const session = require("express-session");
 const querystring = require("querystring");
+const session = require("express-session");
+const axios = require("axios");
+
+const openai = require("openai");
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const { google } = require("googleapis");
+const multer = require("multer");
+const upload = multer({dest:"/api/drive-upload"});
 
 const openAI = new openai({apiKey:process.env.CHATGPT_API_KEY});
 const app = express();
 const server = createServer(app);
 const io = new Server(server);
+
 
 app.use(cookieParser());
 const sessionMiddleware = session({
@@ -25,23 +35,42 @@ const sessionMiddleware = session({
     cookie:{secure:false} // Set to true in production with HTTPS
 });
 app.use(sessionMiddleware);
-
-
-/*--Setup Google Services----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-const passport = require("passport");
-const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const sharedsession = require("express-socket.io-session");
-const { google } = require("googleapis");
-
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 io.use(sharedsession(sessionMiddleware, {autoSave:true}));
 
-const multer = require("multer");
-const upload = multer({dest:"/api/drive-upload"});
+/*--Schemas------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+const Schema = mongoose.Schema;
+const usersSchema = new Schema({
+    userID:      {type:String, required:true},
+    username:    {type:String, required:true},
+    email:       {type:String, required:true},
+    password:    {type:String, required:false, default:null},
+    clientID:    {type:String, required:false, default:null},
+    jobTitle:    {type:String, required:false, default:null},
+    location:    {type:String, required:false, default:null},
+    education:   {type:String, required:false, default:null},
+    history:     {type:String, required:false, default:null},
+    description: {type:String, required:false, default:null},
+    cv:{
+        type:{
+            contentType: {type:String, required:true},
+            filename:    {type:String, required:true},
+            data:        {type:Buffer, required:true}
+        },
+        required:false,
+        default:null,
+    },
+    googleConnected:    {type:Boolean, require:true,  default:false},
+    zoomConnected:      {type:Boolean, require:true,  default:false},
+    googleAccessToken:  {type:Boolean, require:false, default:null},
+    googleRefreshToken: {type:Boolean, require:false, default:null}
+});
+const Users = mongoose.model("User", usersSchema);
 
+/*--Setup Google Services----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 passport.use(new GoogleStrategy({
     clientID:process.env.GOOGLE_CLIENT_ID,
     clientSecret:process.env.GOOGLE_CLIENT_SECRET,
@@ -59,7 +88,7 @@ passport.use(new GoogleStrategy({
 (accessToken, refreshToken, profile, done) => {
     profile.refreshToken = refreshToken;
     profile.accessToken = accessToken;
-    //Here you would typically find or create a user in your database
+    checkUserExistGoogleLogin(profile);
     return done(null, profile);
 }));
 passport.serializeUser((user, done) => done(null, user));
@@ -77,18 +106,6 @@ app.get("/auth/google", passport.authenticate("google", {
     ],
     prompt:"consent"
 }));
-
-
-/*--Setup Zoom Services------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-
-
-
-
-
-
-
-
-
 
 /*--Google Mail API----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 app.get("/api/emails/:inbox", async (req, res)=>{
@@ -338,7 +355,6 @@ app.delete("/api/emails/:id", async (req, res)=>{
     }
 });
 
-
 /*--Google Drive API---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 app.get("/api/drive-list", async (req, res)=>{
     if(!req.user || !req.user.accessToken) return res.status(401).json({error:"Not authenticated"});
@@ -508,7 +524,6 @@ app.delete("/api/drive-delete/:fileId", async (req, res)=>{
     }
 });
 
-
 /*--Google Calendar API------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 app.get("/api/calendar", async (req, res)=>{
     if(!req.user || !req.user.accessToken) return res.status(401).json({error:"Not authenticated"});
@@ -675,7 +690,179 @@ function getColorHex(colorId){
     return colors[colorId] || "1a73e8"; // Default blue
 }
 
+/*--Input/Output-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+io.on("connection",(client)=>{
+    if(client.handshake.session.passport?.user){
+        client.emit("google-status", client.handshake.session.passport.user);
+    }
+    client.on("google-log-in", ()=>{
+        client.emit("google-redirect", "/auth/google");
+    });
+    client.on("google-log-out", ()=>{
+        delete client.handshake.session.passport;
+        client.handshake.session.save();
+        client.emit("google-status", null);
+    });
 
+    client.on("new-chatgpt-message", (message)=>{
+        openAI.chat.completions.create({
+            model:"gpt-4o",
+            messages:[{role:"user", content:message}]
+        })
+        .then((result)=>{
+            client.emit("chatgpt-message", result.choices[0].message.content);
+        })
+        .catch((error)=>{
+            console.error("AI Error: ", error);
+            client.emit("chatgpt-message-error", error);
+        });
+    });
+    client.on("chatgpt-assignment", (material)=>{
+
+    });
+    client.on("chatgpt-homework", (material)=>{
+
+    });
+
+    client.on("disconnect", ()=>{userLogoff(client.id)});
+    client.on("user-logoff", ()=>{userLogoff(client.id)});
+    client.on("user-login", (email)=>{
+        Users.find({email:email})
+        .then((result)=>{
+            if(result.length === 0){
+                client.emit("user-login-fail", 1);
+                return;
+            }
+
+            const foundUser = result[0];
+            foundUser.clientID = client.id;
+            foundUser.save()
+            .catch((error)=>{
+                console.error("Client ID update error: ", error);
+            });
+
+            const userData = {
+                userID:          foundUser.userID,
+                username:        foundUser.username,
+                email:           foundUser.email,
+                jobTitle:        foundUser.jobTitle,
+                location:        foundUser.location,
+                education:       foundUser.education,
+                history:         foundUser.history,
+                cv:              foundUser.cv,
+                description:     foundUser.description,
+                googleConnected: foundUser.googleConnected,
+                zoomConnected:   foundUser.zoomConnected,
+            }
+            client.emit("user-login-success", userData);
+        })
+        .catch((error)=>{
+            console.error("Find user DB error: ", error);
+            client.emit("user-login-fail", 0);
+        });
+    });
+});
+
+
+/*--Start Server-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+app.use(express.static(__dirname));
+mongoose.connect(process.env.DB_URL,{})
+.then(()=>{
+    app.get("/", (req, res)=>{res.sendFile(__dirname+"/pages/index.html")});
+    server.listen(process.env.PORT, ()=>{console.log("Running at port "+process.env.PORT)});
+})
+.catch((error)=>{
+    console.log(error);
+    app.get("/", (req, res)=>{res.sendFile(__dirname+"/pages/db error.html")});
+    server.listen(process.env.PORT, ()=>{console.log("Running at port "+process.env.PORT)});
+});
+
+
+function userLogoff(id){
+    Users.find({clientID:id})
+    .then((result)=>{
+        if(result.length === 0){
+            console.error("User with clientID not found: ", error);
+            return;
+        }
+        const foundUser = result[0];
+        foundUser.clientID = null;
+        foundUser.save()
+        .catch((error)=>{
+            console.error("Client ID update error: ", error);
+        });
+    })
+    .catch((error)=>{
+        console.error("User clientID search failed: ", error);
+    });
+}
+function checkUserExistGoogleLogin(profile){
+    Users.find({email:profile.emails[0].value})
+    .then((result)=>{
+        if(result.length > 0) return;
+
+        const newUser = new Users({
+            userID:uuidv4(),
+            username:profile.displayName,
+            password:"",
+            email:profile.emails[0].value,
+            googleConnected:true,
+            googleAccessToken:profile.accessToken,
+            googleRefreshToken:profile.refreshToken
+        });
+        newUser.save()
+        .then(()=>{console.log("New user '"+newUser.username+"' added")})
+        .catch((error)=>{console.error("New user DB error: ", error)});
+    })
+    .catch((error)=>{
+        console.error("Find user DB error: ", error);
+    });
+}
+
+
+
+
+
+
+
+
+/*
+    userID:    {type:String, required:true},
+    username:  {type:String, required:true},
+    password:  {type:String, required:true},
+    email:     {type:String, required:true},
+    clientID:  {type:String, required:false, default:null},
+    jobTitle:  {type:String, required:false, default:null},
+    location:  {type:String, required:false, default:null},
+    education: {type:String, required:false, default:null},
+    history:   {type:String, required:false, default:null},
+    cv:{
+        type:{
+            contentType: {type:String, required:true},
+            filename:    {type:String, required:true},
+            data:        {type:Buffer, required:true}
+        },
+        required:false,
+        default:null,
+    },
+    googleConnected: {type:Boolean, require:true, default:false},
+    zoomConnected:   {type:Boolean, require:true, default:false}
+/*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*--Setup Zoom Services------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 /*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 app.get('/auth/zoom', (req, res) => {
     const url = `https://zoom.us/oauth/authorize?response_type=code&client_id=${process.env.ZOOM_CLIENT_ID}&redirect_uri=${process.env.ZOOM_REDIRECT_URL}`;
@@ -717,45 +904,4 @@ app.get('/api/create-meeting', async (req, res) => {
     } catch (error) {
       res.status(500).json({ error: 'Failed to create meeting' });
     }
-});
-
-
-/*--Start Server-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-app.use(express.static(__dirname));
-app.get("/",(req, res)=>{res.sendFile(__dirname+"/pages/index.html")});
-server.listen(process.env.PORT,()=>{console.log("Running at port "+process.env.PORT)});
-
-/*--Input/Output-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-io.on("connection",(client)=>{
-    if(client.handshake.session.passport?.user){
-        client.emit("google-status", client.handshake.session.passport.user);
-    }
-    client.on("google-log-in", ()=>{
-        client.emit("google-redirect", "/auth/google");
-    });
-    client.on("google-log-out", ()=>{
-        delete client.handshake.session.passport;
-        client.handshake.session.save();
-        client.emit("google-status", null);
-    });
-
-    client.on("new-chatgpt-message", (message)=>{
-        openAI.chat.completions.create({
-            model:"gpt-3.5-turbo",
-            message:[{role:"user", content:message}]
-        })
-        .then((result)=>{
-            console.log(result);
-        })
-        .catch((error)=>{
-            console.error("AI Error: ", error);
-            client.emit("chatgpt-message-error", error);
-        });
-    });
-    client.on("chatgpt-assignment", (material)=>{
-
-    });
-    client.on("chatgpt-homework", (material)=>{
-
-    });
 });
