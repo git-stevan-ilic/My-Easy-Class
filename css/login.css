@@ -2,14 +2,14 @@
 #pre-main{
     display:block;
 }
-#login-screen{
+#log-in-screen{
     background-color:var(--background-white);
     display:block;
 }
-#signin-screen{
+#sign-in-screen{
     background-color:var(--background-white);
 }
-.login-window{
+.log-in-window{
     box-shadow:0.25vw 0.25vw 0.5vw rgba(0, 0, 0, 0.15);
     background-color:var(--background-white);
     border:1px solid var(--border-gray-1);
@@ -27,15 +27,15 @@
     display:flex;
 }
 
-/*--Login Window Left Side---------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-.login-window-l{
+/*--log-in Window Left Side---------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+.log-in-window-l{
     background-image:linear-gradient(var(--accent-blue-1), var(--accent-blue-2));
     color:var(--background-white);
     flex-shrink:0;
     height:100%;
     width:50%;
 }
-.login-text-l{
+.log-in-text-l{
     justify-content:flex-start;
     align-items:center;
     font-weight:bold;
@@ -46,7 +46,7 @@
     font-size:2.5vw;
     width:80%;
 }
-.login-logo-l{
+.log-in-logo-l{
     background-image:url("../assets/Logo White.png");
     background-position:center center;
     background-repeat:no-repeat;
@@ -59,13 +59,13 @@
     width:30%;
 }
 
-/*--Login Window Right Side--------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-.login-window-r{
+/*--log-in Window Right Side--------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+.log-in-window-r{
     flex-shrink:0;
     height:100%;
     width:50%;
 }
-.login-title-r{
+.log-in-title-r{
     color:var(--dark-blue);
     margin-left:10%;
     margin-top:10%;
@@ -78,13 +78,13 @@
     display:flex;
 }
 
-.login-input-holder{
+.log-in-input-holder{
     margin-bottom:3vw;
     margin-top:1.5vw;
     margin-left:10%;
     width:80%;
 }
-.login-text-r{
+.log-in-text-r{
     justify-content:flex-start;
     align-items:center;
     display:flex;
@@ -92,7 +92,7 @@
     color:var(--dark-blue);
     width:100%;
 }
-input[type=text].login-input, input[type=password].login-input{
+input[type=text].log-in-input, input[type=password].log-in-input, input[type=email].log-in-input{
     background-color:var(--background-white);
     margin-bottom:0.5vw;
     width:18vw;
@@ -129,7 +129,7 @@ input[type=text].login-input, input[type=password].login-input{
     text-decoration:underline;
 }
 
-.alternate-signin-divider{
+.alternate-sign-in-divider{
     justify-content:center;
     align-items:center;
     display:flex;
@@ -137,12 +137,12 @@ input[type=text].login-input, input[type=password].login-input{
     margin-left:5%;
     width:90%;
 }
-.alternate-signin-line{
+.alternate-sign-in-line{
     background-color:var(--border-gray-1);
     height:1px;
     width:100%;
 }
-.alternate-signin-text{
+.alternate-sign-in-text{
     color:var(--dark-blue);
     margin-right:0.5vw;
     margin-left:0.5vw;
@@ -153,7 +153,7 @@ input[type=text].login-input, input[type=password].login-input{
     align-items:center;
     display:flex;
 }
-.alternate-signin-holder{
+.alternate-sign-in-holder{
     justify-content:center;
     align-items:center;
     user-select:none;
@@ -162,7 +162,7 @@ input[type=text].login-input, input[type=password].login-input{
     margin-left:10%;
     width:80%;
 }
-.alternate-signin-icon{
+.alternate-sign-in-icon{
     border:1px solid var(--border-gray-1);
     transform:translateY(0px);
     border-radius:100%;
@@ -178,16 +178,16 @@ input[type=text].login-input, input[type=password].login-input{
     user-select:none;
     cursor:pointer;
 }
-.alternate-signin-icon:hover{
+.alternate-sign-in-icon:hover{
     transform:translateY(-1px);
 }
-.alternate-signin-icon:active{
+.alternate-sign-in-icon:active{
     transform:translateY(1px);
 }
-.signin-google{
+.sign-in-google{
     background-image:url("../assets/icons/google icon.png");
 }
-.signin-zoom{
+.sign-in-zoom{
     background-image:url("../assets/icons/zoom icon.png");
 }
 
@@ -201,8 +201,8 @@ input[type=text].login-input, input[type=password].login-input{
     to   {opacity:1; transform:translate(-50%) scale(1);}
 }
 
-/*--Signin Window------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-.signin-window{
+/*--sign-in Window------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+.sign-in-window{
     box-shadow:0.25vw 0.25vw 0.5vw rgba(0, 0, 0, 0.15);
     background-color:var(--background-white);
     border:1px solid var(--border-gray-1);
@@ -216,7 +216,7 @@ input[type=text].login-input, input[type=password].login-input{
     left:50%;
     top:2vw;
 }
-.signin-window-title{
+.sign-in-window-title{
     color:var(--dark-blue);
     font-size:1.75vw;
     width:100%;
@@ -226,17 +226,17 @@ input[type=text].login-input, input[type=password].login-input{
     font-weight:bold;
     display:flex;
 }
-.signin-window-form{
+.sign-in-window-form{
     transform:translate(-50%);
     margin-top:2vw;
     margin-left:50%;
     width:80%;
 }
-.signin-window-row{
+.sign-in-window-row{
     margin-bottom:0.5vw;
     width:100%;
 }
-.signin-window-row-title{
+.sign-in-window-row-title{
     justify-content:flex-start;
     align-items:center;
     display:flex;
@@ -245,7 +245,7 @@ input[type=text].login-input, input[type=password].login-input{
     font-size:1.25vw;
     width:100%;
 }
-.signin-window-row-title-text{
+.sign-in-window-row-title-text{
     width:fit-content;
     flex-shrink:0;
     height:100%;
@@ -254,7 +254,7 @@ input[type=text].login-input, input[type=password].login-input{
     align-items:center;
     display:flex;
 }
-.signin-window-row-title-error{
+.sign-in-window-row-title-error{
     color:var(--error);
     font-size:0.75vw;
     height:100%;
@@ -265,10 +265,10 @@ input[type=text].login-input, input[type=password].login-input{
     align-items:center;
     display:none;
 }
-.signin-input{
+.sign-in-input{
     width:100%;
 }
-.signin-window-button-holder{
+.sign-in-window-button-holder{
     position:absolute;
     height:5vw;
     width:100%;
@@ -278,4 +278,49 @@ input[type=text].login-input, input[type=password].login-input{
     justify-content:space-evenly;
     align-items:center;
     display:flex;
+}
+
+/*--Password Window----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+.add-password-window{
+    box-shadow:0.25vw 0.25vw 0.5vw rgba(0, 0, 0, 0.15);
+    background-color:var(--background-white);
+    border:1px solid var(--border-gray-1);
+    border-radius:var(--border-radius-2);
+    transform:translate(-50%);
+    color:var(--dark-blue);
+    position:absolute;
+    padding:1vw;
+    width:20vw;
+    left:50%;
+    top:10vw;
+}
+.add-password-window-head{
+    justify-content:center;
+    align-items:center;
+    font-weight:bold;
+    display:flex;
+    
+    padding-bottom:1vw;
+    font-size:1.5vw;
+    height:2vw;
+    width:100%;
+}
+.add-password-window-body{
+    height:fit-content;
+    width:100%;
+}
+.add-password-row{
+    margin-bottom:0.5vw;
+    width:100%;
+}
+.add-password-input{
+    width:calc(100% - 2px);
+}
+.add-password-window-foot{
+    justify-content:space-evenly;
+    align-items:center;
+    display:flex;
+
+    margin-top:3vw;
+    width:100%;
 }

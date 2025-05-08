@@ -46,9 +46,9 @@
                     <div class="header-button-text">Don't have an account?</div>
                     <button id="open-sign-up">Sign Up</button>
                 </div>
-                <div class="header-button-holder" id="login-holder">
+                <div class="header-button-holder" id="log-in-holder">
                     <div class="header-button-text">Already have an account?</div>
-                    <button id="open-login">Log In</button>
+                    <button id="open-log-in">Log In</button>
                 </div>
             </div>
             <div class="main-head">
@@ -58,7 +58,6 @@
                     <div class="tab">Calendar<div class="tab-notification"></div></div>
                     <div class="tab">Drive<div class="tab-notification"></div></div>
                     <div class="tab">Students<div class="tab-notification"></div></div>
-                    <div class="tab">Homework<div class="tab-notification"></div></div>
                 </div>
                 <div class="account-holder">
                     <div class="account-icon user-icon"></div>
@@ -75,19 +74,19 @@
         </div>
         <div class="page-body">
             <div class="screen" id="pre-main">
-                <div class="screen" id="login-screen">
-                    <div class="login-window">
-                        <div class="login-window-l">
-                            <div class="login-text-l">Focus on teaching while we do the rest</div>
-                            <div class="login-logo-l"></div>
+                <div class="screen" id="log-in-screen">
+                    <div class="log-in-window">
+                        <div class="log-in-window-l">
+                            <div class="log-in-text-l">Focus on teaching while we do the rest</div>
+                            <div class="log-in-logo-l"></div>
                         </div>
-                        <div class="login-window-r">
-                            <div class="login-title-r">Log In</div>
-                            <div class="login-input-holder">
-                                <div class="login-text-r">Username</div>
-                                <input type="text" class="login-input" id="login-username">
-                                <div class="login-text-r">Password</div>
-                                <input type="password" class="login-input" id="login-password">
+                        <div class="log-in-window-r">
+                            <div class="log-in-title-r">Log In</div>
+                            <div class="log-in-input-holder">
+                                <div class="log-in-text-r">Email</div>
+                                <input type="email" class="log-in-input" id="log-in-email">
+                                <div class="log-in-text-r">Password</div>
+                                <input type="password" class="log-in-input" id="log-in-password">
                                 <div class="remember-me-holder">
                                     <div class="check-holder" id="remember-me-check">
                                         <div class="check" id="remember-me-check-mark">
@@ -96,56 +95,56 @@
                                     </div>
                                     <div class="remember-me-text">Remember Me</div>
                                 </div>
-                                <button class="blue-button" id="login">LOGIN</button>
+                                <button class="blue-button" id="log-in">LOGIN</button>
                                 <div class="forgot-password">Forgot Password?</div>
                             </div>
-                            <div class="alternate-signin-divider">
-                                <div class="alternate-signin-line"></div>
-                                <div class="alternate-signin-text">Or sign in with</div>
-                                <div class="alternate-signin-line"></div>
+                            <div class="alternate-sign-in-divider">
+                                <div class="alternate-sign-in-line"></div>
+                                <div class="alternate-sign-in-text">Or sign in with</div>
+                                <div class="alternate-sign-in-line"></div>
                             </div>
-                            <div class="alternate-signin-holder">
-                                <div class="alternate-signin-icon signin-google"></div>
-                                <div class="alternate-signin-icon signin-zoom"></div>
+                            <div class="alternate-sign-in-holder">
+                                <div class="alternate-sign-in-icon sign-in-google"></div>
+                                <div class="alternate-sign-in-icon sign-in-zoom"></div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="screen" id="signin-screen">
-                    <div class="signin-window">
-                        <div class="signin-window-title">Create Teacher Account</div>
-                        <div class="signin-window-form">
-                            <div class="signin-window-row">
-                                <div class="signin-window-row-title">
-                                    <div class="signin-window-row-title-text">Name</div>
-                                    <div class="signin-window-row-title-error"></div>
+                <div class="screen" id="sign-in-screen">
+                    <div class="sign-in-window">
+                        <div class="sign-in-window-title">Create Teacher Account</div>
+                        <div class="sign-in-window-form">
+                            <div class="sign-in-window-row">
+                                <div class="sign-in-window-row-title">
+                                    <div class="sign-in-window-row-title-text">Name</div>
+                                    <div class="sign-in-window-row-title-error"></div>
                                 </div>
-                                <input class="signin-input" type="text">
+                                <input class="sign-in-input" type="text" id="sign-in-name">
                             </div>
-                            <div class="signin-window-row">
-                                <div class="signin-window-row-title">
-                                    <div class="signin-window-row-title-text">Email</div>
-                                    <div class="signin-window-row-title-error"></div>
+                            <div class="sign-in-window-row">
+                                <div class="sign-in-window-row-title">
+                                    <div class="sign-in-window-row-title-text">Email</div>
+                                    <div class="sign-in-window-row-title-error"></div>
                                 </div>
-                                <input class="signin-input" type="email">
+                                <input class="sign-in-input" type="email" id="sign-in-email">
                             </div>
-                            <div class="signin-window-row">
-                                <div class="signin-window-row-title">
-                                    <div class="signin-window-row-title-text">Password</div>
-                                    <div class="signin-window-row-title-error"></div>
+                            <div class="sign-in-window-row">
+                                <div class="sign-in-window-row-title">
+                                    <div class="sign-in-window-row-title-text">Password</div>
+                                    <div class="sign-in-window-row-title-error"></div>
                                 </div>
-                                <input class="signin-input" type="password">
+                                <input class="sign-in-input" type="password" id="sign-in-password-1">
                             </div>
-                            <div class="signin-window-row">
-                                <div class="signin-window-row-title">
-                                    <div class="signin-window-row-title-text">Confirm Password</div>
+                            <div class="sign-in-window-row">
+                                <div class="sign-in-window-row-title">
+                                    <div class="sign-in-window-row-title-text">Confirm Password</div>
                                 </div>
-                                <input class="signin-input" type="password">
+                                <input class="sign-in-input" type="password" id="sign-in-password-2">
                             </div>
                         </div>
-                        <div class="signin-window-button-holder">
-                            <button id="signin-confirm">Confirm</button>
-                            <button id="signin-back">Back</button>
+                        <div class="sign-in-window-button-holder">
+                            <button id="sign-in-confirm">Confirm</button>
+                            <button id="sign-in-back">Back</button>
                         </div>
                     </div>
                 </div>
@@ -347,14 +346,34 @@
                             <div class="class-window-tab-holder">
                                 <div class="class-window-tab class-window-selected-tab">Students</div>
                                 <div class="class-window-tab">Assignments</div>
+                                <div class="class-window-tab">Homework</div>
                             </div>
-                            <div class="search-holder" id="student-search-icon-holder">
-                                <div class="search-icon" id="student-search-icon"></div> 
-                                <input type="text" class="search-input" id="student-search" placeholder="Search for students">
+                            <div class="class-window-body">
+                                <div class="class-window-body-content">
+                                    <div class="search-holder" id="student-search-icon-holder">
+                                        <div class="search-icon" id="student-search-icon"></div> 
+                                        <input type="text" class="search-input" id="student-search" placeholder="Search for students">
+                                    </div>
+                                    <div class="class-window-student-list-holder">
+                                        <div class="class-window-student-list"></div>
+                                    </div>
+                                </div>
+                                <div class="class-window-body-content" style="display:block;">
+                                    <div class="search-holder" id="assignment-search-icon-holder">
+                                        <div class="search-icon" id="assignment-search-icon"></div> 
+                                        <input type="text" class="search-input" id="assignment-search" placeholder="Search for assignments">
+                                    </div>
+                                    <div class="class-window-assignment-list-holder">
+                                        <div class="class-window-assignment-list">
+                                            <div class="assignment">Assignment 1</div>
+
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="class-window-body-content"></div>
                             </div>
-                            <div class="class-window-student-list-holder">
-                                <div class="class-window-student-list"></div>
-                            </div>
+                           
                         </div>
                     </div>
                     <div class="lesson-holder">
@@ -384,9 +403,6 @@
                             <div class="lesson-list-holder"></div>
                         </div>
                     </div>
-                </div>
-                <div class="screen tab-affected" id="homework-screen">
-                    <div class="wip">Work in Progress</div>
                 </div>
                 <div class="screen" id="about-me-screen">
                     <div class="about-me-info-holder">
@@ -421,7 +437,6 @@
                     </div>
                     <div class="about-me-desc" id="about-me-desc">No description provided</div>
                 </div>
-                
             </div>
         </div>
         <div class="page-foot">
@@ -668,6 +683,26 @@
                 <div class="new-lesson-window-foot">
                     <button id="new-button-confirm">Confirm</button>
                     <button id="new-button-cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+        <div class="screen-mask" id="edit-password-screen">
+            <div class="screen-mask-background"></div>
+            <div class="edit-password-window">
+                <div class="edit-password-window-head">Add Account Password</div>
+                <div class="edit-password-window-body">
+                    <div class="edit-password-row">
+                        <div class="edit-password-label">Password</div>
+                        <input class="edit-password-input" type="password"  id="edit-password-1">
+                    </div>
+                    <div class="edit-password-row">
+                        <div class="edit-password-label">Confirm Password</div>
+                        <input class="edit-password-input" type="password"  id="edit-password-2">
+                    </div>
+                </div>
+                <div class="edit-password-window-foot">
+                    <button id="edit-password-confirm">Confirm</button>
+                    <button id="edit-password-cancel">Cancel</button>
                 </div>
             </div>
         </div>

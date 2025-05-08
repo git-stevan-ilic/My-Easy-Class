@@ -63,10 +63,10 @@ const usersSchema = new Schema({
         required:false,
         default:null,
     },
-    googleConnected:    {type:Boolean, require:true,  default:false},
-    zoomConnected:      {type:Boolean, require:true,  default:false},
-    googleAccessToken:  {type:Boolean, require:false, default:null},
-    googleRefreshToken: {type:Boolean, require:false, default:null}
+    googleConnected:    {type:Boolean, required:true,  default:false},
+    googleAccessToken:  {type:String,  required:false, default:null},
+    googleRefreshToken: {type:String,  required:false, default:null},
+    googleUserID:       {type:String,  required:false, default:null}
 });
 const Users = mongoose.model("User", usersSchema);
 
@@ -83,7 +83,8 @@ passport.use(new GoogleStrategy({
         "https://www.googleapis.com/auth/gmail.modify",
         "https://www.googleapis.com/auth/gmail.send"
     ],
-    accessType:"offline"
+    accessType:"offline",
+    prompt:"consent"
 },
 (accessToken, refreshToken, profile, done) => {
     profile.refreshToken = refreshToken;
@@ -104,8 +105,38 @@ app.get("/auth/google", passport.authenticate("google", {
         "https://www.googleapis.com/auth/gmail.modify",
         "https://www.googleapis.com/auth/gmail.send"
     ],
+    accessType:"offline",
     prompt:"consent"
 }));
+/*
+async function getGoogleAuth(userID){
+    Users.find({userID:userID})
+    .then((result)=>{
+        if(result.length === 0){
+            client.emit("user-log-in-fail", 1);
+            return;
+        }
+        const foundUser = result[0];
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.on("tokens", (tokens)=>{
+            if(tokens.refresh_token) foundUser.googleRefreshToken = tokens.refresh_token;
+            foundUser.googleAccessToken = tokens.access_token;
+            foundUser.save().catch((error)=>{console.error("Client Google Tokens update error: ", error)});
+        });
+        oauth2Client.setCredentials({
+            refresh_token:foundUser.googleRefreshToken,
+            access_token:foundUser.googleAccessToken
+        });
+        return oauth2Client;
+    })  
+    .catch((error)=>{
+        console.error("Find user DB error: ", error);
+        return null;
+    });
+}
+*/
+
+
 
 /*--Google Mail API----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 app.get("/api/emails/:inbox", async (req, res)=>{
@@ -119,7 +150,7 @@ app.get("/api/emails/:inbox", async (req, res)=>{
             refresh_token:req.user.refreshToken,
             access_token:req.user.accessToken
         });
-
+       
         const {inbox} = req.params;
         const {pageToken} = req.query;
         const gmail = google.gmail({version:"v1", auth:oauth2Client});
@@ -695,13 +726,37 @@ io.on("connection",(client)=>{
     if(client.handshake.session.passport?.user){
         client.emit("google-status", client.handshake.session.passport.user);
     }
+
+    client.on("disconnect", ()=>{userLogOff(client)});
+    client.on("user-log-off", ()=>{userLogOff(client)});
+    client.on("user-log-in", (email)=>{userLogIn(client, email, null)});
+    client.on("user-log-in-attempt", (email, password)=>{userLogIn(client, email, password)});
+    client.on("edit-password", (userID, password)=>{
+        Users.find({userID:userID})
+        .then((result)=>{
+            if(result.length === 0){
+                client.emit("edit-password-fail", 0);
+                return;
+            }
+
+            const foundUser = result[0];
+            foundUser.password = password;
+            foundUser.save()
+            .then(()=>{
+                client.emit("edit-password-success");
+            })
+            .catch((error)=>{
+                console.error("Client ID update error: ", error);
+                client.emit("edit-password-fail", 1);
+            });
+        })
+        .catch((error)=>{
+            console.error("Find user DB error: ", error);
+            client.emit("user-log-in-fail", 0);
+        });
+    });
     client.on("google-log-in", ()=>{
         client.emit("google-redirect", "/auth/google");
-    });
-    client.on("google-log-out", ()=>{
-        delete client.handshake.session.passport;
-        client.handshake.session.save();
-        client.emit("google-status", null);
     });
 
     client.on("new-chatgpt-message", (message)=>{
@@ -723,44 +778,6 @@ io.on("connection",(client)=>{
     client.on("chatgpt-homework", (material)=>{
 
     });
-
-    client.on("disconnect", ()=>{userLogoff(client.id)});
-    client.on("user-logoff", ()=>{userLogoff(client.id)});
-    client.on("user-login", (email)=>{
-        Users.find({email:email})
-        .then((result)=>{
-            if(result.length === 0){
-                client.emit("user-login-fail", 1);
-                return;
-            }
-
-            const foundUser = result[0];
-            foundUser.clientID = client.id;
-            foundUser.save()
-            .catch((error)=>{
-                console.error("Client ID update error: ", error);
-            });
-
-            const userData = {
-                userID:          foundUser.userID,
-                username:        foundUser.username,
-                email:           foundUser.email,
-                jobTitle:        foundUser.jobTitle,
-                location:        foundUser.location,
-                education:       foundUser.education,
-                history:         foundUser.history,
-                cv:              foundUser.cv,
-                description:     foundUser.description,
-                googleConnected: foundUser.googleConnected,
-                zoomConnected:   foundUser.zoomConnected,
-            }
-            client.emit("user-login-success", userData);
-        })
-        .catch((error)=>{
-            console.error("Find user DB error: ", error);
-            client.emit("user-login-fail", 0);
-        });
-    });
 });
 
 
@@ -777,23 +794,62 @@ mongoose.connect(process.env.DB_URL,{})
     server.listen(process.env.PORT, ()=>{console.log("Running at port "+process.env.PORT)});
 });
 
-
-function userLogoff(id){
-    Users.find({clientID:id})
+function userLogOff(client){
+    Users.find({clientID:client.id})
     .then((result)=>{
-        if(result.length === 0){
-            console.error("User with clientID not found: ", error);
-            return;
-        }
+        if(result.length === 0) return;
         const foundUser = result[0];
         foundUser.clientID = null;
         foundUser.save()
         .catch((error)=>{
             console.error("Client ID update error: ", error);
         });
+        delete client.handshake.session.passport;
+        client.handshake.session.save();
     })
     .catch((error)=>{
         console.error("User clientID search failed: ", error);
+    });
+}
+function userLogIn(client, email, password){
+    Users.find({email:email})
+    .then((result)=>{
+        if(result.length === 0){
+            client.emit("user-log-in-fail", 1);
+            return;
+        }
+
+        const foundUser = result[0];
+        if(password !== null){
+            if(foundUser.password !== password){
+                client.emit("user-log-in-fail", 2);
+                return;
+            }
+        }
+        foundUser.clientID = client.id;
+        foundUser.save().catch((error)=>{
+            console.error("Client ID update error: ", error);
+        });
+
+        const userData = {
+            userID:          foundUser.userID,
+            username:        foundUser.username,
+            email:           foundUser.email,
+            jobTitle:        foundUser.jobTitle,
+            location:        foundUser.location,
+            education:       foundUser.education,
+            history:         foundUser.history,
+            cv:              foundUser.cv,
+            description:     foundUser.description,
+            googleConnected: foundUser.googleConnected
+        }
+        let requestPassword = false;
+        if(foundUser.password === "") requestPassword = true;
+        client.emit("user-log-in-success", userData, requestPassword);
+    })
+    .catch((error)=>{
+        console.error("Find user DB error: ", error);
+        client.emit("user-log-in-fail", 0);
     });
 }
 function checkUserExistGoogleLogin(profile){
@@ -808,7 +864,8 @@ function checkUserExistGoogleLogin(profile){
             email:profile.emails[0].value,
             googleConnected:true,
             googleAccessToken:profile.accessToken,
-            googleRefreshToken:profile.refreshToken
+            googleRefreshToken:profile.refreshToken,
+            googleUserID:profile.id
         });
         newUser.save()
         .then(()=>{console.log("New user '"+newUser.username+"' added")})
@@ -826,34 +883,6 @@ function checkUserExistGoogleLogin(profile){
 
 
 
-/*
-    userID:    {type:String, required:true},
-    username:  {type:String, required:true},
-    password:  {type:String, required:true},
-    email:     {type:String, required:true},
-    clientID:  {type:String, required:false, default:null},
-    jobTitle:  {type:String, required:false, default:null},
-    location:  {type:String, required:false, default:null},
-    education: {type:String, required:false, default:null},
-    history:   {type:String, required:false, default:null},
-    cv:{
-        type:{
-            contentType: {type:String, required:true},
-            filename:    {type:String, required:true},
-            data:        {type:Buffer, required:true}
-        },
-        required:false,
-        default:null,
-    },
-    googleConnected: {type:Boolean, require:true, default:false},
-    zoomConnected:   {type:Boolean, require:true, default:false}
-/*
-
-
-
-
-
-
 
 
 
@@ -864,6 +893,8 @@ function checkUserExistGoogleLogin(profile){
 
 /*--Setup Zoom Services------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 /*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+const jwt = require('jsonwebtoken');
+
 app.get('/auth/zoom', (req, res) => {
     const url = `https://zoom.us/oauth/authorize?response_type=code&client_id=${process.env.ZOOM_CLIENT_ID}&redirect_uri=${process.env.ZOOM_REDIRECT_URL}`;
     res.redirect(url);
@@ -902,6 +933,53 @@ app.get('/api/create-meeting', async (req, res) => {
   
       res.json(response.data);
     } catch (error) {
+        console.log(error)
       res.status(500).json({ error: 'Failed to create meeting' });
+    }
+});
+app.post('/api/generate-zoom-signature', async (req, res) => {
+    const { meetingNumber, role } = req.body;
+
+    if (!meetingNumber || typeof role === 'undefined') {
+        return res.status(400).json({ error: 'Meeting number and role are required.' });
+    }
+
+    const iat = Math.floor(Date.now() / 1000) - 30;
+    const exp = iat + 60 * 60 * 2; // Expires in 2 hours
+
+    const payload = {
+        sdkKey: process.env.ZOOM_CLIENT_ID,
+        mn: meetingNumber.toString(),
+        role: parseInt(role, 10),
+        iat: iat,
+        exp: exp,
+        appKey: process.env.ZOOM_CLIENT_ID, // Some SDK versions might expect appKey
+        tokenExp: exp,
+    };
+
+    try {
+        const signature = jwt.sign(payload, process.env.ZOOM_CLIENT_SECRET, { algorithm: 'HS256' });
+        let zakToken = null;
+
+        if (parseInt(role, 10) === 1) {
+            // === Option 1: If the meeting is being created by and for the API user ===
+            // And you're using a Server-to-Server OAuth app or JWT app for that user,
+            // you might fetch their ZAK token.
+            // This is a placeholder - actual ZAK fetching requires Zoom API call.
+            const zakResponse = await axios.get(`https://api.zoom.us/v2/users/me/zak`, { headers: { 'Authorization': `Bearer ${YOUR_S2S_ACCESS_TOKEN}` } });
+            zakToken = zakResponse.data.token;
+            // For simplicity in this example, we'll assume you might have it or get it.
+            // If your /api/create-meeting already returns a host_zak, you could use that.
+            // For now, let's send null and acknowledge it might be an issue.
+            console.warn("ZAK token fetching logic not fully implemented in this example for host role.");
+            // You might need to pass the ZAK from the meeting creation step if it provides it,
+            // or have a dedicated user ID for whom you fetch the ZAK.
+        }
+
+        res.json({ signature, zak: zakToken });
+
+    } catch (error) {
+        console.error('Error generating signature or fetching ZAK:', error);
+        res.status(500).json({ error: 'Failed to generate signature or process request.' });
     }
 });

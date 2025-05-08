@@ -220,7 +220,7 @@ input[type=text]:disabled,[type=password]:disabled,[type=email]:disabled,[type=t
     margin-right:0.5vw;
     font-size:1.1vw;
 }
-#login-holder{
+#log-in-holder{
     display:none;
 }
 

@@ -525,7 +525,7 @@
     background-color:var(--background-white);
     border:1px solid var(--border-gray-1);
     border-radius:var(--border-radius-1);
-    width:19.5vw;
+    width:13vw;
     height:2vw;
    
     transition:ease-in-out 0.1s;
@@ -553,14 +553,27 @@
 .class-window-selected-tab:active{
     background-color:var(--background-gray-2);
 }
-#student-search-icon-holder{
+#student-search-icon-holder, #assignment-search-icon-holder{
     transform:translate(-50%);
-    margin-left:50%;
+    margin-left:calc(50% + 1vw);
     margin-top:1vw;
     width:40vw;
 }
+.class-window-body{
+    position:relative;
+    height:calc(18vw + 2px);
+    width:calc(100% - 2vw);
+}
+.class-window-body-content{
+    position:absolute;
+    display:none;
+    height:100%;
+    width:100%;
+    left:0px;
+    top:0px;
+}
 .class-window-student-list-holder{
-    height:calc(100% - 6.5vw);
+    height:calc(100% - 2.5vw);
     margin-top:1vw;
     width:100%;
 

@@ -132,11 +132,7 @@ function headTabLogic(){
         tabs[i].onclick = ()=>{
             if(currTab !== i){
                 const screensToClose = document.querySelector("#main").children;
-                for(let j = 0; j < screensToClose.length; j++){
-                    if(screensToClose[j].classList.contains("tab-affected")){
-                        screensToClose[j].style.display = "none";
-                    }
-                }
+                for(let j = 0; j < screensToClose.length; j++) screensToClose[j].style.display = "none";
                 document.getElementById(screens[i]).style.display = "block";
                
                 if(currTab !== -1){

@@ -1,14 +1,14 @@
 /*--Initial------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function loadStudentsLogic(user){
+function loadStudentsLogic(username){
     let lessons = [[], [], []], currlesson = 0, currClass = 0;
     let classes = [
-        {name:"All Students", students:[]},
-        {name:"Ungrouped", students:[]}
+        {name:"All Students", students:[], assugnments:[], homework:[]},
+        {name:"Ungrouped", students:[], assugnments:[], homework:[]}
     ];
     let classNameSearch = "", studentListSearch = "", inviteStudendSearch = "";
     generateClasses(classNameSearch, classes);
     generateNewClassLogic();
-    addStudentEvents(user);
+    addStudentEvents(username);
     displayCurrClass(classes[currClass], studentListSearch);
     generateLessons(lessons[currlesson], currlesson);
 
@@ -322,7 +322,7 @@ function displayCurrClass(currClass, studentListSearch){
 }
 
 /*--Add Students-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function addStudentEvents(user){
+function addStudentEvents(username){
     const dropMenu = document.querySelector(".add-student-drop-down");
     const inviteList = document.querySelector(".invite-list");
     let addStudentDropDown = false;
@@ -392,7 +392,7 @@ function addStudentEvents(user){
             let style = "background-color:rgb(087, 160, 211);color:var(255,255,255);height:50px;width:150px;font:20px Arial bold;";
             let emailContent = "<!DOCTYPE html><html><body>";
             emailContent += "<h2>My Easy Class</h2>"
-            emailContent += "You're being invited to join My Easy Class by "+user.displayName;
+            emailContent += "You're being invited to join My Easy Class by "+username;
             emailContent += "<br>Click the button below to join<br><br>";
             emailContent += "<button style='"+style+"' onclick='()=>{window.open('http:localhost:5000')}'>Join My Easy</button>";
             emailContent += "</body></html>";
@@ -589,6 +589,34 @@ function generateLessons(lessons, currlesson){
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 let meetingSDK;
 async function connectZoom(){
@@ -597,6 +625,51 @@ async function connectZoom(){
 async function startMeeting() {
     const response = await fetch("/api/create-meeting");
     const meetingData = await response.json();
+
+    console.log( meetingData)
+    let signatureResponse;
+    try{
+        signatureResponse = await fetch("/api/generate-zoom-signature", { // Create this backend endpoint
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                meetingNumber: meetingData.id,
+                role: 1
+                // You might need to pass userId or email if your backend needs to fetch ZAK for a specific user
+            })
+        });
+        if (!signatureResponse.ok) {
+            const errorText = await signatureResponse.text();
+            throw new Error(`Failed to get signature: ${errorText}`);
+        }
+    }
+    catch(e){
+        console.error("Error fetching signature:", e);
+        alert(`Error fetching meeting signature: ${e.message}`);
+        return;
+    }
+
+
+
+    const signatureData = await signatureResponse.json();
+    const signature = signatureData.signature;
+    const zakToken = signatureData.zak; // Your backend should provide this if role is host
+
+    if (!signature) {
+        console.error("Signature is missing from backend response.");
+        alert("Error: Could not obtain meeting signature.");
+        return;
+    }
+
+    if (!zakToken) {
+        console.warn("Attempting to join as host without ZAK token. This might fail.");
+        // Depending on your Zoom account settings and meeting type, joining as host
+        // without ZAK might work for instant meetings started by the SDK user directly,
+        // but for scheduled meetings or to ensure host controls, ZAK is usually needed.
+    }
+
 
     ZoomMtg.setZoomJSLib("https://source.zoom.us/2.13.0/lib", "/av");
     ZoomMtg.preLoadWasm();
@@ -608,6 +681,9 @@ async function startMeeting() {
         passWord:meetingData.password, // Only required for password-protected meetings
         leaveUrl:"http://localhost:5000",
         role:1, // 1 for host, 0 for participant
+        sdkKey: "zeY5YgjkTDG0TN4WvNlPuw",
+        signature: signature,
+        zak: zakToken,
     };
 
     ZoomMtg.init({
@@ -615,6 +691,7 @@ async function startMeeting() {
       success: () => {
         const zoomElement = document.getElementById("zmmtg-root");
         zoomElement.style.position = "absolute";
+        zoomElement.style.display = "block";
         ZoomMtg.join({
           ...config,
           success: (res) => console.log('Joined meeting'),

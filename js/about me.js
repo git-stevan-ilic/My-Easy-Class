@@ -7,7 +7,7 @@ function loadAboutMeLogic(user){
         tabHolder.children[1].click();
         newEmail.click();
 
-        const emailValue = user.emails[0].value;
+        const emailValue = user.email;
         document.querySelector("#send-mail-recipients").value = emailValue;
     }
     document.querySelector(".about-me-share").onclick = ()=>{
@@ -37,12 +37,12 @@ function loadAboutMeLogic(user){
     const inputI = document.querySelector("#input-icon");
    
     document.querySelector("#edit-info").onclick = ()=>{
-        editIcon.style.backgroundImage = "url('"+user.photos[0].value+"')";
+        //editIcon.style.backgroundImage = "url('"+user.photos[0].value+"')";
         const editData = {
             description:user.description || "Description not provided",
             education:user.education || "Not provided",
             location:user.location || "Not provided",
-            name:user.displayName || "Not provided",
+            name:user.username || "Not provided",
             history:user.history || "Not provided",
             job:user.job || "Not provided",
         };
@@ -58,20 +58,20 @@ function loadAboutMeLogic(user){
     }
     document.querySelector("#about-me-edit-save").onclick = ()=>{
         user.desc = inputD.value || "Description not provided";
-        user.displayName = inputN.value || user.displayName;
+        user.username = inputN.value || user.username;
         user.location = inputL.value || "Not provided";
         user.education = inputE.value || "Not provided";
         user.history = inputH.value || "Not provided";
         user.job = inputJ.value || "Not provided";
         if(inputC.files.length > 0) cvFile = inputC.files[0];
-        if(newImage){
+        /*if(newImage){
             user.photos[0].value = newImage;
             const userIcons = document.querySelectorAll(".user-icon");
             for(let i = 0; i < userIcons.length; i++) userIcons[i].style.backgroundImage = "url('"+user.photos[0].value+"')";
-        }
+        }*/
       
         document.querySelector("#about-me-education").innerText = user.education;
-        document.querySelector(".about-me-name").innerText = user.displayName;
+        document.querySelector(".about-me-name").innerText = user.username;
         document.querySelector("#about-me-location").innerText = user.location;
         document.querySelector("#about-me-history").innerText = user.history;
         document.querySelector("#about-me-desc").innerText = user.desc;
