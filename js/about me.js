@@ -14,7 +14,7 @@ function loadAboutMeLogic(user){
         notification("Link copied");
     }
     document.querySelector("#about-me-cv").onclick = ()=>{
-        if(!cvFile) alert("No CV present");
+        if(!cvFile) notification("No CV present");
         else{
             const url = URL.createObjectURL(cvFile);
             const a = document.createElement('a');

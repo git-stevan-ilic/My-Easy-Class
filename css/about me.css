@@ -172,6 +172,7 @@
     top:5vw;
 
     transition:ease-in-out 0.1s;
+    background-image:url("../assets/icons/default user.png");
     background-position:center center;
     background-repeat:no-repeat;
     background-size:cover;

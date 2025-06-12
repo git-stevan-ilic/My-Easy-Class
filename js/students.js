@@ -84,7 +84,7 @@ function loadStudentsLogic(username){
     }
     document.querySelector("#new-button-confirm").onclick = ()=>{
         if(newLessonName.value === "" || newLessonContent.value === "" || newLessonDate.value === "" || newLessonTime.value === ""){
-            alert("Input all values");
+            notification("Input all values");
             return;
         }
         let studentNames = [];
@@ -109,7 +109,7 @@ function loadStudentsLogic(username){
         for(let i = 0; i < classes.length; i++){
             if(classes[i].name === eventName){
                 nameMatch = true;
-                alert("There is already a class with that name");
+                notification("There is already a class with that name");
                 break;
             }
         }
@@ -253,7 +253,7 @@ function generateNewClassLogic(){
     }
     newClassConfirm.onclick = ()=>{
         if(!newClassInput.value){
-            alert("Input a class name");
+            notification("Input a class name");
             return;
         }
         const eventData = {detail:{name:newClassInput.value}}
@@ -387,7 +387,7 @@ function addStudentEvents(username){
 
     const inviteEmailInput = document.querySelector("#invite-email-input");
     document.querySelector("#invite-email-button").onclick = ()=>{
-        if(!isValidEmail(inviteEmailInput.value)) alert("Invalid email");
+        if(!isValidEmail(inviteEmailInput.value)) notification("Invalid email");
         else{
             let style = "background-color:rgb(087, 160, 211);color:var(255,255,255);height:50px;width:150px;font:20px Arial bold;";
             let emailContent = "<!DOCTYPE html><html><body>";
@@ -396,7 +396,7 @@ function addStudentEvents(username){
             emailContent += "<br>Click the button below to join<br><br>";
             emailContent += "<button style='"+style+"' onclick='()=>{window.open('http:localhost:5000')}'>Join My Easy</button>";
             emailContent += "</body></html>";
-            sendMail(inviteEmailInput.value, "My Easy Class Invite", emailContent, "invite");
+            sendMail(inviteEmailInput.value, "My Easy Class Invite", emailContent, [], "invite");
         }
     }
     window.addEventListener("invite-email-sent", (e)=>{
@@ -562,7 +562,7 @@ function generateLessons(lessons, currlesson){
                         const cancellesson = new CustomEvent("cancel-lesson", {detail:{index:i}});
                         window.dispatchEvent(cancellesson);
                     }*/
-                    alert("database error");
+                    notification("database error");
                 }
                 break;
             case 1:
@@ -571,7 +571,7 @@ function generateLessons(lessons, currlesson){
                 commentButton.innerHTML = "Comment Students";
                 lessonA.appendChild(commentButton);
                 commentButton.onclick = ()=>{
-                    alert("database error");
+                    notification("database error");
                 }
                 break;
             case 2:
@@ -582,7 +582,7 @@ function generateLessons(lessons, currlesson){
                 rescheduleButton.onclick = ()=>{
                     //const reschedulelesson = new CustomEvent("reschedule-lesson", {detail:{index:i}});
                     //window.dispatchEvent(reschedulelesson);
-                    alert("database error");
+                    notification("database error");
                 }
                 break;
         }
@@ -647,7 +647,7 @@ async function startMeeting() {
     }
     catch(e){
         console.error("Error fetching signature:", e);
-        alert(`Error fetching meeting signature: ${e.message}`);
+        notification(`Error fetching meeting signature: ${e.message}`);
         return;
     }
 
@@ -659,7 +659,7 @@ async function startMeeting() {
 
     if (!signature) {
         console.error("Signature is missing from backend response.");
-        alert("Error: Could not obtain meeting signature.");
+        notification("Error: Could not obtain meeting signature.");
         return;
     }
 
@@ -728,7 +728,7 @@ async function createMeeting() {
       window.open(meetingData.join_url);
     } catch (error) {
       console.error('Frontend Error:', error);
-      alert(error.message);
+      notification(error.message);
     }
 }
 */

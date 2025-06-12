@@ -12,7 +12,7 @@ function loadLogInLogic(client){
         ];
         document.querySelector("#log-in").disabled = false;
         console.error("User login error: "+errorTexts[errorType]);
-        alert("User login error: "+errorTexts[errorType]);
+        notification("User login error: "+errorTexts[errorType]);
     });
     client.on("user-log-in-success", (userData, requestPassword)=>{
         document.querySelector("#log-in-password").value = "";
@@ -37,20 +37,24 @@ function loadLogInLogic(client){
         fadeOut("#pre-main", 0.1, ()=>{fadeIn("#main", 0.1, "block")});
         fadeIn(".assistant-holder", 0.1);
 
-        /*loadStudentsLogic(userData.username);
+        loadStudentsLogic(userData.username);
         loadAssistantLogic(client);
         loadAboutMeLogic(userData);
-        loadDriveLogic(client);*/
+        loadDriveLogic(client);
         loadMailLogic();
-        //loadCalendar();
+        loadCalendar();
 
          /*
-            if(user.photos.length > 0){
+        if(user.photos.length > 0){
                 const userIcons = document.querySelectorAll(".user-icon");
                 for(let i = 0; i < userIcons.length; i++) userIcons[i].style.backgroundImage = 'url("'+user.photos[0].value+'")';
-            }*/
+        }
+        */
 
-        if(requestPassword) fadeIn("#edit-password-screen", 0.1);
+        if(requestPassword) fadeIn("#add-password-screen", 0.1);
+        window.addEventListener("send-add-password", (e)=>{
+            client.emit("add-password", userData.userID, e.detail.password);
+        });
     });
 }
 function logOff(client){
@@ -134,7 +138,7 @@ function switchLoginSignin(client){
     }
     const loginButton = document.querySelector("#log-in");
     loginButton.onclick = ()=>{
-        if(loginEmail.value === "" || loginPassword.value === "") alert("Input all fields");
+        if(loginEmail.value === "" || loginPassword.value === "") notification("Input all fields");
         else{
             loginButton.disabled = true;
             client.emit("user-log-in-attempt", loginEmail.value, loginPassword.value);
@@ -142,29 +146,31 @@ function switchLoginSignin(client){
     }
 }
 function editPasswordLogic(client){
-    const editPasswordConfirm = document.querySelector("#edit-password-confirm");
-    const editPasswordCancel = document.querySelector("#edit-password-cancel");
-    const editPassword1 = document.querySelector("#edit-password-1");
-    const editPassword2 = document.querySelector("#edit-password-2");
+    const editPasswordConfirm = document.querySelector("#add-password-confirm");
+    const editPasswordCancel = document.querySelector("#add-password-cancel");
+    const editPassword1 = document.querySelector("#add-password-1");
+    const editPassword2 = document.querySelector("#add-password-2");
     editPassword1.value = "";
     editPassword2.value = "";
 
     editPasswordCancel.onclick = ()=>{
-        fadeOut("#edit-password-screen", 0.1, ()=>{
+        fadeOut("#add-password-screen", 0.1, ()=>{
             editPassword1.value = "";
             editPassword2.value = "";
         });
     }
     editPasswordConfirm.onclick = ()=>{
-        if(editPassword1.value === "" || editPassword2.value === "") alert("Input all fields");
-        else if(editPassword1.value !== editPassword2.value) alert("Passwords don't match");
+        if(editPassword1.value === "" || editPassword2.value === "") notification("Input all fields");
+        else if(editPassword1.value !== editPassword2.value) notification("Passwords don't match");
         else{
-            client.emit("edit-password", userData.userID, editPassword1.value);
+            const eventData = {detail:{password:editPassword1.value}}
+            const addPasswordEvent = new CustomEvent("send-add-password", eventData);
+            window.dispatchEvent(addPasswordEvent);
             editPasswordConfirm.disabled = true;
         }
     }
 
-    client.on("edit-password-fail", (errorType)=>{
+    client.on("add-password-fail", (errorType)=>{
         editPasswordConfirm.disabled = false;
         const errorTexts = [
             "User not found",
@@ -172,9 +178,9 @@ function editPasswordLogic(client){
         ];
         console.error("Add password error: "+errorTexts[errorType]);
     });
-    client.on("edit-password-success", ()=>{
-        alert("Passoword saved");
-        fadeOut("#edit-password-screen", 0.1, ()=>{
+    client.on("add-password-success", ()=>{
+        notification("Passoword saved");
+        fadeOut("#add-password-screen", 0.1, ()=>{
             editPasswordConfirm.disabled = false;
             editPassword1.value = "";
             editPassword2.value = "";

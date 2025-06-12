@@ -353,14 +353,21 @@ async function deleteFile(fileId){
     try{
         const response = await fetch(`/api/drive-delete/${fileId}`, {method:"DELETE"});
         const result = await response.json();
-        if(!result.success) alert("Failed to delete file");
+        if(!result.success) notification("Failed to delete file");
         else{
-            const deletedElement = document.getElementById("file-"+fileId);
-            const holder = deletedElement.parentElement;
-            deletedElement.remove();
-            if(holder.children.length === 0){
-                holder.previousElementSibling.remove();
-                holder.remove();
+            const deletedElement = document.querySelectorAll("#file-"+fileId);
+            for(let i = 0; i < deletedElement.length; i++){
+                const holder = deletedElement[i].parentElement;
+                deletedElement[i].remove();
+                if(holder.children.length === 0){
+                    if(holder.className === "dashboard-holder"){
+                        holder.innerHTML = "No recent files";
+                    }
+                    else{
+                        holder.previousElementSibling.remove();
+                        holder.remove();
+                    }  
+                }
             }
             fadeOut(".file-display", 0.1);
         }
@@ -373,7 +380,7 @@ async function uploadFile(){
     const driveFileUpload = document.querySelector("#drive-file-upload");
     const file = driveFileUpload.files[0];
     if(!file){
-        alert("File invalid");
+        notification("File invalid");
         return;
     }
 
@@ -382,15 +389,15 @@ async function uploadFile(){
     try{
         const response = await fetch("/api/drive-upload", {method:"POST", body:formData});
         const result = await response.json();
-        if(!result.success)  alert("Upload file error");
+        if(!result.success)  notification("Upload file error");
         else{
-            alert("File uploaded");
+            notification("File uploaded");
             const reloadDriveFiles = new Event("reload-drive-files");
             document.dispatchEvent(reloadDriveFiles);
         }
     }
     catch(error){
-        alert("Upload file error");
+        notification("Upload file error");
         console.error("Upload error:", error);
     }
 }

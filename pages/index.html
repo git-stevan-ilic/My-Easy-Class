@@ -150,7 +150,7 @@
                 </div>
             </div>
             <div class="screen" id="main">
-                <div class="screen tab-affected" id="dahsboard-screen" style="display:none;">
+                <div class="screen tab-affected" id="dahsboard-screen">
                     <div class="dashboard-account-display">
                         <div class="dashboard-account-image user-icon"></div>
                         <div class="dashboard-account-name"></div>
@@ -220,6 +220,9 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="mail-mask">
+                            <div class="mail-loader"></div>
+                        </div>
                         <div class="send-mail-window">
                             <div class="send-mail-head">
                                 <div class="send-mail-title">New Message</div>
@@ -232,7 +235,10 @@
                             </div>
                             <div class="send-mail-foot">
                                 <button id="send-mail">Send</button>
+                                <button id="mail-attachment"></button>
+                                <div class="attachment-display"></div>
                             </div>
+                            <input type="file" id="attachment-file-input" multiple>
                         </div>
                     </div>
                 </div>
@@ -296,7 +302,7 @@
                     </div>
                     <div class="drive-body"></div>
                 </div>
-                <div class="screen tab-affected" id="students-screen" style="display:block;">
+                <div class="screen tab-affected" id="students-screen" style="display:none;">
                     <div class="class-list-window">
                         <div class="search-holder" id="class-search-icon-holder">
                             <div class="search-icon" id="class-search-icon"></div> 
@@ -493,23 +499,7 @@
                     Assistant
                 </div>
                 <div class="assistant-window-body">
-                    <div class="assistant-messages-list">
-                        <div class="assistant-message">
-                            <div class="assistant-message-body">
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.Lorem ipsum dolor sit amet, consectetur aaaaaa
-                            </div>
-                        </div>
-                        <div class="assistant-message bot-message">
-                            <div class="assistant-message-body bot-message-body">
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit
-                            </div>
-                        </div>
-                        <div class="assistant-message">
-                            <div class="assistant-message-body">
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit
-                            </div>
-                        </div>
-                    </div>
+                    <div class="assistant-messages-list"></div>
                 </div>
                 <div class="assistant-window-foot">
                     <input type="text" class="assistant-input">
@@ -686,23 +676,23 @@
                 </div>
             </div>
         </div>
-        <div class="screen-mask" id="edit-password-screen">
+        <div class="screen-mask" id="add-password-screen">
             <div class="screen-mask-background"></div>
-            <div class="edit-password-window">
-                <div class="edit-password-window-head">Add Account Password</div>
-                <div class="edit-password-window-body">
-                    <div class="edit-password-row">
-                        <div class="edit-password-label">Password</div>
-                        <input class="edit-password-input" type="password"  id="edit-password-1">
+            <div class="add-password-window">
+                <div class="add-password-window-head">Add Account Password</div>
+                <div class="add-password-window-body">
+                    <div class="add-password-row">
+                        <div class="add-password-label">Password</div>
+                        <input class="add-password-input" type="password"  id="add-password-1">
                     </div>
-                    <div class="edit-password-row">
-                        <div class="edit-password-label">Confirm Password</div>
-                        <input class="edit-password-input" type="password"  id="edit-password-2">
+                    <div class="add-password-row">
+                        <div class="add-password-label">Confirm Password</div>
+                        <input class="add-password-input" type="password"  id="add-password-2">
                     </div>
                 </div>
-                <div class="edit-password-window-foot">
-                    <button id="edit-password-confirm">Confirm</button>
-                    <button id="edit-password-cancel">Cancel</button>
+                <div class="add-password-window-foot">
+                    <button id="add-password-confirm">Confirm</button>
+                    <button id="add-password-cancel">Cancel</button>
                 </div>
             </div>
         </div>

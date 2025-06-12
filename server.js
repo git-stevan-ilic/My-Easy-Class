@@ -2,7 +2,7 @@
 const express = require("express");
 const { createServer } = require("node:http");
 const { Server } = require("socket.io");
-const { v4: uuidv4 } = require("uuid");
+const { nanoid } = require("nanoid");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const fs = require("fs");
@@ -26,7 +26,6 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server);
 
-
 app.use(cookieParser());
 const sessionMiddleware = session({
     secret:process.env.SESSION_SECRET,
@@ -37,8 +36,8 @@ const sessionMiddleware = session({
 app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(express.json());
-app.use(express.urlencoded({extended:true}));
+//app.use(express.json());
+//app.use(express.urlencoded({extended:true}));
 io.use(sharedsession(sessionMiddleware, {autoSave:true}));
 
 /*--Schemas------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -108,6 +107,11 @@ app.get("/auth/google", passport.authenticate("google", {
     accessType:"offline",
     prompt:"consent"
 }));
+
+
+
+
+
 /*
 async function getGoogleAuth(userID){
     Users.find({userID:userID})
@@ -159,41 +163,44 @@ app.get("/api/emails/:inbox", async (req, res)=>{
             pageToken: pageToken || undefined
         });
 
-        const messages = await Promise.all(
-            response.data.messages.map(async (message)=>{
-                const msg = await gmail.users.messages.get({
-                    userId:"me",
-                    id:message.id,
-                    format:"metadata",
-                    metadataHeaders:["From", "To", "Subject", "Date"],
-                    fields:"payload(headers),snippet,labelIds"
-                });
+        let messages = [];
+        if(response.data.messages){
+            messages = await Promise.all(
+                response.data.messages.map(async (message)=>{
+                    const msg = await gmail.users.messages.get({
+                        userId:"me",
+                        id:message.id,
+                        format:"metadata",
+                        metadataHeaders:["From", "To", "Subject", "Date"],
+                        fields:"payload(headers),snippet,labelIds"
+                    });
 
-                const labels = msg.data.labelIds || [];
-                const returnFromHeader    = msg.data.payload.headers.find(h => h.name === "From");
-                const returnToHeader      = msg.data.payload.headers.find(h => h.name === "To");
-                const returnSubjectHeader = msg.data.payload.headers.find(h => h.name === "Subject");
-                const returnDateHeader    = msg.data.payload.headers.find(h => h.name === "Date");
+                    const labels = msg.data.labelIds || [];
+                    const returnFromHeader    = msg.data.payload.headers.find(h => h.name === "From");
+                    const returnToHeader      = msg.data.payload.headers.find(h => h.name === "To");
+                    const returnSubjectHeader = msg.data.payload.headers.find(h => h.name === "Subject");
+                    const returnDateHeader    = msg.data.payload.headers.find(h => h.name === "Date");
 
-                let returnFrom = "N/A", returnTo = "N/A", returnSubject = "No Subject", returnDate = "N/A";
-                if(returnFromHeader)    returnFrom    = returnFromHeader.value;
-                if(returnToHeader)      returnTo      = returnToHeader.value;
-                if(returnSubjectHeader) returnSubject = returnSubjectHeader.value;
-                if(returnDateHeader)    returnDate    = returnDateHeader.value;
+                    let returnFrom = "N/A", returnTo = "N/A", returnSubject = "No Subject", returnDate = "N/A";
+                    if(returnFromHeader)    returnFrom    = returnFromHeader.value;
+                    if(returnToHeader)      returnTo      = returnToHeader.value;
+                    if(returnSubjectHeader) returnSubject = returnSubjectHeader.value;
+                    if(returnDateHeader)    returnDate    = returnDateHeader.value;
 
-                return {
-                    id:message.id,
-                    from:returnFrom,
-                    to:returnTo,
-                    subject:returnSubject,
-                    date:returnDate,
-                    snippet:msg.data.snippet,
-                    isStarred:labels.includes("STARRED"),
-                    isImportant:labels.includes("IMPORTANT"),
-                    isUnread:labels.includes("UNREAD")
-                };
-            })
-        );
+                    return {
+                        id:message.id,
+                        from:returnFrom,
+                        to:returnTo,
+                        subject:returnSubject,
+                        date:returnDate,
+                        snippet:msg.data.snippet,
+                        isStarred:labels.includes("STARRED"),
+                        isImportant:labels.includes("IMPORTANT"),
+                        isUnread:labels.includes("UNREAD")
+                    };
+                })
+            );
+        }
         res.json({messages:messages, nextPageToken:response.data.nextPageToken || null});
     }
     catch(error){
@@ -319,7 +326,7 @@ app.post("/api/emails/:id/importance", async (req, res)=>{
         res.status(error.status).json({success:false});
     }
 });
-app.post("/api/send-mail", async (req, res)=>{
+app.post("/api/send-mail", upload.array("file"), async (req, res)=>{
     try{
         const oauth2Client = new google.auth.OAuth2();
         oauth2Client.on("tokens", (tokens)=>{
@@ -331,20 +338,48 @@ app.post("/api/send-mail", async (req, res)=>{
             access_token:req.user.accessToken
         });
 
+        const attachments = req.files || [];
         const {recipients, subject, message} = req.body;
-        const encodedHtml = Buffer.from(message).toString("base64");
-        const formattedBody = encodedHtml.match(/.{1,76}/g).join('\n');
-        const rawEmail = [
+        const boundary = '----------' + Math.random().toString(36).substring(2, 15);
+        
+        const rawEmailParts = [
             "From:'My Easy Class' <"+req.user.email+">",
             "To:"+recipients,
             "Subject:"+subject,
             "MIME-Version:1.0",
+            "Content-Type:multipart/mixed; boundary="+boundary,
+            ""
+        ];
+
+        rawEmailParts.push(
+            "--"+boundary,
             "Content-Type:text/html; charset=utf-8",
             "Content-Transfer-Encoding: base64",
-            "",
-            formattedBody
-        ].join('\n');
+            ""
+        );
 
+        const encodedHtml = Buffer.from(message).toString("base64");
+        rawEmailParts.push(encodedHtml);
+        rawEmailParts.push("");
+
+        if(attachments && attachments.length > 0){
+            for(const attachment of attachments){
+                rawEmailParts.push(
+                    "--"+boundary,
+                    "Content-Type:"+attachment.mimetype+"; name="+attachment.originalname,
+                    "Content-Disposition: attachment; filename="+attachment.originalname,
+                    "Content-Transfer-Encoding: base64",
+                    ""
+                );
+                const fileContent = fs.readFileSync(attachment.path);
+                const encodedAttachment = fileContent.toString("base64");
+                rawEmailParts.push(encodedAttachment);
+                rawEmailParts.push("");
+            }
+        }
+        rawEmailParts.push("--"+boundary+"--");
+
+        const rawEmail = rawEmailParts.join("\n");
         const encodedEmail = Buffer.from(rawEmail)
         .toString('base64')
         .replace(/\+/g, '-')
@@ -731,11 +766,11 @@ io.on("connection",(client)=>{
     client.on("user-log-off", ()=>{userLogOff(client)});
     client.on("user-log-in", (email)=>{userLogIn(client, email, null)});
     client.on("user-log-in-attempt", (email, password)=>{userLogIn(client, email, password)});
-    client.on("edit-password", (userID, password)=>{
+    client.on("add-password", (userID, password)=>{
         Users.find({userID:userID})
         .then((result)=>{
             if(result.length === 0){
-                client.emit("edit-password-fail", 0);
+                client.emit("add-password-fail", 0);
                 return;
             }
 
@@ -743,11 +778,11 @@ io.on("connection",(client)=>{
             foundUser.password = password;
             foundUser.save()
             .then(()=>{
-                client.emit("edit-password-success");
+                client.emit("add-password-success");
             })
             .catch((error)=>{
                 console.error("Client ID update error: ", error);
-                client.emit("edit-password-fail", 1);
+                client.emit("add-password-fail", 1);
             });
         })
         .catch((error)=>{
@@ -858,7 +893,7 @@ function checkUserExistGoogleLogin(profile){
         if(result.length > 0) return;
 
         const newUser = new Users({
-            userID:uuidv4(),
+            userID:nanoid(10),
             username:profile.displayName,
             password:"",
             email:profile.emails[0].value,
@@ -875,6 +910,20 @@ function checkUserExistGoogleLogin(profile){
         console.error("Find user DB error: ", error);
     });
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -145,12 +145,13 @@ function headTabLogic(){
         }
     }
     window.addEventListener("close-all-tabs", ()=>{
+        if(currTab !== -1){
+            const currSelectedTab = document.querySelector(".selected-tab");
+            currSelectedTab.classList.remove("selected-tab");
+        }
         const screensToClose = document.querySelector("#main").children;
         for(let j = 0; j < screensToClose.length; j++) screensToClose[j].style.display = "none";
         currTab = -1;
-
-        const currSelectedTab = document.querySelector(".selected-tab");
-        currSelectedTab.classList.remove("selected-tab");
     });
 }
 
@@ -192,6 +193,7 @@ function loadAssistantLogic(client){
 function clearAsisstantChat(){
     const messageList = document.querySelector(".assistant-messages-list");
     while(messageList.children.length > 0) messageList.removeChild(messageList.lastChild);
+    addMessage(true, false, "Hi. I'm your personal AI assistant. How can I help you today?");
 }
 function startThinking(){
     const assistantInput  = document.querySelector(".assistant-input");

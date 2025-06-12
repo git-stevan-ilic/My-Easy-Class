@@ -216,6 +216,7 @@
     overflow-wrap:break-word;
     word-break:normal;
     font-weight:bold;
+    overflow-y:hidden;
 }
 .drive-item-info{
     color:var(--gray-1);

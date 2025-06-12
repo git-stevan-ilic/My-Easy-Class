@@ -53,6 +53,7 @@ function loadMailLogic(){
         generateMailElements(emails, tabs[selectedTab], searchInput);
         canClickPrev = true;
         canClickNext = true;
+        hideMailLoader();
     });
 
     let canClickPrev = true, canClickNext = true;
@@ -281,9 +282,17 @@ function loadSendMessage(){
     const sendMailButton = document.querySelector("#send-mail");
     const newEmail = document.querySelector("#new-email");
     sendMailWindow.style.display = "none";
+    
+    const attachmentFileInput = document.querySelector("#attachment-file-input");
+    const attachmentDisplay = document.querySelector(".attachment-display");
+    const mailAttachment = document.querySelector("#mail-attachment");
+    attachmentDisplay.innerHTML = "";
+    attachmentFileInput.value = null;
 
     newEmail.onclick = ()=>{
         if(sendMailWindow.style.display === "none"){
+            attachmentFileInput.value = null;
+            attachmentDisplay.innerHTML = "";
             sendMailRecipients.value = "";
             sendMailSubject.value = "";
             sendMailMessage.value = "";
@@ -309,12 +318,28 @@ function loadSendMessage(){
         }
     }
     sendMailButton.onclick = ()=>{
-        sendMail(sendMailRecipients.value, sendMailSubject.value, sendMailMessage.value, "mail");
+        sendMail(sendMailRecipients.value, sendMailSubject.value, sendMailMessage.value, attachmentFileInput.files, "mail");
     }
+
+    mailAttachment.onclick = ()=>{
+        attachmentFileInput.click();
+    }
+    attachmentFileInput.oninput = ()=>{
+        attachmentDisplay.innerText = attachmentFileInput.files.length + " files selected";
+    }
+}
+function showMailLoader(){
+    document.querySelector(".mail-list-holder").style.overflowY = "hidden";
+    fadeIn(".mail-mask", 0.1, "block", null);
+}
+function hideMailLoader(){
+    document.querySelector(".mail-list-holder").style.overflowY = "auto";
+    fadeOut(".mail-mask", 0.1, null);
 }
 
 /*--Mail Manipulation--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 async function loadInbox(inbox, nextPageToken){
+    showMailLoader();
     try{
         let url = "/api/emails/"+inbox;
         if(nextPageToken) url = "/api/emails/"+inbox+"?pageToken="+nextPageToken;
@@ -331,6 +356,7 @@ async function loadInbox(inbox, nextPageToken){
     }
     catch(error){
         console.log("Load inbox error: ", inbox);
+        hideMailLoader();
     }
 }
 async function deleteEmail(emailID){
@@ -344,12 +370,12 @@ async function deleteEmail(emailID){
         }
         else{
             console.log(result.message);
-            alert("Deletion Error");
+            notification("Deletion Error");
         }
     }
     catch(error){
         console.log(error);
-        alert("Deletion Error");
+        notification("Deletion Error");
     }
 }
 async function getEmailContent(email){
@@ -367,7 +393,7 @@ async function getEmailContent(email){
     }
     catch(error){
         console.log(error);
-        alert("Fetching email error");
+        notification("Fetching email error");
     }
 }
 async function markEmailRead(emailID){
@@ -378,19 +404,26 @@ async function markEmailRead(emailID){
         window.dispatchEvent(reloadEmails);
     }
 }
-async function sendMail(recipients, subject, message, appPart){
+async function sendMail(recipients, subject, message, attachments, appPart){
     try{
+        const formData = new FormData();
+        formData.append("recipients", recipients);
+        formData.append("subject", subject);
+        formData.append("message", message);
+        for(let i = 0; i < attachments.length; i++){
+            formData.append("file", attachments[i]);
+        }
+
         const response = await fetch("/api/send-mail", {
             method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({recipients, subject, message}),
+            body:formData
         });
-        if(!response.ok) alert("Failed to send email");
+        if(!response.ok) notification("Failed to send email");
         else{
             switch(appPart){
                 default:break;
                 case "mail":
-                    alert("Email sent successfully");
+                    notification("Email sent successfully");
                     document.querySelector(".send-mail-close").click();
                     break;
                 case "invite":
@@ -402,6 +435,6 @@ async function sendMail(recipients, subject, message, appPart){
     }
     catch(error){
         console.log("Sending email error:", error);
-        alert("Sending email error");
+        notification("Sending email error");
     }
 }

@@ -316,7 +316,7 @@ function confirmEventAdd(date, currDate){
     const time = document.querySelector("#edit-event-time").value;
 
     if(!name || !desc || !time){
-        alert("Fill out all fields");
+        notification("Fill out all fields");
         return;
     }
     const currDateTime = currDate+"T"+document.querySelector("#edit-event-time").value;
@@ -328,7 +328,7 @@ function confirmEventEdit(eventID, currDate){
     const time = document.querySelector("#edit-event-time").value;
 
     if(!name || !desc || !time){
-        alert("Fill out all fields");
+        notification("Fill out all fields");
         return;
     }
     const currDateTime = currDate+"T"+document.querySelector("#edit-event-time").value+":00+00:00";
@@ -359,7 +359,7 @@ async function createEvent(date, currDate, title, description){
             body:JSON.stringify(eventData)
         });
 
-        if(!response.ok) alert("Failed to create event");
+        if(!response.ok) notification("Failed to create event");
         else{
             const updateDate = new CustomEvent("update-date", {detail:{date:date}});
             window.dispatchEvent(updateDate);
@@ -368,7 +368,7 @@ async function createEvent(date, currDate, title, description){
     }
     catch(error){
         console.error("Create event error", error);
-        alert("Error creating event");
+        notification("Error creating event");
     }
 }
 async function deleteEvent(eventID){
@@ -377,7 +377,7 @@ async function deleteEvent(eventID){
         const response = await fetch("/api/calendar/delete/"+eventID, {
             method:"DELETE", headers:{"Content-Type":"application/json"}
         });
-        if(!response.ok) alert("Event deletion error");
+        if(!response.ok) notification("Event deletion error");
         else{
             document.getElementById("event-"+eventID).remove();
             closeEventWindow();
@@ -385,7 +385,7 @@ async function deleteEvent(eventID){
     }   
     catch(error){
         console.error("Delete event error ", error);
-        alert("Event deletion error");
+        notification("Event deletion error");
     }
 }
 async function editEvent(eventID, title, description, time){
