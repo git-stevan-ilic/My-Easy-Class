@@ -124,6 +124,8 @@ input[type=text].log-in-input, input[type=password].log-in-input, input[type=ema
     font-size:0.75vw;
     width:18.25vw;
     height:3vw;
+
+    pointer-events:none;
 }
 .forgot-password:hover{
     text-decoration:underline;

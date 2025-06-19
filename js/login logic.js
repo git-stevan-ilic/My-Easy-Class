@@ -8,7 +8,8 @@ function loadLogInLogic(client){
         const errorTexts = [
             "Database Error",
             "User not found",
-            "Password is incorrect"
+            "Password is incorrect",
+            "Session save error"
         ];
         document.querySelector("#log-in").disabled = false;
         console.error("User login error: "+errorTexts[errorType]);
@@ -37,14 +38,14 @@ function loadLogInLogic(client){
         fadeOut("#pre-main", 0.1, ()=>{fadeIn("#main", 0.1, "block")});
         fadeIn(".assistant-holder", 0.1);
 
-        loadStudentsLogic(userData.username);
-        loadAssistantLogic(client);
-        loadAboutMeLogic(userData);
-        loadDriveLogic(client);
+        //loadStudentsLogic(userData.username);
+        //loadAssistantLogic(client);
+        //loadAboutMeLogic(userData);
+        //loadDriveLogic(client);
         loadMailLogic();
-        loadCalendar();
+        //loadCalendar();
 
-         /*
+        /*
         if(user.photos.length > 0){
                 const userIcons = document.querySelectorAll(".user-icon");
                 for(let i = 0; i < userIcons.length; i++) userIcons[i].style.backgroundImage = 'url("'+user.photos[0].value+'")';

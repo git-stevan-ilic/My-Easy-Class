@@ -36,8 +36,8 @@ const sessionMiddleware = session({
 app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
-//app.use(express.json());
-//app.use(express.urlencoded({extended:true}));
+app.use(express.json());
+app.use(express.urlencoded({extended:true}));
 io.use(sharedsession(sessionMiddleware, {autoSave:true}));
 
 /*--Schemas------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -73,17 +73,7 @@ const Users = mongoose.model("User", usersSchema);
 passport.use(new GoogleStrategy({
     clientID:process.env.GOOGLE_CLIENT_ID,
     clientSecret:process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL:process.env.GOOGLE_REDIRECT_URL,
-    scope:[
-        "profile", "email", "https://www.googleapis.com/auth/calendar",
-        "https://www.googleapis.com/auth/drive.metadata.readonly",
-        "https://www.googleapis.com/auth/drive",
-        "https://www.googleapis.com/auth/gmail.readonly",
-        "https://www.googleapis.com/auth/gmail.modify",
-        "https://www.googleapis.com/auth/gmail.send"
-    ],
-    accessType:"offline",
-    prompt:"consent"
+    callbackURL:process.env.GOOGLE_REDIRECT_URL
 },
 (accessToken, refreshToken, profile, done) => {
     profile.refreshToken = refreshToken;
@@ -94,6 +84,10 @@ passport.use(new GoogleStrategy({
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((user, done) => done(null, user));
 
+GoogleStrategy.prototype.authorizationParams = (options)=>{
+    return{access_type:"offline", prompt:"consent"};
+};
+
 app.get("/auth/google/callback", passport.authenticate("google", {failureRedirect:"/login"}), (req, res) => res.redirect("/"));
 app.get("/auth/google", passport.authenticate("google", {
     scope:[
@@ -103,56 +97,65 @@ app.get("/auth/google", passport.authenticate("google", {
         "https://www.googleapis.com/auth/gmail.readonly",
         "https://www.googleapis.com/auth/gmail.modify",
         "https://www.googleapis.com/auth/gmail.send"
-    ],
-    accessType:"offline",
-    prompt:"consent"
+    ]
 }));
 
-
-
-
-
-/*
-async function getGoogleAuth(userID){
-    Users.find({userID:userID})
+function authentificateGoogleAPI(req, res, index){
+    const googleFunctions = [
+        getEmailInbox, getEmailContent, readEmail, starEmail,
+        importanceEmail, sendEmail, deleteEmail
+    ];
+    Users.find({userID:req.session.userID})
     .then((result)=>{
-        if(result.length === 0){
-            client.emit("user-log-in-fail", 1);
-            return;
+        if(result.length === 0) console.error("Find user DB error: ", error);
+        else{
+            const foundUser = result[0];
+            const currFunc = googleFunctions[index]
+            currFunc(req, res, foundUser.googleAccessToken, foundUser.googleRefreshToken);
         }
-        const foundUser = result[0];
-        const oauth2Client = new google.auth.OAuth2();
-        oauth2Client.on("tokens", (tokens)=>{
-            if(tokens.refresh_token) foundUser.googleRefreshToken = tokens.refresh_token;
-            foundUser.googleAccessToken = tokens.access_token;
-            foundUser.save().catch((error)=>{console.error("Client Google Tokens update error: ", error)});
-        });
-        oauth2Client.setCredentials({
-            refresh_token:foundUser.googleRefreshToken,
-            access_token:foundUser.googleAccessToken
-        });
-        return oauth2Client;
-    })  
+    })
     .catch((error)=>{
         console.error("Find user DB error: ", error);
-        return null;
     });
 }
-*/
-
-
 
 /*--Google Mail API----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 app.get("/api/emails/:inbox", async (req, res)=>{
+    authentificateGoogleAPI(req, res, 0);
+});
+app.get("/api/email-content/:id", async (req, res)=>{
+    authentificateGoogleAPI(req, res, 1);
+});
+app.post("/api/emails/:id/read", async (req, res)=>{
+    authentificateGoogleAPI(req, res, 2);
+});
+app.post("/api/emails/:id/star", async (req, res)=>{
+    authentificateGoogleAPI(req, res, 3);
+});
+app.post("/api/emails/:id/importance", async (req, res)=>{
+    authentificateGoogleAPI(req, res, 4);
+});
+app.post("/api/send-mail", upload.array("file"), async (req, res)=>{
+    authentificateGoogleAPI(req, res, 5);
+});
+app.delete("/api/emails/:id", async (req, res)=>{
+    authentificateGoogleAPI(req, res, 6);
+});
+
+async function getEmailInbox(req, res, accessToken, refreshToken){
     try{
-        const oauth2Client = new google.auth.OAuth2();
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.GOOGLE_REDIRECT_URL
+        );
         oauth2Client.on("tokens", (tokens)=>{
             if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
             req.user.accessToken = tokens.access_token;
         });
         oauth2Client.setCredentials({
-            refresh_token:req.user.refreshToken,
-            access_token:req.user.accessToken
+            refresh_token:refreshToken,
+            access_token:accessToken
         });
        
         const {inbox} = req.params;
@@ -207,17 +210,21 @@ app.get("/api/emails/:inbox", async (req, res)=>{
         console.error("Gmail error:", error);
         res.status(error.status).json({error:"Failed to fetch emails"});
     }
-});
-app.get("/api/email-content/:id", async (req, res)=>{
+}
+async function getEmailContent(req, res, accessToken, refreshToken){
     try{
-        const oauth2Client = new google.auth.OAuth2();
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.GOOGLE_REDIRECT_URL
+        );
         oauth2Client.on("tokens", (tokens)=>{
             if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
             req.user.accessToken = tokens.access_token;
         });
         oauth2Client.setCredentials({
-            refresh_token:req.user.refreshToken,
-            access_token:req.user.accessToken
+            refresh_token:refreshToken,
+            access_token:accessToken
         });
 
         const {id} = req.params;
@@ -249,17 +256,21 @@ app.get("/api/email-content/:id", async (req, res)=>{
         console.error("Error fetching email:", error);
         res.status(error.status).json({error:"Failed to fetch email"});
     }
-});
-app.post("/api/emails/:id/read", async (req, res)=>{
+}
+async function readEmail(req, res, accessToken, refreshToken){
     try{
-        const oauth2Client = new google.auth.OAuth2();
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.GOOGLE_REDIRECT_URL
+        );
         oauth2Client.on("tokens", (tokens)=>{
             if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
             req.user.accessToken = tokens.access_token;
         });
         oauth2Client.setCredentials({
-            refresh_token:req.user.refreshToken,
-            access_token:req.user.accessToken
+            refresh_token:refreshToken,
+            access_token:accessToken
         });
 
         const {id} = req.params;
@@ -271,17 +282,21 @@ app.post("/api/emails/:id/read", async (req, res)=>{
         console.error("Error marking email as read:", error);
         res.status(error.status).json({error:"Failed to update email status"});
     }
-});
-app.post("/api/emails/:id/star", async (req, res)=>{
+}
+async function starEmail(req, res, accessToken, refreshToken){
     try{
-        const oauth2Client = new google.auth.OAuth2();
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.GOOGLE_REDIRECT_URL
+        );
         oauth2Client.on("tokens", (tokens)=>{
             if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
             req.user.accessToken = tokens.access_token;
         });
         oauth2Client.setCredentials({
-            refresh_token:req.user.refreshToken,
-            access_token:req.user.accessToken
+            refresh_token:refreshToken,
+            access_token:accessToken
         });
 
         const gmail = google.gmail({version:"v1", auth:oauth2Client});
@@ -298,17 +313,21 @@ app.post("/api/emails/:id/star", async (req, res)=>{
         console.error("Error:", error);
         res.status(error.status).json({success:false});
     }
-});
-app.post("/api/emails/:id/importance", async (req, res)=>{
+}
+async function importanceEmail(req, res, accessToken, refreshToken){
     try{
-        const oauth2Client = new google.auth.OAuth2();
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.GOOGLE_REDIRECT_URL
+        );
         oauth2Client.on("tokens", (tokens)=>{
             if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
             req.user.accessToken = tokens.access_token;
         });
         oauth2Client.setCredentials({
-            refresh_token:req.user.refreshToken,
-            access_token:req.user.accessToken
+            refresh_token:refreshToken,
+            access_token:accessToken
         });
 
         const gmail = google.gmail({version:"v1", auth:oauth2Client});
@@ -325,17 +344,21 @@ app.post("/api/emails/:id/importance", async (req, res)=>{
         console.error("Error:", error);
         res.status(error.status).json({success:false});
     }
-});
-app.post("/api/send-mail", upload.array("file"), async (req, res)=>{
+}
+async function sendEmail(req, res, accessToken, refreshToken){
     try{
-        const oauth2Client = new google.auth.OAuth2();
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.GOOGLE_REDIRECT_URL
+        );
         oauth2Client.on("tokens", (tokens)=>{
             if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
             req.user.accessToken = tokens.access_token;
         });
         oauth2Client.setCredentials({
-            refresh_token:req.user.refreshToken,
-            access_token:req.user.accessToken
+            refresh_token:refreshToken,
+            access_token:accessToken
         });
 
         const attachments = req.files || [];
@@ -343,7 +366,7 @@ app.post("/api/send-mail", upload.array("file"), async (req, res)=>{
         const boundary = '----------' + Math.random().toString(36).substring(2, 15);
         
         const rawEmailParts = [
-            "From:'My Easy Class' <"+req.user.email+">",
+            "From:'My Easy Class' <"+req.session.email+">",
             "To:"+recipients,
             "Subject:"+subject,
             "MIME-Version:1.0",
@@ -394,17 +417,21 @@ app.post("/api/send-mail", upload.array("file"), async (req, res)=>{
         console.error("Error sending email:", error);
         res.status(error.status).json({error:"Failed to send email"});
     }
-});
-app.delete("/api/emails/:id", async (req, res)=>{
+}
+async function deleteEmail(req, res, accessToken, refreshToken){
     try{
-        const oauth2Client = new google.auth.OAuth2();
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.GOOGLE_REDIRECT_URL
+        );
         oauth2Client.on("tokens", (tokens)=>{
             if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
             req.user.accessToken = tokens.access_token;
         });
         oauth2Client.setCredentials({
-            refresh_token:req.user.refreshToken,
-            access_token:req.user.accessToken
+            refresh_token:refreshToken,
+            access_token:accessToken
         });
 
         const {id} = req.params;
@@ -419,9 +446,12 @@ app.delete("/api/emails/:id", async (req, res)=>{
             message:error.message.includes("404") ? 'Email not found' : 'Failed to delete email'
         });
     }
-});
+}
+
+
 
 /*--Google Drive API---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*
 app.get("/api/drive-list", async (req, res)=>{
     if(!req.user || !req.user.accessToken) return res.status(401).json({error:"Not authenticated"});
     try{
@@ -589,8 +619,10 @@ app.delete("/api/drive-delete/:fileId", async (req, res)=>{
         res.status(error.status).json({success:false, message:"Failed to delete file"});
     }
 });
+*/
 
 /*--Google Calendar API------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*
 app.get("/api/calendar", async (req, res)=>{
     if(!req.user || !req.user.accessToken) return res.status(401).json({error:"Not authenticated"});
     try{
@@ -755,9 +787,11 @@ function getColorHex(colorId){
     };
     return colors[colorId] || "1a73e8"; // Default blue
 }
+*/
 
 /*--Input/Output-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-io.on("connection",(client)=>{
+io.use((client, next) => {sessionMiddleware(client.request, {}, next);});
+io.on("connection", (client)=>{
     if(client.handshake.session.passport?.user){
         client.emit("google-status", client.handshake.session.passport.user);
     }
@@ -867,20 +901,29 @@ function userLogIn(client, email, password){
         });
 
         const userData = {
-            userID:          foundUser.userID,
-            username:        foundUser.username,
-            email:           foundUser.email,
-            jobTitle:        foundUser.jobTitle,
-            location:        foundUser.location,
-            education:       foundUser.education,
-            history:         foundUser.history,
-            cv:              foundUser.cv,
-            description:     foundUser.description,
-            googleConnected: foundUser.googleConnected
+            userID:            foundUser.userID,
+            username:          foundUser.username,
+            email:             foundUser.email,
+            jobTitle:          foundUser.jobTitle,
+            location:          foundUser.location,
+            education:         foundUser.education,
+            history:           foundUser.history,
+            cv:                foundUser.cv,
+            description:       foundUser.description,
+            googleConnected:   foundUser.googleConnected,
+            accessToken:       foundUser.googleAccessToken,
         }
         let requestPassword = false;
         if(foundUser.password === "") requestPassword = true;
-        client.emit("user-log-in-success", userData, requestPassword);
+        client.request.session.userID = foundUser.userID;
+        client.request.session.email = foundUser.email;
+        client.request.session.save((error)=>{
+            if(error){
+                console.error("Session save error:", error);
+                client.emit("user-log-in-fail", 3);
+            }
+            else client.emit("user-log-in-success", userData, requestPassword);
+        });
     })
     .catch((error)=>{
         console.error("Find user DB error: ", error);
@@ -910,12 +953,6 @@ function checkUserExistGoogleLogin(profile){
         console.error("Find user DB error: ", error);
     });
 }
-
-
-
-
-
-
 
 
 

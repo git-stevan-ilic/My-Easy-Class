@@ -343,7 +343,7 @@ async function loadInbox(inbox, nextPageToken){
     try{
         let url = "/api/emails/"+inbox;
         if(nextPageToken) url = "/api/emails/"+inbox+"?pageToken="+nextPageToken;
-        const response = await fetch(url);
+        const response = await fetch(url, {method:"GET"});
         const emails = await response.json();
 
         const receivedEmailsEvent = new CustomEvent("received-emails", {
