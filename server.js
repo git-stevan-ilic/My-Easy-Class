@@ -63,7 +63,6 @@ const usersSchema = new Schema({
         default:null,
     },
     googleConnected:    {type:Boolean, required:true,  default:false},
-    googleAccessToken:  {type:String,  required:false, default:null},
     googleRefreshToken: {type:String,  required:false, default:null},
     googleUserID:       {type:String,  required:false, default:null}
 });
@@ -83,7 +82,6 @@ passport.use(new GoogleStrategy({
 }));
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((user, done) => done(null, user));
-
 GoogleStrategy.prototype.authorizationParams = (options)=>{
     return{access_type:"offline", prompt:"consent"};
 };
@@ -103,7 +101,9 @@ app.get("/auth/google", passport.authenticate("google", {
 function authentificateGoogleAPI(req, res, index){
     const googleFunctions = [
         getEmailInbox, getEmailContent, readEmail, starEmail,
-        importanceEmail, sendEmail, deleteEmail
+        importanceEmail, sendEmail, deleteEmail,
+        getDriveList, getDriveFile, driveDownload, driveUpload, driveDelete,
+        getCalendar, addCalendarEvent, editCalendarEvent, deleteCalendarEvent
     ];
     Users.find({userID:req.session.userID})
     .then((result)=>{
@@ -111,7 +111,7 @@ function authentificateGoogleAPI(req, res, index){
         else{
             const foundUser = result[0];
             const currFunc = googleFunctions[index]
-            currFunc(req, res, foundUser.googleAccessToken, foundUser.googleRefreshToken);
+            currFunc(req, res, foundUser.googleRefreshToken);
         }
     })
     .catch((error)=>{
@@ -142,21 +142,15 @@ app.delete("/api/emails/:id", async (req, res)=>{
     authentificateGoogleAPI(req, res, 6);
 });
 
-async function getEmailInbox(req, res, accessToken, refreshToken){
+async function getEmailInbox(req, res, refreshToken){
     try{
         const oauth2Client = new google.auth.OAuth2(
             process.env.GOOGLE_CLIENT_ID,
             process.env.GOOGLE_CLIENT_SECRET,
             process.env.GOOGLE_REDIRECT_URL
         );
-        oauth2Client.on("tokens", (tokens)=>{
-            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
-            req.user.accessToken = tokens.access_token;
-        });
-        oauth2Client.setCredentials({
-            refresh_token:refreshToken,
-            access_token:accessToken
-        });
+        oauth2Client.setCredentials({refresh_token: refreshToken});
+        await oauth2Client.getAccessToken();
        
         const {inbox} = req.params;
         const {pageToken} = req.query;
@@ -211,21 +205,15 @@ async function getEmailInbox(req, res, accessToken, refreshToken){
         res.status(error.status).json({error:"Failed to fetch emails"});
     }
 }
-async function getEmailContent(req, res, accessToken, refreshToken){
+async function getEmailContent(req, res, refreshToken){
     try{
         const oauth2Client = new google.auth.OAuth2(
             process.env.GOOGLE_CLIENT_ID,
             process.env.GOOGLE_CLIENT_SECRET,
             process.env.GOOGLE_REDIRECT_URL
         );
-        oauth2Client.on("tokens", (tokens)=>{
-            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
-            req.user.accessToken = tokens.access_token;
-        });
-        oauth2Client.setCredentials({
-            refresh_token:refreshToken,
-            access_token:accessToken
-        });
+        oauth2Client.setCredentials({refresh_token: refreshToken});
+        await oauth2Client.getAccessToken();
 
         const {id} = req.params;
         const gmail = google.gmail({version:"v1", auth:oauth2Client});
@@ -257,21 +245,15 @@ async function getEmailContent(req, res, accessToken, refreshToken){
         res.status(error.status).json({error:"Failed to fetch email"});
     }
 }
-async function readEmail(req, res, accessToken, refreshToken){
+async function readEmail(req, res, refreshToken){
     try{
         const oauth2Client = new google.auth.OAuth2(
             process.env.GOOGLE_CLIENT_ID,
             process.env.GOOGLE_CLIENT_SECRET,
             process.env.GOOGLE_REDIRECT_URL
         );
-        oauth2Client.on("tokens", (tokens)=>{
-            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
-            req.user.accessToken = tokens.access_token;
-        });
-        oauth2Client.setCredentials({
-            refresh_token:refreshToken,
-            access_token:accessToken
-        });
+        oauth2Client.setCredentials({refresh_token: refreshToken});
+        await oauth2Client.getAccessToken();
 
         const {id} = req.params;
         const gmail = google.gmail({version:"v1", auth:oauth2Client});
@@ -283,21 +265,15 @@ async function readEmail(req, res, accessToken, refreshToken){
         res.status(error.status).json({error:"Failed to update email status"});
     }
 }
-async function starEmail(req, res, accessToken, refreshToken){
+async function starEmail(req, res, refreshToken){
     try{
         const oauth2Client = new google.auth.OAuth2(
             process.env.GOOGLE_CLIENT_ID,
             process.env.GOOGLE_CLIENT_SECRET,
             process.env.GOOGLE_REDIRECT_URL
         );
-        oauth2Client.on("tokens", (tokens)=>{
-            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
-            req.user.accessToken = tokens.access_token;
-        });
-        oauth2Client.setCredentials({
-            refresh_token:refreshToken,
-            access_token:accessToken
-        });
+        oauth2Client.setCredentials({refresh_token: refreshToken});
+        await oauth2Client.getAccessToken();
 
         const gmail = google.gmail({version:"v1", auth:oauth2Client});
         const {id} = req.params;
@@ -314,21 +290,15 @@ async function starEmail(req, res, accessToken, refreshToken){
         res.status(error.status).json({success:false});
     }
 }
-async function importanceEmail(req, res, accessToken, refreshToken){
+async function importanceEmail(req, res, refreshToken){
     try{
         const oauth2Client = new google.auth.OAuth2(
             process.env.GOOGLE_CLIENT_ID,
             process.env.GOOGLE_CLIENT_SECRET,
             process.env.GOOGLE_REDIRECT_URL
         );
-        oauth2Client.on("tokens", (tokens)=>{
-            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
-            req.user.accessToken = tokens.access_token;
-        });
-        oauth2Client.setCredentials({
-            refresh_token:refreshToken,
-            access_token:accessToken
-        });
+        oauth2Client.setCredentials({refresh_token: refreshToken});
+        await oauth2Client.getAccessToken();
 
         const gmail = google.gmail({version:"v1", auth:oauth2Client});
         const {id} = req.params;
@@ -345,21 +315,15 @@ async function importanceEmail(req, res, accessToken, refreshToken){
         res.status(error.status).json({success:false});
     }
 }
-async function sendEmail(req, res, accessToken, refreshToken){
+async function sendEmail(req, res, refreshToken){
     try{
         const oauth2Client = new google.auth.OAuth2(
             process.env.GOOGLE_CLIENT_ID,
             process.env.GOOGLE_CLIENT_SECRET,
             process.env.GOOGLE_REDIRECT_URL
         );
-        oauth2Client.on("tokens", (tokens)=>{
-            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
-            req.user.accessToken = tokens.access_token;
-        });
-        oauth2Client.setCredentials({
-            refresh_token:refreshToken,
-            access_token:accessToken
-        });
+        oauth2Client.setCredentials({refresh_token: refreshToken});
+        await oauth2Client.getAccessToken();
 
         const attachments = req.files || [];
         const {recipients, subject, message} = req.body;
@@ -418,21 +382,15 @@ async function sendEmail(req, res, accessToken, refreshToken){
         res.status(error.status).json({error:"Failed to send email"});
     }
 }
-async function deleteEmail(req, res, accessToken, refreshToken){
+async function deleteEmail(req, res, refreshToken){
     try{
         const oauth2Client = new google.auth.OAuth2(
             process.env.GOOGLE_CLIENT_ID,
             process.env.GOOGLE_CLIENT_SECRET,
             process.env.GOOGLE_REDIRECT_URL
         );
-        oauth2Client.on("tokens", (tokens)=>{
-            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
-            req.user.accessToken = tokens.access_token;
-        });
-        oauth2Client.setCredentials({
-            refresh_token:refreshToken,
-            access_token:accessToken
-        });
+        oauth2Client.setCredentials({refresh_token: refreshToken});
+        await oauth2Client.getAccessToken();
 
         const {id} = req.params;
         const gmail = google.gmail({version:"v1", auth:oauth2Client});
@@ -448,22 +406,32 @@ async function deleteEmail(req, res, accessToken, refreshToken){
     }
 }
 
-
-
 /*--Google Drive API---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-/*
 app.get("/api/drive-list", async (req, res)=>{
-    if(!req.user || !req.user.accessToken) return res.status(401).json({error:"Not authenticated"});
+    authentificateGoogleAPI(req, res, 7);
+});
+app.get("/api/drive-file-content/:fileId", async (req, res)=>{
+    authentificateGoogleAPI(req, res, 8);
+});
+app.get("/api/drive-download/:fileId", async (req, res)=>{
+    authentificateGoogleAPI(req, res, 9);
+});
+app.post("/api/drive-upload", upload.single("file"), async (req, res)=>{
+    authentificateGoogleAPI(req, res, 10);
+});
+app.delete("/api/drive-delete/:fileId", async (req, res)=>{
+    authentificateGoogleAPI(req, res, 11);
+});
+
+async function getDriveList(req, res, refreshToken){
     try{
-        const oauth2Client = new google.auth.OAuth2();
-        oauth2Client.on("tokens", (tokens)=>{
-            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
-            req.user.accessToken = tokens.access_token;
-        });
-        oauth2Client.setCredentials({
-            refresh_token:req.user.refreshToken,
-            access_token:req.user.accessToken
-        });
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.GOOGLE_REDIRECT_URL
+        );
+        oauth2Client.setCredentials({refresh_token: refreshToken});
+        await oauth2Client.getAccessToken();
 
         const drive = google.drive({version:"v3", auth:oauth2Client});
         const response = await drive.files.list({fields:"files(id, name, mimeType, size, modifiedTime, thumbnailLink)"});
@@ -473,18 +441,61 @@ app.get("/api/drive-list", async (req, res)=>{
         console.error("Drive API Error:", error);
         res.status(error.status).json({error:"Failed to fetch drive data"});
     }
-})
-app.get("/api/drive-download/:fileId", async (req, res)=>{
+}
+async function getDriveFile(req, res, refreshToken){
     try{
-        const oauth2Client = new google.auth.OAuth2();
-        oauth2Client.on("tokens", (tokens)=>{
-            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
-            req.user.accessToken = tokens.access_token;
-        });
-        oauth2Client.setCredentials({
-            refresh_token:req.user.refreshToken,
-            access_token:req.user.accessToken
-        });
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.GOOGLE_REDIRECT_URL
+        );
+        oauth2Client.setCredentials({refresh_token: refreshToken});
+        await oauth2Client.getAccessToken();
+
+        const fileId = req.params.fileId;
+        const drive = google.drive({version:"v3", auth:oauth2Client});
+        const metadata = await drive.files.get({fileId, fields:"mimeType"});
+        const mimeType = metadata.data.mimeType;
+
+        if(mimeType === "application/vnd.google-apps.document"){
+            const response = await drive.files.export({fileId,mimeType:"text/html"}, {responseType:"stream"});
+            res.setHeader("Content-Type", "text/html");
+            response.data.pipe(res);
+        }
+        else if(mimeType === "application/pdf"){
+            const response = await drive.files.get({fileId, alt:"media"}, {responseType:"stream"});
+            res.setHeader("Content-Type", "application/pdf");
+            response.data.pipe(res);
+        }
+        else if(mimeType.startsWith("image/")){
+            const response = await drive.files.get({fileId, alt:"media"}, {responseType:"stream"});
+            res.setHeader("Content-Type", mimeType);
+            response.data.pipe(res);
+        
+        }
+        else if(mimeType.startsWith("video/")){
+            const response = await drive.files.get({fileId, alt:"media"}, {responseType:"stream"});
+            res.setHeader("Content-Type", mimeType);
+            response.data.pipe(res);
+        }
+        else{
+            res.status(400).send("Unsupported file type");
+        }
+    }
+    catch(error){
+        console.error("Drive API Error:", error);
+        res.status(error.status).json({error:"Failed to fetch file content"});
+    }
+}
+async function driveDownload(req, res, refreshToken){
+    try{
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.GOOGLE_REDIRECT_URL
+        );
+        oauth2Client.setCredentials({refresh_token: refreshToken});
+        await oauth2Client.getAccessToken();
 
         const {fileId} = req.params;
         const {format} = req.query;
@@ -526,65 +537,16 @@ app.get("/api/drive-download/:fileId", async (req, res)=>{
         console.error("Drive API Error:", error);
         res.status(error.status).json({error:"Failed to download drive data"});
     }
-});
-app.get("/api/drive-file-content/:fileId", async (req, res)=>{
+}
+async function driveUpload(req, res, refreshToken){
     try{
-        const oauth2Client = new google.auth.OAuth2();
-        oauth2Client.on("tokens", (tokens)=>{
-            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
-            req.user.accessToken = tokens.access_token;
-        });
-        oauth2Client.setCredentials({
-            refresh_token:req.user.refreshToken,
-            access_token:req.user.accessToken
-        });
-
-        const fileId = req.params.fileId;
-        const drive = google.drive({version:"v3", auth:oauth2Client});
-        const metadata = await drive.files.get({fileId, fields:"mimeType"});
-        const mimeType = metadata.data.mimeType;
-
-        if(mimeType === "application/vnd.google-apps.document"){
-            const response = await drive.files.export({fileId,mimeType:"text/html"}, {responseType:"stream"});
-            res.setHeader("Content-Type", "text/html");
-            response.data.pipe(res);
-        }
-        else if(mimeType === "application/pdf"){
-            const response = await drive.files.get({fileId, alt:"media"}, {responseType:"stream"});
-            res.setHeader("Content-Type", "application/pdf");
-            response.data.pipe(res);
-        }
-        else if(mimeType.startsWith("image/")){
-            const response = await drive.files.get({fileId, alt:"media"}, {responseType:"stream"});
-            res.setHeader("Content-Type", mimeType);
-            response.data.pipe(res);
-        
-        }
-        else if(mimeType.startsWith("video/")){
-            const response = await drive.files.get({fileId, alt:"media"}, {responseType:"stream"});
-            res.setHeader("Content-Type", mimeType);
-            response.data.pipe(res);
-        }
-        else{
-            res.status(400).send("Unsupported file type");
-        }
-    }
-    catch(error){
-        console.error("Drive API Error:", error);
-        res.status(error.status).json({error:"Failed to fetch file content"});
-    }
-});
-app.post("/api/drive-upload", upload.single("file"), async (req, res)=>{
-    try{
-        const oauth2Client = new google.auth.OAuth2();
-        oauth2Client.on("tokens", (tokens)=>{
-            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
-            req.user.accessToken = tokens.access_token;
-        });
-        oauth2Client.setCredentials({
-            refresh_token:req.user.refreshToken,
-            access_token:req.user.accessToken
-        });
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.GOOGLE_REDIRECT_URL
+        );
+        oauth2Client.setCredentials({refresh_token: refreshToken});
+        await oauth2Client.getAccessToken();
 
         const drive = google.drive({version:"v3", auth:oauth2Client});
         const fileMetadata = {name:req.file.originalname};
@@ -597,18 +559,17 @@ app.post("/api/drive-upload", upload.single("file"), async (req, res)=>{
         console.error("Upload error:", error);
         res.status(error.status).json({success:false});
     }
-});
-app.delete("/api/drive-delete/:fileId", async (req, res)=>{
+}
+async function driveDelete(req, res, refreshToken){
     try{
-        const oauth2Client = new google.auth.OAuth2();
-        oauth2Client.on("tokens", (tokens)=>{
-            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
-            req.user.accessToken = tokens.access_token;
-        });
-        oauth2Client.setCredentials({
-            refresh_token:req.user.refreshToken,
-            access_token:req.user.accessToken
-        });
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.GOOGLE_REDIRECT_URL
+        );
+        oauth2Client.setCredentials({refresh_token: refreshToken});
+        await oauth2Client.getAccessToken();
+
         const fileId = req.params.fileId;
         const drive = google.drive({version:"v3", auth:oauth2Client});
         await drive.files.delete({fileId: fileId});
@@ -618,23 +579,31 @@ app.delete("/api/drive-delete/:fileId", async (req, res)=>{
         console.error("Delete error:", error);
         res.status(error.status).json({success:false, message:"Failed to delete file"});
     }
-});
-*/
+}
 
 /*--Google Calendar API------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-/*
 app.get("/api/calendar", async (req, res)=>{
-    if(!req.user || !req.user.accessToken) return res.status(401).json({error:"Not authenticated"});
+    authentificateGoogleAPI(req, res, 12);
+});
+app.post("/api/calendar/add", async (req, res)=>{
+    authentificateGoogleAPI(req, res, 13);
+});
+app.put("/api/calendar/edit/:id", async (req, res)=>{
+    authentificateGoogleAPI(req, res, 14);
+});
+app.delete("/api/calendar/delete/:id", async (req, res)=>{
+    authentificateGoogleAPI(req, res, 15);
+});
+
+async function getCalendar(req, res, refreshToken){
     try{
-        const oauth2Client = new google.auth.OAuth2();
-        oauth2Client.on("tokens", (tokens)=>{
-            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
-            req.user.accessToken = tokens.access_token;
-        });
-        oauth2Client.setCredentials({
-            refresh_token:req.user.refreshToken,
-            access_token:req.user.accessToken
-        });
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.GOOGLE_REDIRECT_URL
+        );
+        oauth2Client.setCredentials({refresh_token: refreshToken});
+        await oauth2Client.getAccessToken();
 
         const calendar = google.calendar({version:"v3", auth:oauth2Client});
         const currDate = new Date();
@@ -667,19 +636,16 @@ app.get("/api/calendar", async (req, res)=>{
         console.error("Calendar API Error:", error);
         res.status(error.status).json({error:"Failed to fetch calendar events"});
     }
-});
-app.post("/api/calendar/add", async (req, res)=>{
-    if(!req.user || !req.user.accessToken) return res.status(401).json({error:"Not authenticated"});
+}
+async function addCalendarEvent(req, res, refreshToken){
     try{
-        const oauth2Client = new google.auth.OAuth2();
-        oauth2Client.on("tokens", (tokens)=>{
-            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
-            req.user.accessToken = tokens.access_token;
-        });
-        oauth2Client.setCredentials({
-            refresh_token:req.user.refreshToken,
-            access_token:req.user.accessToken
-        });
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.GOOGLE_REDIRECT_URL
+        );
+        oauth2Client.setCredentials({refresh_token: refreshToken});
+        await oauth2Client.getAccessToken();
 
         const calendar = google.calendar({version:"v3", auth:oauth2Client});
         const event = {
@@ -703,31 +669,28 @@ app.post("/api/calendar/add", async (req, res)=>{
         console.error("Calendar event add error: ", error);
         res.status(error.status).json({error:"Failed to add event", details:error.response?.data?.error});
     }
-});
-app.put("/api/calendar/edit/:id", async (req, res)=>{
-    if(!req.user || !req.user.accessToken) return res.status(401).json({error:"Not authenticated"});
+}
+async function editCalendarEvent(req, res, refreshToken){
     try{
-        const oauth2Client = new google.auth.OAuth2();
-        oauth2Client.on("tokens", (tokens)=>{
-            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
-            req.user.accessToken = tokens.access_token;
-        });
-        oauth2Client.setCredentials({
-            refresh_token:req.user.refreshToken,
-            access_token:req.user.accessToken
-        });
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.GOOGLE_REDIRECT_URL
+        );
+        oauth2Client.setCredentials({refresh_token: refreshToken});
+        await oauth2Client.getAccessToken();
 
         const calendar = google.calendar({version:"v3", auth:oauth2Client});
         const updatedEvent = {
             summary:req.body.title,
             description:req.body.description,
             start:{
-                dateTime:req.body.startDateTime,
-                timeZone:req.body.timeZone || "America/Los_Angeles"
+                dateTime:req.body.start,
+                timeZone:req.body.timeZone || "UTC"
             },
             end:{
-                dateTime:req.body.endDateTime,
-                timeZone:req.body.timeZone || "America/Los_Angeles"
+                dateTime:req.body.end,
+                timeZone:req.body.timeZone || "UTC"
             },
             attendees:req.body.attendees || [],
             reminders:req.body.reminders || {
@@ -750,19 +713,16 @@ app.put("/api/calendar/edit/:id", async (req, res)=>{
         console.error("Calendar event update error: ", error);
         res.status(error.status).json({error:"Failed to update event", details:error.response?.data?.error});
     }
-});
-app.delete("/api/calendar/delete/:id", async (req, res)=>{
-    if(!req.user || !req.user.accessToken) return res.status(401).json({error:"Not authenticated"});
+}
+async function deleteCalendarEvent(req, res, refreshToken){
     try{
-        const oauth2Client = new google.auth.OAuth2();
-        oauth2Client.on("tokens", (tokens)=>{
-            if(tokens.refresh_token) req.user.refreshToken = tokens.refresh_token;
-            req.user.accessToken = tokens.access_token;
-        });
-        oauth2Client.setCredentials({
-            refresh_token:req.user.refreshToken,
-            access_token:req.user.accessToken
-        });
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.GOOGLE_REDIRECT_URL
+        );
+        oauth2Client.setCredentials({refresh_token: refreshToken});
+        await oauth2Client.getAccessToken();
 
         const calendar = google.calendar({version:"v3", auth:oauth2Client});
         await calendar.events.delete({
@@ -777,7 +737,7 @@ app.delete("/api/calendar/delete/:id", async (req, res)=>{
         console.error("Calendar event delete error: ", error);
         res.status(error.status).json({error:"Failed to delete event", details:error.response?.data?.error});
     }
-});
+}
 function getColorHex(colorId){
     const colors = {
         "1":"a4bdfc", // Lavender
@@ -787,7 +747,6 @@ function getColorHex(colorId){
     };
     return colors[colorId] || "1a73e8"; // Default blue
 }
-*/
 
 /*--Input/Output-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 io.use((client, next) => {sessionMiddleware(client.request, {}, next);});
@@ -911,7 +870,6 @@ function userLogIn(client, email, password){
             cv:                foundUser.cv,
             description:       foundUser.description,
             googleConnected:   foundUser.googleConnected,
-            accessToken:       foundUser.googleAccessToken,
         }
         let requestPassword = false;
         if(foundUser.password === "") requestPassword = true;
@@ -941,7 +899,6 @@ function checkUserExistGoogleLogin(profile){
             password:"",
             email:profile.emails[0].value,
             googleConnected:true,
-            googleAccessToken:profile.accessToken,
             googleRefreshToken:profile.refreshToken,
             googleUserID:profile.id
         });

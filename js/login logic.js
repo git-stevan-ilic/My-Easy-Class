@@ -39,16 +39,16 @@ function loadLogInLogic(client){
         fadeIn(".assistant-holder", 0.1);
 
         //loadStudentsLogic(userData.username);
-        //loadAssistantLogic(client);
+        loadAssistantLogic(client);
         //loadAboutMeLogic(userData);
-        //loadDriveLogic(client);
+        loadDriveLogic(client);
         loadMailLogic();
-        //loadCalendar();
+        loadCalendar();
 
         /*
         if(user.photos.length > 0){
-                const userIcons = document.querySelectorAll(".user-icon");
-                for(let i = 0; i < userIcons.length; i++) userIcons[i].style.backgroundImage = 'url("'+user.photos[0].value+'")';
+            const userIcons = document.querySelectorAll(".user-icon");
+            for(let i = 0; i < userIcons.length; i++) userIcons[i].style.backgroundImage = 'url("'+user.photos[0].value+'")';
         }
         */
 
