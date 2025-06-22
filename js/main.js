@@ -5,7 +5,7 @@ function initLoad(){
     const client = io();
 
     loadLogInLogic(client);
-    ZoomMeetingAPI();
+    //ZoomMeetingAPI();
     loadHeadLogic();
 
     let notificationTimeout;

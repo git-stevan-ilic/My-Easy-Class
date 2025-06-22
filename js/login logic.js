@@ -38,9 +38,9 @@ function loadLogInLogic(client){
         fadeOut("#pre-main", 0.1, ()=>{fadeIn("#main", 0.1, "block")});
         fadeIn(".assistant-holder", 0.1);
 
-        //loadStudentsLogic(userData.username);
+        loadStudentsLogic(userData.username);
         loadAssistantLogic(client);
-        //loadAboutMeLogic(userData);
+        loadAboutMeLogic(userData);
         loadDriveLogic(client);
         loadMailLogic();
         loadCalendar();

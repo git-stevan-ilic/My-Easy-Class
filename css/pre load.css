@@ -1,6 +1,6 @@
 .loading-screen{
-    background-image:radial-gradient(circle, rgb(255, 255, 255), rgb(235, 235, 235));
-    background-color:rgb(255, 255, 255);
+    background-image:radial-gradient(circle, var(--background-white), var(--background-gray-1));
+    background-color:var(--background-white);
     position:absolute;
     height:100%;
     width:100%;
@@ -9,13 +9,13 @@
     z-index:10;
 }
 .loading-screen-loader{
-    border:1vw solid rgb(016, 047, 068);
-    border-bottom:1vw solid rgba(0, 0, 0, 0);
+    border:1rem solid var(--dark-blue);
+    border-bottom:1rem solid rgba(0, 0, 0, 0);
     transform:translate(-50%, -50%);
     border-radius:100%;
     position:absolute;
     aspect-ratio:1;
-    height:5vw;
+    height:5rem;
     opacity:0;
     left:50%;
     top:50%;

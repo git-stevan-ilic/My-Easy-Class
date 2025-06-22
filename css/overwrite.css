@@ -1,9 +1,10 @@
+/*
 body{
     background-color:var(--background-white);
     font-family:"Inter";
     overflow-x:hidden;
     overflow-y:auto;
-    font-size:1vw;
+    font-size:1rem;
     height:100%;
     padding:0px;
     margin:0px;  
@@ -14,9 +15,9 @@ button{
     border:1px solid var(--dark-blue);
     transform:translateY(0px);
     color:var(--dark-blue);
-    font-size:1.25vw;
+    font-size:1.25rem;
     aspect-ratio:3.5;
-    width:8vw;
+    width:8rem;
 
     transition:ease-in-out 0.1s;
     justify-content:center;
@@ -34,9 +35,9 @@ button:active{
 .blue-button{
     background-color:var(--accent-blue-1);
     color:var(--background-white);
-    width:calc(18.25vw + 2px);
+    width:calc(18.25rem + 2px);
     aspect-ratio:6;
-    margin-top:1vw;
+    margin-top:1rem;
 
     font-weight:bold;
     border:none;
@@ -67,3 +68,4 @@ button:active{
     font-family:"Inter";
     src:url("../assets/fonts/Inter Variable Font.ttf");
 }
+*/
