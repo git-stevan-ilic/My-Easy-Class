@@ -4,7 +4,7 @@ body{
     font-family:"Inter";
     overflow-x:hidden;
     overflow-y:auto;
-    font-size:1rem;
+    font-size:1vw;
     height:100%;
     padding:0px;
     margin:0px;  
@@ -15,9 +15,9 @@ button{
     border:1px solid var(--dark-blue);
     transform:translateY(0px);
     color:var(--dark-blue);
-    font-size:1.25rem;
+    font-size:1.25vw;
     aspect-ratio:3.5;
-    width:8rem;
+    width:8vw;
 
     transition:ease-in-out 0.1s;
     justify-content:center;
@@ -35,9 +35,9 @@ button:active{
 .blue-button{
     background-color:var(--accent-blue-1);
     color:var(--background-white);
-    width:calc(18.25rem + 2px);
+    width:calc(18.25vw + 2px);
     aspect-ratio:6;
-    margin-top:1rem;
+    margin-top:1vw;
 
     font-weight:bold;
     border:none;
