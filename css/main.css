@@ -45,7 +45,6 @@ body{
     z-index:20;
     left:50%;
     top:5vw;
-    display:flex;
 }
 
 @font-face{
@@ -68,9 +67,9 @@ button{
     border:1px solid var(--dark-blue);
     transform:translateY(0px);
     color:var(--dark-blue);
-    font-size:1.25vw;
-    aspect-ratio:3.5;
-    width:8vw;
+    font-size:1.5rem;
+    height:3rem;
+    width:8rem;
 
     transition:ease-in-out 0.1s;
     justify-content:center;
@@ -866,4 +865,16 @@ input[type=text].search-input{
     25%  {transform:scale(1.5);}
     50%  {transform:scale(1);}
     100% {transform:scale(1);}
+}
+
+/*--Mobile Dispaly-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+@media only screen and (max-width:480px) and (orientation:portrait){
+    :root{
+        font-size:12px;
+    }
+}
+@media only screen and (max-width:768px) and (orientation:landscape){
+    :root{
+        font-size:12px;
+    }
 }

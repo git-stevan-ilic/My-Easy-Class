@@ -2,6 +2,7 @@
 function loadLogInLogic(client){
     editPasswordLogic(client);
     switchLoginSignin(client);
+    rememberMeLogic(client);
     googleLogin(client);
 
     client.on("user-log-in-fail", (errorType)=>{
@@ -9,11 +10,13 @@ function loadLogInLogic(client){
             "Database Error",
             "User not found",
             "Password is incorrect",
-            "Session save error"
+            "Session save error",
+            "No session"
         ];
         document.querySelector("#log-in").disabled = false;
         console.error("User login error: "+errorTexts[errorType]);
-        notification("User login error: "+errorTexts[errorType]);
+        if(errorType === 4) localStorage.setItem("my-easy-class-session-id", "");
+        else notification("User login error: "+errorTexts[errorType]);
     });
     client.on("user-log-in-success", (userData, requestPassword)=>{
         document.querySelector("#log-in-password").value = "";
@@ -52,6 +55,10 @@ function loadLogInLogic(client){
         }
         */
 
+        const rememberMe = getLocalStorage("my-easy-class-remember-me", false, false);
+        if(!rememberMe) localStorage.setItem("my-easy-class-session-id", "null");
+        else if(userData.sessionID) localStorage.setItem("my-easy-class-session-id", userData.sessionID);
+
         if(requestPassword) fadeIn("#add-password-screen", 0.1);
         window.addEventListener("send-add-password", (e)=>{
             client.emit("add-password", userData.userID, e.detail.password);
@@ -64,6 +71,7 @@ function logOff(client){
     document.querySelector("#account-log-off").onclick = null;
     client.emit("user-log-off");
 
+    localStorage.setItem("my-easy-class-session-id", "null");
     fadeOut(".main-head", 0.1, ()=>{fadeIn(".pre-main-head", 0.1, "flex")});
     fadeOut("#main", 0.1, ()=>{fadeIn("#pre-main", 0.1, "block")});
     fadeOut(".assistant-holder", 0.1);
@@ -201,39 +209,31 @@ function googleLogin(client){
     });
 }
 
+/*--Session Logic------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+function getLocalStorage(query, defaultValue, string){
+    let storageItem;
+    try{
+        if(string) storageItem = localStorage.getItem(query);
+        else storageItem = JSON.parse(localStorage.getItem(query));
+        if(!storageItem){
+            let defaultValueSaved = defaultValue;
+            if(!string) defaultValueSaved = JSON.stringify(defaultValue);
+            localStorage.setItem(query, defaultValueSaved);
+            storageItem = defaultValue;
+        }
+    }
+    catch{
+        let defaultValueSaved = defaultValue;
+        if(!string) defaultValueSaved = JSON.stringify(defaultValue);
+        localStorage.setItem(query, defaultValueSaved);
+        storageItem = defaultValue;
+    }
+    return storageItem;
+}
+function rememberMeLogic(client){
+    let rememberMe = getLocalStorage("my-easy-class-remember-me", false, false);
+    if(rememberMe) document.querySelector("#remember-me-check-mark").style.display = "flex";
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    /*let rememberMe = false;
     const rememberMeCheck = document.querySelector("#remember-me-check");
     rememberMeCheck.onclick = ()=>{
         if(!rememberMe){
@@ -244,7 +244,38 @@ function googleLogin(client){
             fadeOut("#remember-me-check-mark", 0.1);
             rememberMe = false;
         }
+        localStorage.setItem("my-easy-class-remember-me", JSON.stringify(rememberMe));
     }
+
+    const sessionID = getLocalStorage("my-easy-class-session-id", null, true);
+    if(rememberMe) client.emit("session-log-in", sessionID);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /*
     document.querySelector(".sign-in-zoom").onclick = ()=>{
         connectZoom();
     }

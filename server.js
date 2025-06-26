@@ -48,6 +48,7 @@ const usersSchema = new Schema({
     email:       {type:String, required:true},
     password:    {type:String, required:false, default:null},
     clientID:    {type:String, required:false, default:null},
+    sessionID:   {type:String, required:false, default:null},
     jobTitle:    {type:String, required:false, default:null},
     location:    {type:String, required:false, default:null},
     education:   {type:String, required:false, default:null},
@@ -757,8 +758,9 @@ io.on("connection", (client)=>{
 
     client.on("disconnect", ()=>{userLogOff(client)});
     client.on("user-log-off", ()=>{userLogOff(client)});
-    client.on("user-log-in", (email)=>{userLogIn(client, email, null)});
-    client.on("user-log-in-attempt", (email, password)=>{userLogIn(client, email, password)});
+    client.on("user-log-in", (email)=>{userLogIn(client, email, null, false, null)});
+    client.on("session-log-in", (sessionID)=>{userLogIn(client, null, null, true, sessionID)});
+    client.on("user-log-in-attempt", (email, password)=>{userLogIn(client, email, password, false, null)});
     client.on("add-password", (userID, password)=>{
         Users.find({userID:userID})
         .then((result)=>{
@@ -839,16 +841,26 @@ function userLogOff(client){
         console.error("User clientID search failed: ", error);
     });
 }
-function userLogIn(client, email, password){
-    Users.find({email:email})
+function userLogIn(client, email, password, sessionLogin, sessionID){
+    let searchParam = {email:email};
+    if(sessionLogin){
+        searchParam = {sessionID:sessionID};
+        if(sessionID === null){
+            client.emit("user-log-in-fail", 4);
+            return;
+        }
+    }
+    
+    Users.find(searchParam)
     .then((result)=>{
         if(result.length === 0){
-            client.emit("user-log-in-fail", 1);
+            if(sessionID) client.emit("user-log-in-fail", 4);
+            else client.emit("user-log-in-fail", 1);
             return;
         }
 
         const foundUser = result[0];
-        if(password !== null){
+        if(sessionID === null && password !== null){
             if(foundUser.password !== password){
                 client.emit("user-log-in-fail", 2);
                 return;
@@ -863,6 +875,7 @@ function userLogIn(client, email, password){
             userID:            foundUser.userID,
             username:          foundUser.username,
             email:             foundUser.email,
+            sessionID:         foundUser.sessionID,
             jobTitle:          foundUser.jobTitle,
             location:          foundUser.location,
             education:         foundUser.education,
@@ -885,7 +898,8 @@ function userLogIn(client, email, password){
     })
     .catch((error)=>{
         console.error("Find user DB error: ", error);
-        client.emit("user-log-in-fail", 0);
+        if(sessionID) client.emit("user-log-in-fail", 4);
+        else client.emit("user-log-in-fail", 0);
     });
 }
 function checkUserExistGoogleLogin(profile){
@@ -897,6 +911,7 @@ function checkUserExistGoogleLogin(profile){
             userID:nanoid(10),
             username:profile.displayName,
             password:"",
+            sessionID:nanoid(10),
             email:profile.emails[0].value,
             googleConnected:true,
             googleRefreshToken:profile.refreshToken,

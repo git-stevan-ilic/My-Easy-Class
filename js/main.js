@@ -29,13 +29,6 @@ function initLoad(){
     link.href  = "../css/overwrite.css";
     head.appendChild(link);
     setTimeout(()=>{fadeOut(".loading-screen", 0.1)}, 200);
-
-
-
-    setTimeout(()=>{
-        document.getElementById("log-in-email").value = "steve654.work@gmail.com"
-        document.getElementById("log-in-password").value = "123"
-    },500)
 }
 
 function fadeIn(query, durration, type, callabck){
