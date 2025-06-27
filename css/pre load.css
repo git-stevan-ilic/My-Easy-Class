@@ -1,3 +1,4 @@
+/*--Pre Load-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .loading-screen{
     background-image:radial-gradient(circle, var(--background-white), var(--background-gray-1));
     background-color:var(--background-white);
