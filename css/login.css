@@ -10,24 +10,24 @@
     background-color:var(--background-white);
 }
 .log-in-window{
-    box-shadow:0.25vw 0.25vw 0.5vw rgba(0, 0, 0, 0.15);
+    box-shadow:0.25rem 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
     background-color:var(--background-white);
     border:1px solid var(--border-gray-1);
     border-radius:var(--border-radius-3);
     transform:translate(-50%);
-    position:absolute;
-    aspect-ratio:1.4;
     overflow:hidden;
-    width:50vw;
-    left:50%;
-    top:3vw;
+    height:36rem;
+    width:50rem;
+    margin-left:50%;
+    margin-top:3rem;
+    margin-bottom:5rem;
 
     justify-content:center;
     align-items:center;
     display:flex;
 }
 
-/*--log-in Window Left Side---------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*--Log In Window Left Side---------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .log-in-window-l{
     background-image:linear-gradient(var(--accent-blue-1), var(--accent-blue-2));
     color:var(--background-white);
@@ -41,9 +41,9 @@
     font-weight:bold;
     display:flex;
 
+    font-size:2.5rem;
     margin-left:10%;
     margin-top:25%;
-    font-size:2.5vw;
     width:80%;
 }
 .log-in-logo-l{
@@ -54,12 +54,12 @@
 
     transform:translate(-50%);
     margin-left:50%;
+    margin-top:4rem;
     aspect-ratio:1;
-    margin-top:4vw;
     width:30%;
 }
 
-/*--log-in Window Right Side--------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*--Log In Window Right Side--------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .log-in-window-r{
     flex-shrink:0;
     height:100%;
@@ -69,7 +69,7 @@
     color:var(--dark-blue);
     margin-left:10%;
     margin-top:10%;
-    font-size:2vw;
+    font-size:2rem;
     width:80%;
 
     justify-content:flex-start;
@@ -79,8 +79,8 @@
 }
 
 .log-in-input-holder{
-    margin-bottom:3vw;
-    margin-top:1.5vw;
+    margin-bottom:3rem;
+    margin-top:1.5rem;
     margin-left:10%;
     width:80%;
 }
@@ -94,15 +94,15 @@
 }
 input[type=text].log-in-input, input[type=password].log-in-input, input[type=email].log-in-input{
     background-color:var(--background-white);
-    margin-bottom:0.5vw;
-    width:18vw;
+    margin-bottom:1rem;
+    width:18rem;
 }
 .remember-me-holder{
     justify-content:flex-start;
     align-items:center;
     display:flex;
 
-    height:3vw;
+    height:3rem;
     width:100%;
 }
 .remember-me-text{
@@ -111,8 +111,8 @@ input[type=text].log-in-input, input[type=password].log-in-input, input[type=ema
     display:flex;
 
     color:var(--dark-blue);
-    margin-left:0.5vw;
-    font-size:0.75vw;
+    margin-left:0.5rem;
+    font-size:0.75rem;
 }
 .forgot-password{
     justify-content:flex-end;
@@ -121,9 +121,9 @@ input[type=text].log-in-input, input[type=password].log-in-input, input[type=ema
     display:flex;
 
     color:var(--dark-blue);
-    font-size:0.75vw;
-    width:18.25vw;
-    height:3vw;
+    font-size:0.75rem;
+    width:18.25rem;
+    height:3rem;
 
     pointer-events:none;
 }
@@ -146,9 +146,9 @@ input[type=text].log-in-input, input[type=password].log-in-input, input[type=ema
 }
 .alternate-sign-in-text{
     color:var(--dark-blue);
-    margin-right:0.5vw;
-    margin-left:0.5vw;
-    font-size:0.75vw;
+    margin-right:0.5rem;
+    margin-left:0.5rem;
+    font-size:0.75rem;
     flex-shrink:0;
 
     justify-content:center;
@@ -167,12 +167,12 @@ input[type=text].log-in-input, input[type=password].log-in-input, input[type=ema
 .alternate-sign-in-icon{
     border:1px solid var(--border-gray-1);
     transform:translateY(0px);
+    margin-right:0.75rem;
+    margin-left:0.75rem;
     border-radius:100%;
-    margin-right:0.75vw;
-    margin-left:0.75vw;
-    margin-top:1.5vw;
+    margin-top:1.5rem;
     aspect-ratio:1;
-    width:2.5vw;
+    width:2.5rem;
 
     background-position:center center;
     background-repeat:no-repeat;
@@ -203,24 +203,23 @@ input[type=text].log-in-input, input[type=password].log-in-input, input[type=ema
     to   {opacity:1; transform:translate(-50%) scale(1);}
 }
 
-/*--sign-in Window------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*--Sign In Window------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .sign-in-window{
-    box-shadow:0.25vw 0.25vw 0.5vw rgba(0, 0, 0, 0.15);
+    box-shadow:0.25rem 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
     background-color:var(--background-white);
     border:1px solid var(--border-gray-1);
     border-radius:var(--border-radius-3);
     transform:translate(-50%);
-    aspect-ratio:0.8;
-    position:absolute;
     overflow:hidden;
-    padding:1vw;
-    width:25vw;
-    left:50%;
-    top:2vw;
+    padding:1rem;
+    width:25rem;
+    margin-left:50%;
+    margin-top:2rem;
+    margin-bottom:5rem;
 }
 .sign-in-window-title{
     color:var(--dark-blue);
-    font-size:1.75vw;
+    font-size:1.75rem;
     width:100%;
 
     justify-content:center;
@@ -230,12 +229,12 @@ input[type=text].log-in-input, input[type=password].log-in-input, input[type=ema
 }
 .sign-in-window-form{
     transform:translate(-50%);
-    margin-top:2vw;
+    margin-top:2rem;
     margin-left:50%;
     width:80%;
 }
 .sign-in-window-row{
-    margin-bottom:0.5vw;
+    margin-bottom:0.5rem;
     width:100%;
 }
 .sign-in-window-row-title{
@@ -244,7 +243,7 @@ input[type=text].log-in-input, input[type=password].log-in-input, input[type=ema
     display:flex;
 
     color:var(--dark-blue);
-    font-size:1.25vw;
+    font-size:1.25rem;
     width:100%;
 }
 .sign-in-window-row-title-text{
@@ -258,7 +257,7 @@ input[type=text].log-in-input, input[type=password].log-in-input, input[type=ema
 }
 .sign-in-window-row-title-error{
     color:var(--error);
-    font-size:0.75vw;
+    font-size:0.75rem;
     height:100%;
     width:100%;
 
@@ -271,10 +270,9 @@ input[type=text].log-in-input, input[type=password].log-in-input, input[type=ema
     width:100%;
 }
 .sign-in-window-button-holder{
-    position:absolute;
-    height:5vw;
+    margin-top:2rem;
+    height:5rem;
     width:100%;
-    bottom:0px;
     left:0px;
 
     justify-content:space-evenly;
@@ -284,17 +282,17 @@ input[type=text].log-in-input, input[type=password].log-in-input, input[type=ema
 
 /*--Password Window----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .add-password-window{
-    box-shadow:0.25vw 0.25vw 0.5vw rgba(0, 0, 0, 0.15);
+    box-shadow:0.25rem 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
     background-color:var(--background-white);
     border:1px solid var(--border-gray-1);
     border-radius:var(--border-radius-2);
     transform:translate(-50%);
     color:var(--dark-blue);
     position:absolute;
-    padding:1vw;
-    width:20vw;
+    padding:1rem;
+    width:20rem;
     left:50%;
-    top:10vw;
+    top:min(10rem, 20%);
 }
 .add-password-window-head{
     justify-content:center;
@@ -302,9 +300,9 @@ input[type=text].log-in-input, input[type=password].log-in-input, input[type=ema
     font-weight:bold;
     display:flex;
     
-    padding-bottom:1vw;
-    font-size:1.5vw;
-    height:2vw;
+    padding-bottom:1rem;
+    font-size:1.5rem;
+    height:2rem;
     width:100%;
 }
 .add-password-window-body{
@@ -312,7 +310,7 @@ input[type=text].log-in-input, input[type=password].log-in-input, input[type=ema
     width:100%;
 }
 .add-password-row{
-    margin-bottom:0.5vw;
+    margin-bottom:0.5rem;
     width:100%;
 }
 .add-password-input{
@@ -323,6 +321,45 @@ input[type=text].log-in-input, input[type=password].log-in-input, input[type=ema
     align-items:center;
     display:flex;
 
-    margin-top:3vw;
+    margin-top:3rem;
     width:100%;
+}
+
+/*--Mobile Dispaly-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+@media only screen and (max-width:768px) and (orientation:landscape){
+    .log-in-window{
+        margin-top:1rem;
+        height:31rem;
+    }
+    .log-in-text-l{
+        margin-top:15%;
+    }
+    .log-in-logo-l{
+        margin-top:4rem;
+        aspect-ratio:1;
+        width:30%;
+    }
+    .log-in-title-r{
+        margin-top:5%;
+    }
+    .log-in-input-holder{
+        margin-bottom:0rem;
+    }
+}
+@media only screen and (max-width:830px) and (orientation:portrait){
+    .log-in-window{
+        justify-content:flex-start;
+        align-items:flex-start;
+        flex-direction:column;
+        height:36rem;
+        width:25rem;
+    }
+    .log-in-window-l{
+        display:none;
+    }
+    .log-in-window-r{
+        flex-shrink:0;
+        height:50%;
+        width:100%;
+    }
 }

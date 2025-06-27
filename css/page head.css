@@ -1,0 +1,223 @@
+/*--Page Head----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+.page-head{
+    border-bottom:1px solid var(--border-gray-1);
+    background-color:var(--background-white);
+    position:relative;
+    height:5rem;
+    width:100%;
+    z-index:2;
+
+    justify-content:flex-start;
+    align-items:center;
+    display:flex;
+}
+.logo{
+    background-image:url("../assets/Logo.png");
+    background-position:center center;
+    background-repeat:no-repeat;
+    background-size:contain;
+    cursor:pointer;
+
+    margin-left:1rem;
+    aspect-ratio:1;
+    height:75%;
+}
+.header-title{
+    color:var(--dark-blue);
+    margin-left:2rem;
+    font-size:2rem;
+    height:100%;
+
+    justify-content:flex-start;
+    align-items:center;
+    font-weight:bold;
+    display:flex;
+}
+
+.pre-main-head{
+    position:absolute;
+    height:100%;
+    width:50%;
+    right:1rem;
+    top:0px;
+}
+.header-button-holder{
+    background-color:var(--background-white);
+    position:absolute;
+    height:100%;
+    right:1rem;
+    top:0px;
+
+    justify-content:flex-end;
+    align-items:center;
+    display:flex;
+}
+.header-button-text{
+    color:var(--dark-blue);
+    margin-right:1rem;
+    font-size:1.25rem;
+}
+#log-in-holder{
+    display:none;
+}
+
+.main-head{
+    justify-content:flex-end;
+    align-items:center;
+    position:absolute;
+    display:none;
+
+    height:100%;
+    width:50%;
+    right:1rem;
+    top:0px;
+}
+.tab-holder{
+    justify-content:flex-end;
+    align-items:center;
+    display:flex;
+
+    width:fit-content;
+    height:100%;
+}
+.tab{
+    background-color:var(--background-white);
+    border-radius:var(--border-radius-2);
+    color:var(--dark-blue);
+    margin-right:0.5rem;
+    height:60%;
+    width:6rem;
+
+    transition:ease-in-out 0.1s;
+    justify-content:center;
+    align-items:center;
+    position:relative;
+    font-weight:bold;
+    user-select:none;
+    cursor:pointer;
+    display:flex;
+}
+.tab:hover{
+    background-color:var(--background-gray-1);
+}
+.tab:active{
+    background-color:var(--background-gray-2);
+}
+.selected-tab{
+    background-color:var(--background-gray-3);
+    cursor:default;
+}
+.selected-tab:hover{
+    background-color:var(--background-gray-3);
+}
+.selected-tab:active{
+    background-color:var(--background-gray-3);
+}
+.tab-notification{
+    background-color:var(--accent-blue-1);
+    border-radius:100%;
+    position:absolute;
+    aspect-ratio:1;
+    display:none;
+    width:1rem;
+    right:0px;
+    top:0px;
+}
+
+/*--Head Account Elements----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+.account-holder{
+    position:relative;
+    user-select:none;
+    height:100%;
+    width:5rem;
+}
+.account-icon{
+    background-image:url("../assets/icons/default user.png");
+    background-position:center center;
+    background-repeat:no-repeat;
+    background-size:cover;
+    position:absolute;
+    overflow:hidden;
+    cursor:pointer;
+
+    transition:ease-in-out 0.1s;
+    border:1px solid var(--border-gray-1);
+    transform:translate(-50%, -50%);
+    border-radius:100%;
+    aspect-ratio:1;
+    width:80%;
+    left:50%;
+    top:50%;
+}
+.account-icon:hover{
+    transform:translate(-50%, -50%) scale(1.05);
+}
+.account-icon:active{
+    transform:translate(-50%, -50%);
+}
+.account-drop-down{
+    transform-origin:center -1rem;
+    height:fit-content;
+    width:fit-content;
+    position:absolute;
+    display:none;
+
+    transform:translateY(100%);
+    bottom:-0.5rem;
+    right:0px;
+}
+.account-drop-down-arrow{
+    box-shadow:0.25rem 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+    background-color:var(--background-white);
+    border:1px solid var(--border-gray-1);
+    transform:rotate(45deg);
+    position:absolute;
+    aspect-ratio:1;
+    width:1.5rem;
+    right:1.5rem;
+    top:-0.5rem;
+}
+.account-drop-down-window{
+    box-shadow:0.25rem 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+    background-color:var(--background-white);
+    border:1px solid var(--border-gray-1);
+    border-radius:var(--border-radius-1);
+    position:absolute;
+    padding:0.25rem;
+    right:0px;
+    top:0px;
+}
+.account-drop-down-row{
+    background-color:var(--background-white);
+    color:var(--dark-blue);
+    cursor:pointer;
+    height:1.75rem;
+    width:7rem;
+
+    justify-content:center;
+    align-items:center;
+    display:flex;
+}
+.account-drop-down-row:hover{
+    background-color:var(--background-gray-1);
+}
+.account-drop-down-row:active{
+    background-color:var(--background-gray-2);
+}
+.hide-arrow-border{
+    background-color:var(--background-white);
+    position:absolute;
+    right:1.55rem;
+    width:1.6rem;
+    height:2px;
+    top:0px;
+}
+
+@keyframes show-account-options{
+    from {opacity:0; transform:translateY(100%) scaleY(0);}
+    to   {opacity:1; transform:translateY(100%) scaleY(1);}
+}
+@keyframes hide-account-options{
+    from {opacity:1; transform:translateY(100%) scaleY(1);}
+    to   {opacity:0; transform:translateY(100%) scaleY(0);}
+}
