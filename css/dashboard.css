@@ -1,14 +1,21 @@
+/*--Initial------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+#dahsboard-screen{
+    justify-content:flex-start;
+    align-items:flex-start;
+    display:flex;
+}
+
 /*--Dashboard Account--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .dashboard-account-display{
-    box-shadow:0.25vw 0.25vw 0.5vw rgba(0, 0, 0, 0.15);
     background-color:var(--background-white);
     border:1px solid var(--border-gray-1);
     border-radius:var(--border-radius-2);
-    aspect-ratio:0.66;
-    position:absolute;
-    width:25vw;
-    left:2vw;
-    top:2vw;
+    position:relative;
+    height:30rem;
+    width:22rem;
+    margin-top:1rem;
+    margin-left:1rem;
+    margin-right:1rem;
 }
 .dashboard-account-image{
     background-image:url("../assets/icons/default user.png");
@@ -18,17 +25,17 @@
 
     background-color:rgb(217, 220, 225);
     border:1px solid var(--border-gray-1);
-    margin-left:2.5vw;
-    margin-top:2.5vw;
+    margin-left:1rem;
+    margin-top:1rem;
     aspect-ratio:1;
-    width:20vw;
+    width:20rem;
 }
 .dashboard-account-name{
     color:var(--dark-blue);
     margin-left:16%;
-    margin-top:1vw;
-    font-size:1.5vw;
-    height:2vw;
+    margin-top:1rem;
+    font-size:1.5rem;
+    height:2rem;
     width:68%;
 
     justify-content:center;
@@ -38,8 +45,8 @@
 }
 .dashboard-account-email{
     color:var(--dark-blue);
-    font-size:1.2vw;
-    height:2vw;
+    font-size:1.2rem;
+    height:2rem;
     width:100%;
 
     justify-content:center;
@@ -48,11 +55,11 @@
     display:flex;
 }
 .dashboard-account-desc{
-    width:calc(100% - 2vw);
+    width:calc(100% - 2rem);
     color:var(--dark-blue);
     text-align:center;
-    font-size:1vw;
-    padding:1vw;
+    font-size:1rem;
+    padding:1rem;
 }
 .dashboard-account-share{
     background-image:url("../assets/icons/share.png");
@@ -65,9 +72,9 @@
 
     transition:ease-in-out 0.1s;
     aspect-ratio:1;
-    width:2vw;
-    right:2vw;
-    top:23.5vw;
+    width:2rem;
+    right:1rem;
+    top:22rem;
 }
 .dashboard-account-share:hover{
     transform:scale(1.1);
@@ -78,11 +85,10 @@
 
 /*--Dashboard Right Side-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .dashboard-right-side{
-    position:absolute;
+    width:calc(100% - 26rem);
     height:90%;
-    width:65vw;
-    right:2vw;
-    top:2vw;
+    left:25rem;
+    margin-top:1rem;
 }
 .dashboard-title{
     justify-content:flex-start;
@@ -91,15 +97,15 @@
     display:flex;
 
     color:var(--dark-blue);
-    font-size:1.75vw;
+    font-size:1.75rem;
     width:100%;
 }
 .dashboard-holder{
     color:var(--gray-1);
-    margin-bottom:2vw;
-    font-size:1.25vw;
-    margin-top:1vw;
-    min-height:5vw;
+    margin-bottom:2rem;
+    font-size:1.25rem;
+    margin-top:1rem;
+    min-height:5rem;
     width:100%;
 
     justify-content:flex-start;
@@ -109,16 +115,15 @@
 }
 
 .dashboatd-event{
-    box-shadow:0.25vw 0.25vw 0.5vw rgba(0, 0, 0, 0.15);
     background-color:var(--background-white);
     border:1px solid var(--border-gray-1);
     border-radius:var(--border-radius-2);
-    margin-bottom:1vw;
-    margin-right:1vw;
+    margin-bottom:1rem;
+    margin-right:1rem;
     user-select:none;
     cursor:pointer;
-    height:6vw;
-    width:20vw;
+    height:6rem;
+    width:20rem;
     transition:ease-in-out 0.1s;
 }
 .dashboatd-event:hover{
@@ -129,9 +134,9 @@
 }
 .dashboatd-event-name{
     color:var(--dark-blue);
-    width:calc(100% - 2vw);
-    padding-right:1vw;
-    padding-left:1vw;
+    width:calc(100% - 2rem);
+    padding-right:1rem;
+    padding-left:1rem;
     height:50%;
 
     justify-content:flex-start;
@@ -140,13 +145,30 @@
     display:flex;
 }
 .dashboatd-event-date{
-    width:calc(100% - 2vw);
-    padding-right:1vw;
-    padding-left:1vw;
-    font-size:1vw;
+    width:calc(100% - 2rem);
+    padding-right:1rem;
+    padding-left:1rem;
+    font-size:1rem;
     height:50%;
 
     justify-content:flex-start;
     align-items:center;
     display:flex;
+}
+
+/*--Mobile Dispaly-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+@media only screen and (max-width:768px) and (orientation:portrait){
+    #dahsboard-screen{
+        flex-direction:column;
+    }
+    .dashboard-account-display{
+        transform:translate(-50%);
+        margin-right:none;
+        margin-left:50%;
+    }
+    .dashboard-right-side{
+        width:calc(100% - 2rem);
+        margin-left:1rem;
+        margin-top:2rem;
+    }
 }

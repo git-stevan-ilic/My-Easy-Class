@@ -95,7 +95,7 @@
 input[type=text].log-in-input, input[type=password].log-in-input, input[type=email].log-in-input{
     background-color:var(--background-white);
     margin-bottom:1rem;
-    width:18rem;
+    width:100%;
 }
 .remember-me-holder{
     justify-content:flex-start;
@@ -129,6 +129,9 @@ input[type=text].log-in-input, input[type=password].log-in-input, input[type=ema
 }
 .forgot-password:hover{
     text-decoration:underline;
+}
+#log-in{
+    width:calc(100% + 0.5rem);
 }
 
 .alternate-sign-in-divider{

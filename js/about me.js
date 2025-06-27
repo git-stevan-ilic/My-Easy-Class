@@ -1,15 +1,6 @@
 /*--Initial------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 function loadAboutMeLogic(user){
     let cvFile = undefined, newImage = undefined;
-    document.querySelector("#about-me-send-email").onclick = ()=>{
-        const tabHolder = document.querySelector(".tab-holder");
-        const newEmail = document.querySelector("#new-email");
-        tabHolder.children[1].click();
-        newEmail.click();
-
-        const emailValue = user.email;
-        document.querySelector("#send-mail-recipients").value = emailValue;
-    }
     document.querySelector(".about-me-share").onclick = ()=>{
         notification("Link copied");
     }

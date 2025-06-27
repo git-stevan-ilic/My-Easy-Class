@@ -125,6 +125,7 @@ function headAccountLogic(){
 }
 function headTabLogic(){
     const screens = ["dahsboard-screen", "mail-screen", "calendar-screen", "drive-screen", "students-screen", "homework-screen"];
+    const displayTypes = ["flex", "block", "block", "block", "block", "block"];
     const tabs = document.querySelectorAll(".tab");
 
     let currTab = 0;
@@ -133,7 +134,7 @@ function headTabLogic(){
             if(currTab !== i){
                 const screensToClose = document.querySelector("#main").children;
                 for(let j = 0; j < screensToClose.length; j++) screensToClose[j].style.display = "none";
-                document.getElementById(screens[i]).style.display = "block";
+                document.getElementById(screens[i]).style.display = displayTypes[i];
                
                 if(currTab !== -1){
                     const currSelectedTab = document.querySelector(".selected-tab");
