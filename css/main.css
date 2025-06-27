@@ -254,20 +254,20 @@ input[type=text].search-input{
     display:none;
     height:100%;
     z-index:12;
-    width:25vw;
+    width:25rem;
     right:0px;
     top:0px;
 }
 .assistant-button{
-    box-shadow:0vw 0vw 0.5vw rgba(0, 0, 0, 0.15);
+    box-shadow:0rem 0rem 0.5rem rgba(0, 0, 0, 0.15);
     background-color:var(--accent-blue-1);
     transform:translateY(0px);
     border-radius:100%;
     position:absolute;
     aspect-ratio:1;
-    width:3vw;
-    right:1vw;
-    bottom:1vw;
+    width:3rem;
+    right:1rem;
+    bottom:1rem;
 
     cursor:pointer;
     user-select:none;
@@ -285,8 +285,9 @@ input[type=text].search-input{
 .assistant-button:active{
     transform:translateY(1px);
 }
+
 .assistant-window{
-    box-shadow:0.25vw 0.25vw 0.5vw rgba(0, 0, 0, 0.15);
+    box-shadow:0.25rem 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
     border-bottom-left-radius:var(--border-radius-2);
     border-top-left-radius:var(--border-radius-2);
     border:1px solid var(--border-gray-1);
@@ -302,8 +303,8 @@ input[type=text].search-input{
     border-bottom:1px solid var(--border-gray-1);
     background-color:var(--accent-blue-1);
     color:var(--background-white);
-    font-size:1.8vw;
-    height:3vw;
+    font-size:1.8rem;
+    height:3rem;
     width:100%;
 
     justify-content:center;
@@ -325,8 +326,8 @@ input[type=text].search-input{
     transition:ease-in-out 0.05s;
     border-radius:100%;
     aspect-ratio:1;
-    width:1.5vw;
-    right:0vw;
+    width:1.5rem;
+    right:0rem;
     top:50%;
 }
 .assistant-window-close:hover{
@@ -337,7 +338,7 @@ input[type=text].search-input{
 }
 .assistant-window-body{
     background-color:var(--background-white);
-    height:calc(100% - 6vw - 2px);
+    height:calc(100% - 6rem - 2px);
     overflow-x:hidden;
     overflow-y:auto;
     width:100%;
@@ -364,12 +365,12 @@ input[type=text].search-input{
     border-radius:var(--border-radius-2);
     border-bottom-right-radius:0px;
     color:var(--background-white);
-    margin-right:0.5vw;
-    margin-bottom:1vw;
-    margin-left:0.5vw;
+    margin-right:0.5rem;
+    margin-bottom:1rem;
+    margin-left:0.5rem;
     flex-shrink:0;
     max-width:75%;
-    padding:0.5vw;
+    padding:0.5rem;
     height:100%;
 }
 .bot-message{
@@ -386,23 +387,23 @@ input[type=text].search-input{
     justify-content:space-evenly;
     align-items:center;
     display:flex;
-    height:1vw;
-    width:3vw;
+    height:1rem;
+    width:3rem;
 }
 .assistant-message-thinking-dot{
     background-color:var(--background-white);
     border-radius:100%;
     aspect-ratio:1;
-    height:0.5vw;
+    height:0.5rem;
     animation:assistant-message-thinking-dot ease-in-out infinite 1s;
 }
 .assistant-window-foot{
     border-top:1px solid var(--border-gray-1);
     background-color:var(--background-white);
-    width:calc(100% - 1vw);
-    padding-right:0.5vw;
-    padding-left:0.5vw;
-    height:3vw;
+    width:calc(100% - 1rem);
+    padding-right:0.5rem;
+    padding-left:0.5rem;
+    height:3rem;
    
 
     justify-content:center;
@@ -415,10 +416,10 @@ input[type=text].search-input{
 .assistant-send{
     background-color:var(--accent-blue-1);
     border:1px solid var(--accent-blue-2);
-    margin-left:0.25vw;
+    height:calc(2rem + 4px);
+    margin-left:0.25rem;
     flex-shrink:0;
-    height:2vw;
-    width:4vw;
+    width:4rem;
 
     background-image:url("../assets/icons/send.png");
     background-position:center center;
@@ -460,126 +461,5 @@ input[type=text].search-input{
 @media only screen and (max-width:768px) and (orientation:landscape){
     :root{
         font-size:12px;
-    }
-}
-@media only screen and (max-width:768px) and (orientation:portrait){
-    .header-button-text{
-        display:none;
-    }
-}
-@media only screen and (max-width:525px) and (orientation:portrait){
-    .header-title{
-        margin-left:1rem;
-    }
-    .header-button-holder{
-        right:0px;
-    }
-}
-
-@media only screen and (max-width:825px){
-    .company-info-holder{
-        width:11rem;
-    }
-    .terms-policy{
-        justify-content:flex-start;
-        flex-direction:column;
-        height:52.5%;
-    }
-    .terms-policy > *{
-        width:100%;
-    }
-    .terms-policy-divider{
-        display:none;
-    }
-    .llc-info{
-        height:35%;
-        width:100%;
-    }
-    .llc-row{
-        text-align:right;
-        flex-wrap:wrap;
-    }
-}
-@media only screen and (max-width:1150px){
-    .footer-right-holder{
-        transform:translate(0%);
-        left:13rem;
-    }
-}
-@media only screen and (max-width:1150px){
-    .footer-right-holder{
-        justify-content:flex-start;
-        flex-direction:column;
-    }
-    .footer-right-holder > *{
-        width:100%;
-    }
-    .footer-element-title{
-        justify-content:flex-start;
-    }
-    .footer-link{
-        justify-content:flex-start;
-    }
-    .footer-contact{
-        justify-content:flex-start;
-    }
-    #footer-contact-us{
-        margin-top:0px;
-    }
-    .terms-policy > *{
-        justify-content:flex-end;
-    }
-}
-
-@media only screen and (max-width:700px) and (orientation:portrait){
-    .page-foot{
-        height:20rem;
-    }
-    .footer-right-holder{
-        height:10rem;
-        width:17.5rem;
-        right:0px;
-        left:auto;
-    }
-    .company-info-holder{
-        height:auto;
-        right:auto;
-        width:100%;
-        top:11rem;
-        left:0px;
-    }
-    .terms-policy{
-        justify-content:center;
-        flex-direction:row;
-
-        margin-top:2.5%;
-        transform:translate(-50%);
-        margin-left:50%;
-        height:3rem;
-    }
-    .terms-policy > *{
-        justify-content:center;
-    }
-    .privacy{
-        justify-content:flex-end;
-        width:7rem;
-    }
-    .terms{
-        justify-content:flex-start;
-        width:11rem;
-    }
-    .terms-policy-divider{
-        display:block;
-        margin-right:1rem;
-        margin-left:1rem;
-        height:50%;
-        width:1px;
-    }
-    .llc-info{
-        padding-top:2.5%;
-        height:4rem;
-    }
-    .llc-row{
-        width:calc(100% - 1rem);
     }
 }

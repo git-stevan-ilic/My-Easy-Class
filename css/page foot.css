@@ -175,3 +175,111 @@
     height:50%;
     width:100%;
 }
+
+/*--Mobile Dispaly-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+@media only screen and (max-width:825px){
+    .company-info-holder{
+        width:11rem;
+    }
+    .terms-policy{
+        justify-content:flex-start;
+        flex-direction:column;
+        height:52.5%;
+    }
+    .terms-policy > *{
+        width:100%;
+    }
+    .terms-policy-divider{
+        display:none;
+    }
+    .llc-info{
+        height:35%;
+        width:100%;
+    }
+    .llc-row{
+        text-align:right;
+        flex-wrap:wrap;
+    }
+}
+@media only screen and (max-width:1150px){
+    .footer-right-holder{
+        transform:translate(0%);
+        left:13rem;
+    }
+}
+@media only screen and (max-width:1150px){
+    .footer-right-holder{
+        justify-content:flex-start;
+        flex-direction:column;
+    }
+    .footer-right-holder > *{
+        width:100%;
+    }
+    .footer-element-title{
+        justify-content:flex-start;
+    }
+    .footer-link{
+        justify-content:flex-start;
+    }
+    .footer-contact{
+        justify-content:flex-start;
+    }
+    #footer-contact-us{
+        margin-top:0px;
+    }
+    .terms-policy > *{
+        justify-content:flex-end;
+    }
+}
+@media only screen and (max-width:700px) and (orientation:portrait){
+    .page-foot{
+        height:20rem;
+    }
+    .footer-right-holder{
+        height:10rem;
+        width:17.5rem;
+        right:0px;
+        left:auto;
+    }
+    .company-info-holder{
+        height:auto;
+        right:auto;
+        width:100%;
+        top:11rem;
+        left:0px;
+    }
+    .terms-policy{
+        justify-content:center;
+        flex-direction:row;
+
+        margin-top:2.5%;
+        transform:translate(-50%);
+        margin-left:50%;
+        height:3rem;
+    }
+    .terms-policy > *{
+        justify-content:center;
+    }
+    .privacy{
+        justify-content:flex-end;
+        width:7rem;
+    }
+    .terms{
+        justify-content:flex-start;
+        width:11rem;
+    }
+    .terms-policy-divider{
+        display:block;
+        margin-right:1rem;
+        margin-left:1rem;
+        height:50%;
+        width:1px;
+    }
+    .llc-info{
+        padding-top:2.5%;
+        height:4rem;
+    }
+    .llc-row{
+        width:calc(100% - 1rem);
+    }
+}

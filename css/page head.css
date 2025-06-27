@@ -37,8 +37,8 @@
 .pre-main-head{
     position:absolute;
     height:100%;
-    width:50%;
     right:1rem;
+    width:50%;
     top:0px;
 }
 .header-button-holder{
@@ -67,24 +67,32 @@
     position:absolute;
     display:none;
 
+    max-width:calc(100% - 6rem);
     height:100%;
-    width:50%;
+    width:37rem;
     right:1rem;
     top:0px;
 }
 .tab-holder{
-    justify-content:flex-end;
+    justify-content:flex-start;
+    padding-left:0.25rem;
     align-items:center;
     display:flex;
 
-    width:fit-content;
+    width:calc(100% - 5rem);
     height:100%;
+
+    overflow-x:auto;
+    overflow-y:hidden;
+    white-space:nowrap;
+    scrollbar-width: thin;
 }
 .tab{
     background-color:var(--background-white);
     border-radius:var(--border-radius-2);
     color:var(--dark-blue);
-    margin-right:0.5rem;
+    margin-right:0.25rem;
+    flex-shrink:0;
     height:60%;
     width:6rem;
 
@@ -128,6 +136,7 @@
 .account-holder{
     position:relative;
     user-select:none;
+    flex-shrink:0;
     height:100%;
     width:5rem;
 }
@@ -220,4 +229,24 @@
 @keyframes hide-account-options{
     from {opacity:1; transform:translateY(100%) scaleY(1);}
     to   {opacity:0; transform:translateY(100%) scaleY(0);}
+}
+
+/*--Mobile Dispaly-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+@media only screen and (max-width:768px) and (orientation:portrait){
+    .header-button-text{
+        display:none;
+    }
+}
+@media only screen and (max-width:525px) and (orientation:portrait){
+    .header-title{
+        margin-left:1rem;
+    }
+    .header-button-holder{
+        right:0px;
+    }
+}
+@media only screen and (max-width:960px){
+    .header-title{
+        display:none;
+    }
 }
