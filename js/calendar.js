@@ -252,6 +252,11 @@ function openEventWindow(e, date, event, coords){
     eventWindow.style.left = (eventX+diffX)+"px";
     eventWindow.style.top  = (eventY+diffY)+"px";
 
+    if(window.innerWidth < 768){
+        eventWindow.style.top = "calc(50% - 6rem)";
+        eventWindow.style.left = "50%";
+    }
+
     document.querySelector("#calendar-event-edit").onclick = ()=>{openEditEvent(date, false, getCurrDate(event.start), event)}
     document.querySelector("#calendar-event-delete").onclick = ()=>{deleteEvent(event.id)}
 }
@@ -412,7 +417,7 @@ async function editEvent(eventID, title, description, time){
         closeEditEvent();
     }
 }
-function toRFC3339Local(dtString) {
+function toRFC3339Local(dtString){
     const date = new Date(dtString);
 
     const year = date.getFullYear();
