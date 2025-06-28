@@ -166,8 +166,8 @@ input[type=text]:disabled,[type=password]:disabled,[type=email]:disabled,[type=t
     border:1px solid var(--border-gray-1);
     border-radius:var(--border-radius-1);
     overflow:hidden;
-    width:25vw;
-    height:2vw;
+    height:2rem;
+    width:25rem;
 
     justify-content:flex-start;
     align-items:center;
@@ -183,7 +183,7 @@ input[type=text]:disabled,[type=password]:disabled,[type=email]:disabled,[type=t
 
     transition:ease-in-out 0.05s;
     aspect-ratio:1;
-    height:2vw;
+    height:2rem;
 }
 .search-icon:hover{
     transform:scale(1.05);
@@ -193,11 +193,11 @@ input[type=text]:disabled,[type=password]:disabled,[type=email]:disabled,[type=t
 }
 input[type=text].search-input{
     background-color:var(--background-gray-2);
-    width:calc(100% - 2.5vw);
+    width:calc(100% - 2.5rem);
     border-radius:0;
     outline:none;
     border:none;
-    height:2vw;
+    height:2rem;
 }
 
 /*--Page Body----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
