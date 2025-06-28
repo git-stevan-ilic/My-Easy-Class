@@ -31,6 +31,19 @@ body{
     height:100%;
     width:100%;
 }
+.page-text{
+    min-height:calc(100vh - 5rem);
+    width:calc(100% - 2rem);
+    color:var(--dark-blue);
+    height:fit-content;
+    margin-bottom:2rem;
+    margin-left:1rem;
+    margin-top:1rem;
+}
+.page-text-title{
+    font-size:1.5rem;
+    font-weight:bold;
+}
 .notification{
     box-shadow:0.25rem 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
     background-color:var(--background-white);
