@@ -11,6 +11,7 @@ function loadStudentsLogic(username){
     addStudentEvents(username);
     displayCurrClass(classes[currClass], studentListSearch);
     generateLessons(lessons[currlesson], currlesson);
+    studentResizeLogic();
 
     const classSearchIcon = document.querySelector("#class-search-icon");
     const classSearch = document.querySelector("#class-search");
@@ -185,6 +186,30 @@ function loadStudentsLogic(username){
         }
         generateClasses(classNameSearch, classes);
         displayCurrClass(classes[currClass], studentListSearch);
+    });
+}
+function studentResizeLogic(){
+    const portraitButtonHolder = document.querySelector(".student-portrait-button-holder");
+    const buttonsElements = document.querySelector(".students-top-buttons-elements");
+    const studentsMainHead = document.querySelector(".students-main-head");
+    const dropMenu = document.querySelector(".add-student-drop-down");
+
+    let portraitMode = false;
+    if(window.innerWidth <= 1150){
+        portraitButtonHolder.appendChild(buttonsElements);
+        portraitMode = true;
+    }
+
+    window.addEventListener("resize", ()=>{
+        dropMenu.style.animation = "none";
+        if(window.innerWidth <= 1150){
+            if(!portraitMode) portraitButtonHolder.appendChild(buttonsElements);
+            portraitMode = true;
+        }
+        else{
+            if(portraitMode) studentsMainHead.appendChild(buttonsElements);
+            portraitMode = false;
+        }
     });
 }
 
@@ -588,10 +613,6 @@ function generateLessons(lessons, currlesson){
         }
     }
 }
-
-
-
-
 
 
 

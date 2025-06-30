@@ -274,7 +274,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="screen tab-affected" id="drive-screen" style="display:block;">
+                <div class="screen tab-affected" id="drive-screen">
                     <div class="drive-head">
                         <input type="file" id="drive-file-upload">
                         <button id="drive-upload">Upload</button>
@@ -305,84 +305,90 @@
                     </div>
                     <div class="drive-body"></div>
                 </div>
-                <div class="screen tab-affected" id="students-screen">
-                    <div class="class-list-window">
-                        <div class="search-holder" id="class-search-icon-holder">
-                            <div class="search-icon" id="class-search-icon"></div> 
-                            <input type="text" class="search-input" id="class-search">
-                        </div>
-                        <div class="class-list-holder">
-                            <div class="class-list"></div>
-                        </div>
-                        <div class="class-list-window-button-holder">
-                            <button class="blue-button" id="create-class">Create Class</button>
-                        </div>
-                        <div class="class-list-window-input-holder">
-                            <input type="text" id="new-class-input" placeholder="New class name">
-                            <div class="new-class-input-button-holder">
-                                <button id="new-class-confirm">Confirm</button>
-                                <button id="new-class-cancel">Cancel</button>
+                <div class="screen tab-affected" id="students-screen" style="display:block;">
+                    <div class="students-main-holder">
+                        <div class="student-portrait-button-holder"></div>
+                        <div class="class-list-window">
+                            <div class="search-holder" id="class-search-icon-holder">
+                                <div class="search-icon" id="class-search-icon"></div> 
+                                <input type="text" class="search-input" id="class-search">
                             </div>
-                        </div>
-                    </div>
-                    <div class="students-main">
-                        <div class="students-main-head">
-                            <div class="class-title">All Students</div>
-                            <div class="class-head-buttons">
-                                <button class="blue-button" id="new-lesson">New lesson</button>
-                                <button class="blue-button" id="add-students">Add Students</button>
+                            <div class="class-list-holder">
+                                <div class="class-list"></div>
                             </div>
-                            <div class="add-student-drop-down">
-                                <div class="add-student-row">
-                                    <div class="add-student-icon add-student-email-icon"></div>
-                                    <div class="add-student-text" id="invite-email">Invite by e-mail</div>
-                                </div>
-                                <div class="add-student-row">
-                                    <div class="add-student-icon add-student-link-icon"></div>
-                                    <div class="add-student-text" id="invite-link">Invite by link</div>
-                                </div>
-                                <div class="add-student-row">
-                                    <div class="add-student-icon add-student-qr-icon"></div>
-                                    <div class="add-student-text" id="invite-qr">Invite by QR code</div>
-                                </div>
-                                <div class="add-student-row">
-                                    <div class="add-student-icon add-student-list-icon"></div>
-                                    <div class="add-student-text" id="invite-list">Invite from my students</div>
+                            <div class="class-list-window-button-holder">
+                                <button class="blue-button" id="create-class">Create Class</button>
+                            </div>
+                            <div class="class-list-window-input-holder">
+                                <input type="text" id="new-class-input" placeholder="New class name">
+                                <div class="new-class-input-button-holder">
+                                    <button id="new-class-confirm">Confirm</button>
+                                    <button id="new-class-cancel">Cancel</button>
                                 </div>
                             </div>
                         </div>
-                        <div class="class-window">
-                            <div class="class-window-tab-holder">
-                                <div class="class-window-tab class-window-selected-tab">Students</div>
-                                <div class="class-window-tab">Assignments</div>
-                                <div class="class-window-tab">Homework</div>
-                            </div>
-                            <div class="class-window-body">
-                                <div class="class-window-body-content">
-                                    <div class="search-holder" id="student-search-icon-holder">
-                                        <div class="search-icon" id="student-search-icon"></div> 
-                                        <input type="text" class="search-input" id="student-search" placeholder="Search for students">
+                        <div class="students-main">
+                            <div class="students-main-head">
+                                <div class="class-title">All Students</div>
+                                <div class="students-top-buttons-elements">
+                                    <div class="class-head-buttons">
+                                        <button class="blue-button" id="new-lesson">New lesson</button>
+                                        <button class="blue-button" id="add-students">Add Students</button>
                                     </div>
-                                    <div class="class-window-student-list-holder">
-                                        <div class="class-window-student-list"></div>
-                                    </div>
-                                </div>
-                                <div class="class-window-body-content" style="display:block;">
-                                    <div class="search-holder" id="assignment-search-icon-holder">
-                                        <div class="search-icon" id="assignment-search-icon"></div> 
-                                        <input type="text" class="search-input" id="assignment-search" placeholder="Search for assignments">
-                                    </div>
-                                    <div class="class-window-assignment-list-holder">
-                                        <div class="class-window-assignment-list">
-                                            <div class="assignment">Assignment 1</div>
-
-
+                                    <div class="add-student-drop-down">
+                                        <div class="add-student-row">
+                                            <div class="add-student-icon add-student-email-icon"></div>
+                                            <div class="add-student-text" id="invite-email">Invite by e-mail</div>
+                                        </div>
+                                        <div class="add-student-row">
+                                            <div class="add-student-icon add-student-link-icon"></div>
+                                            <div class="add-student-text" id="invite-link">Invite by link</div>
+                                        </div>
+                                        <div class="add-student-row">
+                                            <div class="add-student-icon add-student-qr-icon"></div>
+                                            <div class="add-student-text" id="invite-qr">Invite by QR code</div>
+                                        </div>
+                                        <div class="add-student-row">
+                                            <div class="add-student-icon add-student-list-icon"></div>
+                                            <div class="add-student-text" id="invite-list">Invite from my students</div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="class-window-body-content"></div>
+                                
                             </div>
-                           
+                            <div class="class-window">
+                                <div class="class-window-tab-holder">
+                                    <div class="class-window-tab class-window-selected-tab">Students</div>
+                                    <div class="class-window-tab">Assignments</div>
+                                    <div class="class-window-tab">Homework</div>
+                                </div>
+                                <div class="class-window-body">
+                                    <div class="class-window-body-content">
+                                        <div class="search-holder" id="student-search-icon-holder">
+                                            <div class="search-icon" id="student-search-icon"></div> 
+                                            <input type="text" class="search-input" id="student-search" placeholder="Search for students">
+                                        </div>
+                                        <div class="class-window-student-list-holder">
+                                            <div class="class-window-student-list"></div>
+                                        </div>
+                                    </div>
+                                    <div class="class-window-body-content" style="display:block;">
+                                        <div class="search-holder" id="assignment-search-icon-holder">
+                                            <div class="search-icon" id="assignment-search-icon"></div> 
+                                            <input type="text" class="search-input" id="assignment-search" placeholder="Search for assignments">
+                                        </div>
+                                        <div class="class-window-assignment-list-holder">
+                                            <div class="class-window-assignment-list">
+                                                <div class="assignment">Assignment 1</div>
+
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="class-window-body-content"></div>
+                                </div>
+                            
+                            </div>
                         </div>
                     </div>
                     <div class="lesson-holder">
