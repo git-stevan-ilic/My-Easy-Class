@@ -1,6 +1,19 @@
 /*--Initial------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 function loadAboutMeLogic(client, userData){
-    let cvFile = null, fileData = null;
+    let cvFileTemp = null, iconFileTemp = null;
+    let cvFile = null, iconFile = null;
+    if(userData.cv.filename && userData.cv.mimeType && userData.cv.data){
+        cvFile = new Blob([userData.cv.data], {type:userData.cv.mimeType});
+        cvFile.name = userData.cv.filename;
+    }
+    if(userData.icon.filename && userData.icon.mimeType && userData.icon.data){
+        const byteArray = new Uint8Array(userData.icon.data);
+        iconFile = new Blob([byteArray], {type:userData.icon.mimeType});
+        const url = URL.createObjectURL(iconFile);
+        const userIcons = document.querySelectorAll(".user-icon");
+        for(let i = 0; i < userIcons.length; i++) userIcons[i].style.backgroundImage = `url(${url})`;
+    }
+
     document.querySelector(".about-me-share").onclick = ()=>{accountURL(userData.userID)}
     document.querySelector("#about-me-cv").onclick = ()=>{
         if(!cvFile) notification("No CV present");
@@ -43,6 +56,12 @@ function loadAboutMeLogic(client, userData){
         inputD.value = editData.description;
         inputC.value = "";
 
+        if(iconFile === null) editIcon.style.backgroundImage = "url('../assets/icons/default user.png')";
+        else{
+            const url = URL.createObjectURL(iconFile);
+            document.querySelector(".edit-window-icon").style.backgroundImage = `url(${url})`;
+        }
+
         fadeIn("#about-me-edit-screen", 0.1, "block");
     }
     document.querySelector("#about-me-edit-save").onclick = ()=>{
@@ -59,21 +78,58 @@ function loadAboutMeLogic(client, userData){
         document.querySelector("#about-me-history").innerText = userData.history;
         document.querySelector("#about-me-desc").innerText = userData.description;
         document.querySelector("#about-me-job").innerText = userData.jobTitle;
-        document.querySelector("#about-me-edit-cancel").click();
+        closeEditProfileWindow(false);
 
-
-        if(inputC.files.length === 0) client.emit("update-user-data", userData, null);
-        //else sendFileInChunks(client, cvFile);
-       
-        /*if(userImage){
-            userData.photos[0].value = userImage;
-            const userIcons = document.querySelectorAll(".user-icon");
-            for(let i = 0; i < userIcons.length; i++) userIcons[i].style.backgroundImage = "url('"+user.photos[0].value+"')";
-        }*/    
+        client.emit("update-user-data", userData);
+        uploadIcon(userData.userID);
+        uploadCV(userData.userID);
+        iconFile = iconFileTemp;
+        cvFile = cvFileTemp;
+        iconFileTemp = null;
+        cvFileTemp = null;
     }
     document.querySelector("#about-me-edit-cancel").onclick = ()=>{
+        closeEditProfileWindow(true);
+    }
+    editIcon.onclick = ()=>{
+        inputI.click();
+    }
+    inputI.onchange = (e)=>{
+        iconFileTemp = e.target.files[0];
+        if(!iconFileTemp) return;
+        if(inputI.files && inputI.files[0]){
+            let reader = new FileReader();
+            reader.onload = (e)=>{
+                userImage = e.target.result;
+                editIcon.style.backgroundImage = "url('"+e.target.result+"')";
+            }
+            reader.readAsDataURL(inputI.files[0]);
+        }
+    }
+    inputC.onchange = (e)=>{
+        cvFileTemp = e.target.files[0];
+        if(!cvFileTemp) return;
+    }
+    window.addEventListener("update-profile-image", ()=>{
+        const url = URL.createObjectURL(iconFile);
+        const userIcons = document.querySelectorAll(".user-icon");
+        for(let i = 0; i < userIcons.length; i++) userIcons[i].style.backgroundImage = `url(${url})`;
+    });
+
+    client.on("upload-file-error", (type)=>{
+        const errorTexts = [
+            "Failed to upload user CV file",
+            "Failed to upload user image file"
+        ];
+        notification(errorTexts[type]);
+    });
+
+    function closeEditProfileWindow(resetFiles){
+        if(resetFiles){
+            cvFileTemp = null;
+            iconFileTemp = null;
+        }
         fadeOut("#about-me-edit-screen", 0.1, ()=>{
-            //userImage = undefined;
             inputN.value = "";
             inputJ.value = "";
             inputL.value = "";
@@ -83,40 +139,51 @@ function loadAboutMeLogic(client, userData){
             inputC.value = "";
         });
     }
-    editIcon.onclick = ()=>{
-        inputI.click();
-    }
-    inputI.onchange = (e)=>{
-        if(inputI.files && inputI.files[0]){
-            var reader = new FileReader();
-            reader.onload = (e)=>{
-                userImage = e.target.result;
-                editIcon.style.backgroundImage = "url('"+e.target.result+"')";
-            }
-            reader.readAsDataURL(inputI.files[0]);
+}
+
+async function uploadCV(userID){
+    const inputC = document.querySelector("#input-cv");
+    if(inputC.files.length > 0){
+        const file = inputC.files[0];
+        const formData = new FormData();
+        formData.append("cvFile", file);
+
+        try{
+            const res = await fetch(`/upload-cv/${userID}`, {
+                method:"POST",
+                body:formData
+            });
+            const text = await res.text();
+            console.log(text);
+        }
+        catch(error){
+            notification("CV upload failed");
+            console.error(error);
         }
     }
-    inputC.onchange = (e)=>{
-        cvFile = e.target.files[0];
-        if(!cvFile) return;
+}
+async function uploadIcon(userID){
+    const inputI = document.querySelector("#input-icon");
+    if(inputI.files.length > 0){
+        const file = inputI.files[0];
+        const formData = new FormData();
+        formData.append("iconFile", file);
 
-        const reader = new FileReader();
-        reader.onerror = ()=>{console.error("Error reading file")};
-        reader.onload = ()=>{
-            fileData = {
-                fileName:cvFile.name,
-                mimeType:cvFile.type,
-                data:reader.result
-            };
-        };
-        reader.readAsArrayBuffer(cvFile);
+        try{
+            const res = await fetch(`/upload-icon/${userID}`, {
+                method:"POST",
+                body:formData
+            });
+            const text = await res.text();
+            console.log(text);
+            if(res.status === 200){
+                const updateProfileImage = new Event("update-profile-image");
+                window.dispatchEvent(updateProfileImage);
+            }
+        }
+        catch(error){
+            notification("Profile image upload failed");
+            console.error(error);
+        }
     }
-
-    client.on("upload-file-error", (type)=>{
-        const errorTexts = [
-            "Failed to upload user CV file",
-            "Failed to upload user image file"
-        ];
-        notification(errorTexts[type]);
-    })
 }

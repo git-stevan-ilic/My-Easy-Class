@@ -49,13 +49,6 @@ function loadLogInLogic(client){
         loadMailLogic();
         loadCalendar();
 
-        /*
-        if(user.photos.length > 0){
-            const userIcons = document.querySelectorAll(".user-icon");
-            for(let i = 0; i < userIcons.length; i++) userIcons[i].style.backgroundImage = 'url("'+user.photos[0].value+'")';
-        }
-        */
-
         const rememberMe = getLocalStorage("my-easy-class-remember-me", false, false);
         if(!rememberMe) localStorage.setItem("my-easy-class-session-id", "null");
         else if(userData.sessionID) localStorage.setItem("my-easy-class-session-id", userData.sessionID);

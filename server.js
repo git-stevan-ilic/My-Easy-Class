@@ -5,7 +5,6 @@ const { Server } = require("socket.io");
 const { nanoid } = require("nanoid");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
-const path = require("path");
 dotenv.config();
 
 const sharedsession = require("express-socket.io-session");
@@ -20,10 +19,11 @@ const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const { google } = require("googleapis");
 const vision = require("@google-cloud/vision");
 const multer = require("multer");
-const upload = multer({dest:"/api/drive-upload"});
+const upload = multer({storage:multer.memoryStorage()});
 const pdfParse = require("pdf-parse");
 const fs = require("fs-extra");
 const mammoth = require("mammoth");
+const stream = require("stream");
 
 const visionClient = new vision.ImageAnnotatorClient();
 const openAI = new openai({apiKey:process.env.CHATGPT_API_KEY});
@@ -60,6 +60,11 @@ const usersSchema = new Schema({
     history:     {type:String, required:false, default:null},
     description: {type:String, required:false, default:null},
     cv:{
+        mimeType: {type:String, required:false, default:null},
+        filename: {type:String, required:false, default:null},
+        data:     {type:Buffer, required:false, default:null}
+    },
+    icon:{
         mimeType: {type:String, required:false, default:null},
         filename: {type:String, required:false, default:null},
         data:     {type:Buffer, required:false, default:null}
@@ -585,9 +590,10 @@ async function driveUpload(req, res, refreshToken){
 
         const drive = google.drive({version:"v3", auth:oauth2Client});
         const fileMetadata = {name:req.file.originalname};
-        const media = {mimeType:req.file.mimetype, body:fs.createReadStream(req.file.path)};
+        const bufferStream = new stream.PassThrough();
+        bufferStream.end(req.file.buffer);
+        const media = {mimeType:req.file.mimetype, body:bufferStream};
         const response = await drive.files.create({resource:fileMetadata, media:media, fields:"id, name"});
-        fs.unlinkSync(req.file.path);
         res.status(200).json({success:true, file:response.data});
     }
     catch(error){
@@ -783,6 +789,84 @@ function getColorHex(colorId){
     return colors[colorId] || "1a73e8"; // Default blue
 }
 
+/*--About Me File Upload-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+app.post("/upload-cv/:userID", upload.single("cvFile"), async (req, res)=>{
+    try{
+        const userID = req.params.userID;
+        if(!req.file) return res.status(400).send("No file uploaded");
+
+        const allowedDocTypes = ["application/vnd.openxmlformats-officedocument.wordprocessingml.document",];
+        if(!allowedDocTypes.includes(req.file.mimetype)) return res.status(400).send("Invalid document format");
+        
+        Users.find({userID:userID})
+        .then((result)=>{
+            if(result.length === 0){
+                console.error("User not found");
+                res.status(500).send("CV upload failed");
+                return;
+            }
+
+            const foundUser = result[0];
+            foundUser.cv.data = req.file.buffer;
+            foundUser.cv.mimeType = req.file.mimetype;
+            foundUser.cv.filename = req.file.originalname;
+
+            foundUser.save().catch((error)=>{
+                console.error("Client ID update error: ", error);
+                res.status(500).send("CV upload failed");
+            });
+        })
+        .catch((error)=>{
+            console.error(error);
+            res.status(500).send("CV upload failed");
+        });
+        res.send("CV uploaded successfully");
+    }
+    catch(error){
+        console.error(error);
+        res.status(500).send("CV upload failed");
+    }
+});
+app.post("/upload-icon/:userID", upload.single("iconFile"), async (req, res)=>{
+    try{
+        const userID = req.params.userID;
+        if(!req.file) return res.status(400).send("No file uploaded");
+
+        const allowedImageTypes = ["image/png", "image/jpeg", "image/webp"];
+            if(!allowedImageTypes.includes(req.file.mimetype)) {
+            return res.status(400).send("Invalid image format");
+        }
+
+        Users.find({userID:userID})
+        .then((result)=>{
+            if(result.length === 0){
+                console.error("User not found");
+                res.status(500).send("CV upload failed");
+                return;
+            }
+
+            const foundUser = result[0];
+            foundUser.icon.data = req.file.buffer;
+            foundUser.icon.mimeType = req.file.mimetype;
+            foundUser.icon.filename = req.file.originalname;
+
+            foundUser.save().catch((error)=>{
+                console.error("Client ID update error: ", error);
+                res.status(500).send("CV upload failed");
+            });
+        })
+        .catch((error)=>{
+            console.error(error);
+            res.status(500).send("CV upload failed");
+        });
+        res.send("Profile image uploaded");
+    }
+    catch(error){
+        console.error(error);
+        res.status(500).send("Profile image upload failed");
+    }
+});
+
 /*--Input/Output-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 io.use((client, next) => {sessionMiddleware(client.request, {}, next);});
 io.on("connection", (client)=>{
@@ -847,7 +931,7 @@ io.on("connection", (client)=>{
             client.emit("get-user-display-data-fail");
         });
     });
-    client.on("update-user-data", (userData, cvFile)=>{
+    client.on("update-user-data", (userData)=>{
         Users.find({email:userData.email})
         .then((result)=>{
             if(result.length === 0){
@@ -864,24 +948,6 @@ io.on("connection", (client)=>{
             foundUser.save().catch((error)=>{
                 console.error("Client ID update error: ", error);
             });
-
-            /*if(cvFile){
-                try{
-                    foundUser.cv = {
-                        fileName:cvFile.fileName,
-                        mimeType:cvFile.mimeType,
-                        data:Buffer.from(cvFile.data)
-                    }
-                    console.log(2,foundUser.cv)
-                    foundUser.save().catch((error)=>{
-                        console.error("Client ID update error: ", error);
-                    });
-                }
-                catch(error){
-                    console.error("Upload failed", error);
-                    client.emit("upload-file-error", 0);
-                }
-            }*/
         })
         .catch((error)=>{
             console.error("Find user DB error: ", error);
@@ -971,7 +1037,6 @@ io.on("connection", (client)=>{
     });
 });
 
-
 /*--Start Server-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 app.use(express.static(__dirname));
 mongoose.connect(process.env.DB_URL,{})
@@ -1042,6 +1107,7 @@ function userLogIn(client, email, password, sessionLogin, sessionID){
             education:         foundUser.education,
             history:           foundUser.history,
             cv:                foundUser.cv,
+            icon:              foundUser.icon,
             description:       foundUser.description,
             googleConnected:   foundUser.googleConnected,
         }
@@ -1085,12 +1151,6 @@ function checkUserExistGoogleLogin(profile){
     .catch((error)=>{
         console.error("Find user DB error: ", error);
     });
-}
-async function extractTextFromImage(buffer) {
-    const [result] = await visionClient.textDetection({image:{content:buffer}});
-    const detections = result.textAnnotations;
-    if(detections.length > 0) return detections[0].description;
-    return "";
 }
 async function analyzeCEFR(client, text){
     if(!text.trim()) return null;
@@ -1148,7 +1208,12 @@ async function analyzeCEFR(client, text){
 
 
 
-
+async function extractTextFromImage(buffer) {
+    const [result] = await visionClient.textDetection({image:{content:buffer}});
+    const detections = result.textAnnotations;
+    if(detections.length > 0) return detections[0].description;
+    return "";
+}
 
 
 
