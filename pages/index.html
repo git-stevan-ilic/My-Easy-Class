@@ -25,7 +25,8 @@
     <script type="text/javascript" src="../js/zoom/lodash.min.js"></script>
     <script type="text/javascript" src="../js/zoom/zoom-meeting-embedded.min.js"></script>
     <script type="text/javascript" src="../js/zoom/zoom-meeting.min.js"></script>-->
-
+    
+    <script type="text/javascript" src="../js/mammoth.browser.js"></script>
     <script type="text/javascript" src="../js/login logic.js"></script>
     <script type="text/javascript" src="../js/socket.io.js"></script>
     <script type="text/javascript" src="../js/students.js"></script>
@@ -274,7 +275,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="screen tab-affected" id="drive-screen">
+                <div class="screen tab-affected" id="drive-screen" style="display:block;">
                     <div class="drive-head">
                         <input type="file" id="drive-file-upload">
                         <button id="drive-upload">Upload</button>
@@ -290,6 +291,7 @@
                                     <div class="filter-window-text">File Type</div>
                                     <select class="filter-select" name="filter-select" value="none">
                                         <option value="none" >None    </option>
+                                        <option value="text" >Text    </option>
                                         <option value="pdf"  >PDF     </option>
                                         <option value="doc"  >Document</option>
                                         <option value="image">Image   </option>
@@ -417,7 +419,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="screen" id="about-me-screen" style="display:block;">
+                <div class="screen" id="about-me-screen">
                     <div class="about-me-info-holder">
                         <div class="about-me-image user-icon"></div>
                         <div class="about-me-info">
@@ -519,7 +521,7 @@
                 <div class="file-display-close"></div>
                 <button class="file-display-round-button" id="file-display-download"></button>
                 <button class="file-display-round-button" id="file-display-delete"></button>
-                <button class="file-display-round-button" id="file-display-ceft">CEFR</button>
+                <button class="file-display-round-button" id="file-display-cefr">CEFR</button>
             </div>
             <div class="file-display-body"></div>
             <div class="file-loader"></div>
@@ -703,9 +705,7 @@
                 </div>
             </div>
         </div>
-
-
-        <div class="screen-mask" id="cefr-screen" style="display:none;">
+        <div class="screen-mask" id="cefr-screen">
             <div class="screen-mask-background"></div>
             <div class="cefr-window">
                 <div class="cefr-winow-head">CEFR Analysis</div>
@@ -713,20 +713,20 @@
                     <div class="cefr-overview">
                         <div class="cefr-level">
                             <div class="cefr-level-title">Level</div>
-                            <div class="cefr-level-value">B1</div>
+                            <div class="cefr-level-value" id="total-cefr-level">B1</div>
                         </div>
                         <div class="cefr-level-breakdown">
                             <div class="cefr-break-point">
                                 <div class="cefr-break-point-title">Vocabulary</div>
-                                <div class="cefr-break-point-value">B1</div>
+                                <div class="cefr-break-point-value" id="vocabulary-cefr-level">B1</div>
                             </div>
                             <div class="cefr-break-point">
                                 <div class="cefr-break-point-title">Grammar</div>
-                                <div class="cefr-break-point-value">B1</div>
+                                <div class="cefr-break-point-value" id="grammar-cefr-level">B1</div>
                             </div>
                             <div class="cefr-break-point">
                                 <div class="cefr-break-point-title">Syntax</div>
-                                <div class="cefr-break-point-value">B1</div>
+                                <div class="cefr-break-point-value" id="syntax-cefr-level">B1</div>
                             </div>
                         </div>
                     </div>
@@ -738,7 +738,21 @@
                                 <div class="cefr-vocabulary-breakdown-column-bar-holder">
                                     <div class="cefr-vocabulary-breakdown-column-bar" style="height:25%"></div>
                                 </div>
-                                <div class="cefr-vocabulary-breakdown-column-level">B2</div>
+                                <div class="cefr-vocabulary-breakdown-column-level">A1</div>
+                            </div>
+                            <div class="cefr-vocabulary-breakdown-column">
+                                <div class="cefr-vocabulary-breakdown-column-percent">25%</div>
+                                <div class="cefr-vocabulary-breakdown-column-bar-holder">
+                                    <div class="cefr-vocabulary-breakdown-column-bar" style="height:25%"></div>
+                                </div>
+                                <div class="cefr-vocabulary-breakdown-column-level">A2</div>
+                            </div>
+                            <div class="cefr-vocabulary-breakdown-column">
+                                <div class="cefr-vocabulary-breakdown-column-percent">25%</div>
+                                <div class="cefr-vocabulary-breakdown-column-bar-holder">
+                                    <div class="cefr-vocabulary-breakdown-column-bar" style="height:25%"></div>
+                                </div>
+                                <div class="cefr-vocabulary-breakdown-column-level">B1</div>
                             </div>
                             <div class="cefr-vocabulary-breakdown-column">
                                 <div class="cefr-vocabulary-breakdown-column-percent">25%</div>
@@ -752,69 +766,20 @@
                                 <div class="cefr-vocabulary-breakdown-column-bar-holder">
                                     <div class="cefr-vocabulary-breakdown-column-bar" style="height:25%"></div>
                                 </div>
-                                <div class="cefr-vocabulary-breakdown-column-level">B2</div>
+                                <div class="cefr-vocabulary-breakdown-column-level">C1</div>
                             </div>
                             <div class="cefr-vocabulary-breakdown-column">
                                 <div class="cefr-vocabulary-breakdown-column-percent">25%</div>
                                 <div class="cefr-vocabulary-breakdown-column-bar-holder">
                                     <div class="cefr-vocabulary-breakdown-column-bar" style="height:25%"></div>
                                 </div>
-                                <div class="cefr-vocabulary-breakdown-column-level">B2</div>
-                            </div>
-                            <div class="cefr-vocabulary-breakdown-column">
-                                <div class="cefr-vocabulary-breakdown-column-percent">25%</div>
-                                <div class="cefr-vocabulary-breakdown-column-bar-holder">
-                                    <div class="cefr-vocabulary-breakdown-column-bar" style="height:25%"></div>
-                                </div>
-                                <div class="cefr-vocabulary-breakdown-column-level">B2</div>
-                            </div>
-                            <div class="cefr-vocabulary-breakdown-column">
-                                <div class="cefr-vocabulary-breakdown-column-percent">25%</div>
-                                <div class="cefr-vocabulary-breakdown-column-bar-holder">
-                                    <div class="cefr-vocabulary-breakdown-column-bar" style="height:25%"></div>
-                                </div>
-                                <div class="cefr-vocabulary-breakdown-column-level">B2</div>
-                            </div>
-                            <div class="cefr-vocabulary-breakdown-column">
-                                <div class="cefr-vocabulary-breakdown-column-percent">25%</div>
-                                <div class="cefr-vocabulary-breakdown-column-bar-holder">
-                                    <div class="cefr-vocabulary-breakdown-column-bar" style="height:25%"></div>
-                                </div>
-                                <div class="cefr-vocabulary-breakdown-column-level">B2</div>
+                                <div class="cefr-vocabulary-breakdown-column-level">C2</div>
                             </div>
                         </div>
                     </div>
                     <div class="grammar-points">
                         <div class="grammar-points-head">Grammar and Syntax</div>
-                        <div class="grammar-points-body">
-                            <div class="grammar-point">Present Simple</div>
-                            <div class="grammar-point">Present Simple</div>
-                            <div class="grammar-point">Present Simple</div>
-                             <div class="grammar-point">Present Simple</div>
-                              <div class="grammar-point">Present Simple</div>
-                               <div class="grammar-point">Present Simple</div>
-                                <div class="grammar-point">Present Simple</div>
-                                 <div class="grammar-point">Present Simple</div>
-                                  <div class="grammar-point">Present Simple</div>
-                                   <div class="grammar-point">Present Simple</div>
-                                    <div class="grammar-point">Present Simple</div>
-                                     <div class="grammar-point">Present Simple</div>
-
-                                      <div class="grammar-point">Present Simple</div>
-                                       <div class="grammar-point">Present Simple</div>
-                                        <div class="grammar-point">Present Simple</div>
-                                         <div class="grammar-point">Present Simple</div>
-                                          <div class="grammar-point">Present Simple</div>
-                                           <div class="grammar-point">Present Simple</div>
-                                            <div class="grammar-point">Present Simple</div>
-
-                                             <div class="grammar-point">Present Simple</div>
-                                              <div class="grammar-point">Present Simple</div>
-                                               <div class="grammar-point">Present Simple</div>
-                                                <div class="grammar-point">Present Simple</div>
-                                                 <div class="grammar-point">Present Simple</div>
-                                                  <div class="grammar-point">Present Simple</div>
-                        </div>
+                        <div class="grammar-points-body"></div>
                     </div>
                 </div>
                 <div class="cefr-winow-foot">
@@ -822,7 +787,6 @@
                 </div>
             </div>
         </div>
-
 
         <div class="notification"></div>
         <div class="download-notification">Downloading...</div>

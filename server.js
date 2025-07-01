@@ -5,7 +5,7 @@ const { Server } = require("socket.io");
 const { nanoid } = require("nanoid");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
-const fs = require("fs");
+const path = require("path");
 dotenv.config();
 
 const sharedsession = require("express-socket.io-session");
@@ -18,9 +18,14 @@ const openai = require("openai");
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const { google } = require("googleapis");
+const vision = require("@google-cloud/vision");
 const multer = require("multer");
 const upload = multer({dest:"/api/drive-upload"});
+const pdfParse = require("pdf-parse");
+const fs = require("fs-extra");
+const mammoth = require("mammoth");
 
+const visionClient = new vision.ImageAnnotatorClient();
 const openAI = new openai({apiKey:process.env.CHATGPT_API_KEY});
 const app = express();
 const server = createServer(app);
@@ -454,26 +459,59 @@ async function getDriveFile(req, res, refreshToken){
         const metadata = await drive.files.get({fileId, fields:"mimeType"});
         const mimeType = metadata.data.mimeType;
 
-        if(mimeType === "application/vnd.google-apps.document"){
-            const response = await drive.files.export({fileId,mimeType:"text/html"}, {responseType:"stream"});
-            res.setHeader("Content-Type", "text/html");
-            response.data.pipe(res);
+        let conditionTrue = false, conditionIndex = 0;
+        const mimeTypeConditions = [
+            mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            mimeType.startsWith("image/"), mimeType.startsWith("video/"),
+            mimeType === "text/plain", mimeType === "application/pdf"
+        ];
+        for(let i = 0; i < mimeTypeConditions.length; i++){
+            if(mimeTypeConditions[i]){
+                conditionTrue = true;
+                conditionIndex = i;
+                break;
+            }
         }
-        else if(mimeType === "application/pdf"){
-            const response = await drive.files.get({fileId, alt:"media"}, {responseType:"stream"});
-            res.setHeader("Content-Type", "application/pdf");
-            response.data.pipe(res);
-        }
-        else if(mimeType.startsWith("image/")){
-            const response = await drive.files.get({fileId, alt:"media"}, {responseType:"stream"});
-            res.setHeader("Content-Type", mimeType);
-            response.data.pipe(res);
-        
-        }
-        else if(mimeType.startsWith("video/")){
-            const response = await drive.files.get({fileId, alt:"media"}, {responseType:"stream"});
-            res.setHeader("Content-Type", mimeType);
-            response.data.pipe(res);
+
+        if(conditionTrue){
+            //if(conditionIndex === 0){
+                /*const tempDir = tmp.dirSync({ unsafeCleanup: true });
+                const inputPath = path.join(tempDir.name, "input.docx");
+                const outputDir = tempDir.name;
+
+                const response = await drive.files.get({ fileId, alt: "media" }, { responseType: "stream" });
+                const writeStream = fs.createWriteStream(inputPath);
+
+                /*await new Promise((resolve, reject) => {
+                    response.data.pipe(writeStream);
+                    writeStream.on("finish", resolve);
+                    writeStream.on("error", reject);
+                });
+
+                await new Promise((resolve, reject) => {
+                    exec(`soffice --headless --convert-to html --outdir "${outputDir}" "${inputPath}"`, (err, stdout, stderr) => {
+                        if (err) return reject(stderr);
+                        resolve(stdout);
+                    });
+                });
+
+                const outputHtmlPath = inputPath.replace(/\.docx$/, ".html");
+                if (!fs.existsSync(outputHtmlPath)) {
+                    return res.status(500).json({ error: "HTML conversion failed" });
+                }
+
+                // Read and return the HTML
+                const htmlContent = await fs.readFile(outputHtmlPath, "utf8");
+
+                // Cleanup
+                tempDir.removeCallback();
+                res.send(htmlContent)*/
+            //}
+            //else{
+                const response = await drive.files.get({fileId, alt:"media"}, {responseType:"stream"});
+                res.setHeader("Content-Type", mimeType);
+                response.data.pipe(res);
+            //}
         }
         else{
             res.status(400).send("Unsupported file type");
@@ -507,7 +545,7 @@ async function driveDownload(req, res, refreshToken){
         const {name, mimeType} = metadata.data;
 
         let response;
-        if(mimeType === "application/vnd.google-apps.document"){
+        if(mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"){
             const exportMime = exportTypes[format] || "application/pdf";
             const extension = format || "pdf";
       
@@ -851,6 +889,67 @@ io.on("connection", (client)=>{
         });
     });
 
+    client.on("analize-cefr", (fileId)=>{
+        Users.find({clientID:client.id})
+        .then(async (result)=>{
+            if(result.length === 0) console.error("Find user DB error: ", error);
+            else{
+                try{
+                    const foundUser = result[0];
+                    const oauth2Client = new google.auth.OAuth2(
+                        process.env.GOOGLE_CLIENT_ID,
+                        process.env.GOOGLE_CLIENT_SECRET,
+                        process.env.GOOGLE_REDIRECT_URL
+                    );
+                    oauth2Client.setCredentials({refresh_token:foundUser.googleRefreshToken});
+                    await oauth2Client.getAccessToken();
+
+                    const drive = google.drive({version:"v3", auth:oauth2Client});
+                    const metadata = await drive.files.get({fileId, fields:"mimeType"});
+                    const mimeType = metadata.data.mimeType;
+
+                    const res = await drive.files.get({fileId, alt:"media"}, {responseType:"arraybuffer"});
+                    const buffer = Buffer.from(res.data);
+                    let textContent = "";
+
+                    if(mimeType.startsWith("text/")) textContent = buffer.toString("utf8");
+                    else if(mimeType === "application/pdf"){
+                        const pdfData = await pdfParse(buffer);
+                        textContent = pdfData.text;
+                    }
+                    else if(mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"){
+                        const result = await mammoth.extractRawText({buffer});
+                        textContent = result.value;
+                    }
+                    else if(mimeType.startsWith("image/")){
+                        textContent = await extractTextFromImage(buffer);
+                    }
+                    /*else if(mimeType.startsWith("image/")){
+                        const [result] = await visionClient.textDetection({image:{content:buffer}});
+                        const detections = result.textAnnotations;
+                        textContent = detections.length ? detections[0].description : "";
+                    }*/
+                    else{
+                        console.error("Unsupported file type for CEFR analysis");
+                        client.emit("cefr-read-error", 1);
+                    }
+                    if(!textContent.trim()){
+                        console.error("No readable text found");
+                        client.emit("cefr-read-error", 2);
+                    }
+                    analyzeCEFR(client, textContent);
+                }
+                catch(error){
+                    console.error("Reading CEFR error: ", error);
+                    client.emit("cefr-read-error", 0);
+                }
+            }
+        })
+        .catch((error)=>{
+            console.error("Find user DB error: ", error);
+        });
+    });
+
     client.on("new-chatgpt-message", (message)=>{
         openAI.chat.completions.create({
             model:"gpt-4o",
@@ -987,8 +1086,57 @@ function checkUserExistGoogleLogin(profile){
         console.error("Find user DB error: ", error);
     });
 }
+async function extractTextFromImage(buffer) {
+    const [result] = await visionClient.textDetection({image:{content:buffer}});
+    const detections = result.textAnnotations;
+    if(detections.length > 0) return detections[0].description;
+    return "";
+}
+async function analyzeCEFR(client, text){
+    if(!text.trim()) return null;
+    const systemPrompt = `
+        You are a CEFR analysis engine. You will evaluate a provided English text based on the CEFR language proficiency framework.
 
+        Return a JSON object with:
+        - "totalLevel": The estimated overall CEFR level (A1, A2, B1, B2, C1, or C2).
+        - "components": {
+            "vocabulary": {
+                "level": string (A1–C2),
+                "distribution": { "A1": number, "A2": number, "B1": number, "B2": number, "C1": number, "C2": number }
+            },
+            "grammar": {
+                "level": string (A1–C2),
+                "distribution": { "A1": number, "A2": number, "B1": number, "B2": number, "C1": number, "C2": number },
+                "features": string[] (e.g. ["present simple", "past perfect", "passive voice"])
+            },
+            "syntax": {
+                "level": string (A1–C2),
+                "distribution": { "A1": number, "A2": number, "B1": number, "B2": number, "C1": number, "C2": number },
+                "features": string[] (e.g. ["compound sentences", "relative clauses"])
+            }
+        }
+        Only return the JSON object and nothing else. Do not include commentary.
+    `;
 
+    const userPrompt = `Analyze this text for CEFR level:\n\n"${text}"`;
+    const response = await openAI.chat.completions.create({
+        model:"gpt-4o",
+        messages:[
+            {role:"system", content:systemPrompt},
+            {role:"user", content:userPrompt}
+        ]
+    });
+
+    try{
+        const output = response.choices[0].message.content.trim();
+        client.emit("cefr-analysis", output);
+    }
+    catch(error){
+        console.error("Failed to parse CEFR JSON:", error);
+        client.emit("cefr-read-error", 3);
+        return null;
+    }
+}
 
 
 
@@ -1014,6 +1162,7 @@ function checkUserExistGoogleLogin(profile){
 /*--Setup Zoom Services------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 /*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 const jwt = require('jsonwebtoken');
+const { file } = require("googleapis/build/src/apis/file");
 
 app.get('/auth/zoom', (req, res) => {
     const url = `https://zoom.us/oauth/authorize?response_type=code&client_id=${process.env.ZOOM_CLIENT_ID}&redirect_uri=${process.env.ZOOM_REDIRECT_URL}`;

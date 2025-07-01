@@ -1,5 +1,7 @@
 /*--Initial------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 function loadDriveLogic(client){
+    document.querySelector("#cefr-close").onclick = ()=>{fadeOut("#cefr-screen", 0.1, null)}
+
     const filter = document.querySelector(".filter");
     const filterWindow = document.querySelector(".filter-window-holder");
     filter.onclick = ()=>{
@@ -38,6 +40,7 @@ function loadDriveLogic(client){
             switch(filterSelect.value){
                 default:      filterDisplay = "None"; break;
                 case "none":  filterDisplay = "None"; break;
+                case "text":  filterDisplay = "Text"; break;
                 case "pdf":   filterDisplay = "PDF"; break;
                 case "doc":   filterDisplay = "Document"; break;
                 case "image": filterDisplay = "Image"; break;
@@ -46,7 +49,7 @@ function loadDriveLogic(client){
 
             currFilter = filterSelect.value;
             filter.innerText = "Filter: "+filterDisplay;
-            generateDriveData(driveFiles, currFilter, currSearch);
+            generateDriveData(client, driveFiles, currFilter, currSearch);
         });
     }
 
@@ -55,24 +58,37 @@ function loadDriveLogic(client){
     driveSearch.value = "";
     driveSearch.oninput = ()=>{
         currSearch = driveSearch.value;
-        generateDriveData(driveFiles, currFilter, currSearch);
+        generateDriveData(client, driveFiles, currFilter, currSearch);
     }
     searchIcon.onclick = ()=>{
         currSearch = driveSearch.value;
-        generateDriveData(driveFiles, currFilter, currSearch);
+        generateDriveData(client, driveFiles, currFilter, currSearch);
     }
 
     getDriveFiles().then((files)=>{
-        generateDriveData(files, currFilter, currSearch);
+        generateDriveData(client, files, currFilter, currSearch);
         driveFiles = files;
     });
     document.addEventListener("reload-drive-files", ()=>{
         getDriveFiles().then((files)=>{
-            generateDriveData(files, currFilter, currSearch);
+            generateDriveData(client, files, currFilter, currSearch);
             driveFiles = files;
         });
     });
+
     client.on("google-drive-error", error => console.log(error));
+    client.on("cefr-analysis", (analysis)=>{displayCEFR(analysis)});
+    client.on("cefr-read-error", (type)=>{
+        document.querySelector("#file-display-cefr").disabled = false;
+        const errorTexts = [
+            "Reading CEFR error",
+            "Unsupported file type for CEFR analysis",
+            "No readable text found",
+            "CEFR analysis failed"
+        ];
+        console.error(errorTexts[type]);
+        notification(errorTexts[type]);
+    });
 }
 async function getDriveFiles(){
     const response = await fetch("/api/drive-list");
@@ -81,11 +97,12 @@ async function getDriveFiles(){
 }
 
 /*--Generate Drive Data------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function generateDriveData(files, filter, fileName){
+function generateDriveData(client, files, filter, fileName){
     let allDates = [];
     for(let i = 0; i < files.length; i++){
         let fileFormat = "";
         if(files[i].mimeType.indexOf(".document") !== -1) fileFormat = "document";
+        if(files[i].mimeType.indexOf("text/plain") !== -1) fileFormat = "text";
         if(files[i].mimeType.indexOf("image") !== -1) fileFormat = "image";
         if(files[i].mimeType.indexOf("video") !== -1) fileFormat = "video";
         if(files[i].mimeType.indexOf("pdf") !== -1) fileFormat = "pdf";
@@ -95,6 +112,7 @@ function generateDriveData(files, filter, fileName){
             default:      filterCondition = fileFormat !== "";         break;
             case "none":  filterCondition = fileFormat !== "";         break;
             case "pdf":   filterCondition = fileFormat === "pdf";      break;
+            case "text":  filterCondition = fileFormat === "text";     break;
             case "doc":   filterCondition = fileFormat === "document"; break;
             case "image": filterCondition = fileFormat === "image";    break;
             case "video": filterCondition = fileFormat === "video";    break;
@@ -133,8 +151,8 @@ function generateDriveData(files, filter, fileName){
             }
         }
     }
-    generateDriveElements(allDates);
-    generateDashboardDriveElements(allDates);
+    generateDriveElements(client, allDates);
+    generateDashboardDriveElements(client, allDates);
 }
 function convertByteSize(bytes){
     const units = ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
@@ -144,7 +162,7 @@ function convertByteSize(bytes){
 }
 
 /*--Generate Drive Elements--------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function generateDriveElements(dates){
+function generateDriveElements(client, dates){
     const driveBody = document.querySelector(".drive-body");
     while(driveBody.children.length > 0) driveBody.removeChild(driveBody.lastChild);
 
@@ -157,7 +175,7 @@ function generateDriveElements(dates){
     else{
         for(let i = 0; i < dates.length; i++){
             const divider = generateDriveDivider(dates[i].date);
-            const holder = generateDriveHolder(dates[i].files);
+            const holder = generateDriveHolder(client, dates[i].files);
             driveBody.appendChild(divider);
             driveBody.appendChild(holder);
         }
@@ -180,7 +198,7 @@ function generateDriveDivider(date){
     divider.appendChild(divivderLineBig);
     return divider;
 }
-function generateDriveHolder(files){
+function generateDriveHolder(client, files){
     const holder = document.createElement("div");
     holder.className = "drive-holder";
 
@@ -208,11 +226,11 @@ function generateDriveHolder(files){
         driveItem.appendChild(driveItemInfo);
         holder.appendChild(driveItem);
 
-        driveItem.onclick = ()=>{displayFile(files[i].id, files[i].name, files[i].mimeType)}
+        driveItem.onclick = ()=>{displayFile(client, files[i].id, files[i].name, files[i].mimeType)}
     }
     return holder;
 }
-function generateDashboardDriveElements(allDates){
+function generateDashboardDriveElements(client, allDates){
     const recentFilesDIV = document.querySelector("#recent-files");
 
     let recentFiles = [];
@@ -231,21 +249,74 @@ function generateDashboardDriveElements(allDates){
     else{
         for(let i = 0; i < recentFiles.length; i++){
             recentFilesDIV.innerHTML = "";
-            const holder = generateDriveHolder(recentFiles[i].files);
+            const holder = generateDriveHolder(client, recentFiles[i].files);
             for(let j = holder.children.length-1; j >= 0; j--){
                 recentFilesDIV.appendChild(holder.lastChild);
             }
         }
     }
 }
+function displayCEFR(analysis){
+    document.querySelector("#file-display-cefr").disabled = false;
+    if(analysis === null){
+        console.error("CEFR analysis failed");
+        notification("CEFR analysis failed");
+        return;
+    }
+    try{
+        const analysisJSON = JSON.parse(cleanJsonString(analysis));
+        document.querySelector("#total-cefr-level").innerHTML = analysisJSON.totalLevel;
+        document.querySelector("#vocabulary-cefr-level").innerHTML = analysisJSON.components.vocabulary.level;
+        document.querySelector("#grammar-cefr-level").innerHTML = analysisJSON.components.grammar.level;
+        document.querySelector("#syntax-cefr-level").innerHTML = analysisJSON.components.syntax.level;
+
+        const columnPercent = document.querySelectorAll(".cefr-vocabulary-breakdown-column-percent");
+        const columnBar = document.querySelectorAll(".cefr-vocabulary-breakdown-column-bar");
+        const distribution = [
+            analysisJSON.components.vocabulary.distribution.A1,
+            analysisJSON.components.vocabulary.distribution.A2,
+            analysisJSON.components.vocabulary.distribution.B1,
+            analysisJSON.components.vocabulary.distribution.B2,
+            analysisJSON.components.vocabulary.distribution.C1,
+            analysisJSON.components.vocabulary.distribution.C2
+        ];
+        for(let i = 0; i < distribution.length; i++){
+            columnPercent[i].innerHTML = distribution[i]+"%";
+            columnBar[i].style.height = distribution[i]+"%";
+        }
+
+        const grammarPoints = document.querySelector(".grammar-points-body");
+        while(grammarPoints.children.length > 0) grammarPoints.removeChild(grammarPoints.lastChild);
+        const allGrammarPoints = analysisJSON.components.grammar.features.concat(analysisJSON.components.syntax.features);
+        for(let i = 0; i < allGrammarPoints.length; i++){
+            const point = document.createElement("div");
+            point.className = "grammar-point";
+            point.innerHTML = allGrammarPoints[i];
+            grammarPoints.appendChild(point);
+        }
+        fadeIn("#cefr-screen", 0.1, "block", null);
+    }
+    catch(error){
+        console.error("CEFR analysis failed ", error);
+        notification("CEFR analysis failed");
+    }
+}
+function cleanJsonString(text) {
+    return text
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/\s*```$/, '')
+    .trim();
+}
 
 /*--File Manipulation--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-async function displayFile(fileId, fileName, mimeType){
+async function displayFile(client, fileId, fileName, mimeType){
     try{
         const fileLoader = document.querySelector(".file-loader");
         const fileDisplayBody = document.querySelector(".file-display-body");
         const downloadButton = document.querySelector("#file-display-download");
         const deleteButton = document.querySelector("#file-display-delete");
+        const displayCEFR = document.querySelector("#file-display-cefr");
         document.querySelector(".file-display-title").innerText = fileName;
         document.querySelector(".file-display-close").onclick = ()=>{
             fadeOut(".file-display", 0.1, ()=>{
@@ -258,18 +329,33 @@ async function displayFile(fileId, fileName, mimeType){
         }
         downloadButton.onclick = ()=>{downloadFile(fileId, fileName)}
         deleteButton.onclick = ()=>{deleteFile(fileId)}
-       
+        displayCEFR.onclick = ()=>{
+            client.emit("analize-cefr", fileId);
+            displayCEFR.disabled = true;
+        }
+
         fileLoader.style.display = "block";
         while(fileDisplayBody.children.length > 0) fileDisplayBody.removeChild(fileDisplayBody.lastChild);
         const url = "/api/drive-file-content/"+fileId;
-        if(mimeType === "application/vnd.google-apps.document"){
+        if(mimeType === "text/plain"){
             const response = await fetch(url);
             const html = await response.text();
-
             const displayText = document.createElement("div");
+
             displayText.className = "file-display-text";
             fileDisplayBody.appendChild(displayText);
             displayText.innerHTML = DOMPurify.sanitize(html);
+            fileLoader.style.display = "none";
+        }
+        else if(mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"){
+            const response = await fetch(url);
+            const arrayBuffer = await response.arrayBuffer();
+            const result = await mammoth.convertToHtml({arrayBuffer});
+            const displayText = document.createElement("div");
+
+            displayText.className = "file-display-text";
+            fileDisplayBody.appendChild(displayText);
+            displayText.innerHTML = DOMPurify.sanitize(result.value);
             fileLoader.style.display = "none";
         }
         else if(mimeType === "application/pdf"){
@@ -305,13 +391,13 @@ async function displayFile(fileId, fileName, mimeType){
                 vid.style.opacity = "1"
             }
         }
-        fadeIn(".file-display", 0.1);
     }
     catch(error){
         console.log(error);
         const fileDisplayBody = document.querySelector(".file-display-body");
         fileDisplayBody.innerHTML = "<div class='file-display-error'>Failed to load content</div>";
     }
+    fadeIn(".file-display", 0.1);
 }
 async function downloadFile(fileId, fileName){
     const downloadNotification = document.querySelector(".download-notification");
