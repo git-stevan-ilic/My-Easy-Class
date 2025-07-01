@@ -1,9 +1,7 @@
 /*--Initial------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function loadAboutMeLogic(user){
-    let cvFile = undefined, newImage = undefined;
-    document.querySelector(".about-me-share").onclick = ()=>{
-        notification("Link copied");
-    }
+function loadAboutMeLogic(client, userData){
+    let cvFile = null, fileData = null;
+    document.querySelector(".about-me-share").onclick = ()=>{accountURL(userData.userID)}
     document.querySelector("#about-me-cv").onclick = ()=>{
         if(!cvFile) notification("No CV present");
         else{
@@ -28,50 +26,54 @@ function loadAboutMeLogic(user){
     const inputI = document.querySelector("#input-icon");
    
     document.querySelector("#edit-info").onclick = ()=>{
-        //editIcon.style.backgroundImage = "url('"+user.photos[0].value+"')";
         const editData = {
-            description:user.description || "Description not provided",
-            education:user.education || "Not provided",
-            location:user.location || "Not provided",
-            name:user.username || "Not provided",
-            history:user.history || "Not provided",
-            job:user.job || "Not provided",
+            description:userData.description || "Description not provided",
+            education:userData.education || "Not provided",
+            location:userData.location || "Not provided",
+            name:userData.username || "Not provided",
+            history:userData.history || "Not provided",
+            jobTitle:userData.jobTitle || "Not provided"
         };
 
         inputN.value = editData.name;
-        inputJ.value = editData.job;
+        inputJ.value = editData.jobTitle;
         inputL.value = editData.location;
         inputE.value = editData.education;
         inputH.value = editData.history;
         inputD.value = editData.description;
+        inputC.value = "";
 
         fadeIn("#about-me-edit-screen", 0.1, "block");
     }
     document.querySelector("#about-me-edit-save").onclick = ()=>{
-        user.desc = inputD.value || "Description not provided";
-        user.username = inputN.value || user.username;
-        user.location = inputL.value || "Not provided";
-        user.education = inputE.value || "Not provided";
-        user.history = inputH.value || "Not provided";
-        user.job = inputJ.value || "Not provided";
-        if(inputC.files.length > 0) cvFile = inputC.files[0];
-        /*if(newImage){
-            user.photos[0].value = newImage;
+        userData.description = inputD.value || "Description not provided";
+        userData.username = inputN.value || userData.username;
+        userData.location = inputL.value || "Not provided";
+        userData.education = inputE.value || "Not provided";
+        userData.history = inputH.value || "Not provided";
+        userData.jobTitle = inputJ.value || "Not provided";
+        
+        document.querySelector("#about-me-education").innerText = userData.education;
+        document.querySelector(".about-me-name").innerText = userData.username;
+        document.querySelector("#about-me-location").innerText = userData.location;
+        document.querySelector("#about-me-history").innerText = userData.history;
+        document.querySelector("#about-me-desc").innerText = userData.description;
+        document.querySelector("#about-me-job").innerText = userData.jobTitle;
+        document.querySelector("#about-me-edit-cancel").click();
+
+
+        if(inputC.files.length === 0) client.emit("update-user-data", userData, null);
+        //else sendFileInChunks(client, cvFile);
+       
+        /*if(userImage){
+            userData.photos[0].value = userImage;
             const userIcons = document.querySelectorAll(".user-icon");
             for(let i = 0; i < userIcons.length; i++) userIcons[i].style.backgroundImage = "url('"+user.photos[0].value+"')";
-        }*/
-      
-        document.querySelector("#about-me-education").innerText = user.education;
-        document.querySelector(".about-me-name").innerText = user.username;
-        document.querySelector("#about-me-location").innerText = user.location;
-        document.querySelector("#about-me-history").innerText = user.history;
-        document.querySelector("#about-me-desc").innerText = user.desc;
-        document.querySelector("#about-me-job").innerText = user.job;
-        document.querySelector("#about-me-edit-cancel").click();
+        }*/    
     }
     document.querySelector("#about-me-edit-cancel").onclick = ()=>{
         fadeOut("#about-me-edit-screen", 0.1, ()=>{
-            newImage = undefined;
+            //userImage = undefined;
             inputN.value = "";
             inputJ.value = "";
             inputL.value = "";
@@ -88,10 +90,33 @@ function loadAboutMeLogic(user){
         if(inputI.files && inputI.files[0]){
             var reader = new FileReader();
             reader.onload = (e)=>{
-                newImage = e.target.result;
+                userImage = e.target.result;
                 editIcon.style.backgroundImage = "url('"+e.target.result+"')";
             }
             reader.readAsDataURL(inputI.files[0]);
         }
     }
+    inputC.onchange = (e)=>{
+        cvFile = e.target.files[0];
+        if(!cvFile) return;
+
+        const reader = new FileReader();
+        reader.onerror = ()=>{console.error("Error reading file")};
+        reader.onload = ()=>{
+            fileData = {
+                fileName:cvFile.name,
+                mimeType:cvFile.type,
+                data:reader.result
+            };
+        };
+        reader.readAsArrayBuffer(cvFile);
+    }
+
+    client.on("upload-file-error", (type)=>{
+        const errorTexts = [
+            "Failed to upload user CV file",
+            "Failed to upload user image file"
+        ];
+        notification(errorTexts[type]);
+    })
 }

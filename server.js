@@ -55,13 +55,9 @@ const usersSchema = new Schema({
     history:     {type:String, required:false, default:null},
     description: {type:String, required:false, default:null},
     cv:{
-        type:{
-            contentType: {type:String, required:true},
-            filename:    {type:String, required:true},
-            data:        {type:Buffer, required:true}
-        },
-        required:false,
-        default:null,
+        mimeType: {type:String, required:false, default:null},
+        filename: {type:String, required:false, default:null},
+        data:     {type:Buffer, required:false, default:null}
     },
     googleConnected:    {type:Boolean, required:true,  default:false},
     googleRefreshToken: {type:String,  required:false, default:null},
@@ -787,6 +783,72 @@ io.on("connection", (client)=>{
     });
     client.on("google-log-in", ()=>{
         client.emit("google-redirect", "/auth/google");
+    });
+
+    client.on("get-user-display-data", (userID)=>{
+        Users.find({userID:userID})
+        .then((result)=>{
+            if(result.length === 0){
+                client.emit("get-user-display-data-fail");
+                return;
+            }
+            const foundUser = result[0];
+            client.emit("receive-user-display-data", {
+                userID:userID,
+                username:foundUser.username,
+                email:foundUser.email,
+                jobTitle:foundUser.jobTitle,
+                location:foundUser.location,
+                education:foundUser.education,
+                history:foundUser.history,
+                description:foundUser.description
+            });
+        })
+        .catch((error)=>{
+            console.error("Find user DB error: ", error);
+            client.emit("get-user-display-data-fail");
+        });
+    });
+    client.on("update-user-data", (userData, cvFile)=>{
+        Users.find({email:userData.email})
+        .then((result)=>{
+            if(result.length === 0){
+                client.emit("get-user-display-data-fail");
+                return;
+            }
+            const foundUser = result[0];
+            foundUser.description = userData.description;
+            foundUser.education = userData.education;
+            foundUser.jobTitle = userData.jobTitle;
+            foundUser.location = userData.location;
+            foundUser.username = userData.username;
+            foundUser.history = userData.history;
+            foundUser.save().catch((error)=>{
+                console.error("Client ID update error: ", error);
+            });
+
+            /*if(cvFile){
+                try{
+                    foundUser.cv = {
+                        fileName:cvFile.fileName,
+                        mimeType:cvFile.mimeType,
+                        data:Buffer.from(cvFile.data)
+                    }
+                    console.log(2,foundUser.cv)
+                    foundUser.save().catch((error)=>{
+                        console.error("Client ID update error: ", error);
+                    });
+                }
+                catch(error){
+                    console.error("Upload failed", error);
+                    client.emit("upload-file-error", 0);
+                }
+            }*/
+        })
+        .catch((error)=>{
+            console.error("Find user DB error: ", error);
+            client.emit("get-user-display-data-fail");
+        });
     });
 
     client.on("new-chatgpt-message", (message)=>{

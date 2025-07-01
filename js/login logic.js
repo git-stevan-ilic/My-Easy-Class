@@ -27,14 +27,15 @@ function loadLogInLogic(client){
         document.querySelector(".dashboard-account-name").innerText = userData.username;
         document.querySelector(".dashboard-account-email").innerText = userData.email;
         document.querySelector(".dashboard-account-desc").innerText = userData.description || "Not provided";
+        document.querySelector(".dashboard-account-share").onclick = ()=>{accountURL(userData.userID)}
 
-        document.querySelector(".about-me-name").innerText = userData.username;
+        document.querySelector(".about-me-name").innerText = userData.username || "";
         document.querySelector(".about-me-email").innerText = userData.email;
         document.querySelector("#about-me-job").innerText = userData.jobTitle || "Not provided";
         document.querySelector("#about-me-location").innerText = userData.location || "Not provided";
         document.querySelector("#about-me-education").innerText = userData.education || "Not provided";
         document.querySelector("#about-me-history").innerText = userData.history || "Not provided";
-        document.querySelector("#about-me-desc").innerText = userData.description || "Not provided";
+        document.querySelector("#about-me-desc").innerText = userData.description || "Description not provided";
 
         document.querySelector("#account-log-off").onclick = ()=>{logOff(client)}
         fadeOut(".pre-main-head", 0.1, ()=>{fadeIn(".main-head", 0.1, "flex")});
@@ -42,8 +43,8 @@ function loadLogInLogic(client){
         fadeIn(".assistant-holder", 0.1);
 
         loadStudentsLogic(userData.username);
+        loadAboutMeLogic(client, userData);
         loadAssistantLogic(client);
-        loadAboutMeLogic(userData);
         loadDriveLogic(client);
         loadMailLogic();
         loadCalendar();
@@ -206,6 +207,17 @@ function googleLogin(client){
             console.log(user);
             client.emit("user-log-in", user.emails[0].value);
         }
+    });
+}
+function accountURL(userID){
+    const currBaseURL = stripUrlParams(window.location.href);
+    const userURL = currBaseURL + "?id="+userID;
+
+    navigator.clipboard.writeText(userURL)
+    .then(()=>{notification("URL copied to clipboard!")})
+    .catch(error => {
+        notification("Failed to copy URL");
+        console.error("Failed to copy: ", error);
     });
 }
 

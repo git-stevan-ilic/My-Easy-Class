@@ -4,10 +4,6 @@ window.onload = initLoad;
 function initLoad(){
     const client = io();
 
-    loadLogInLogic(client);
-    //ZoomMeetingAPI();
-    loadHeadLogic();
-
     let notificationTimeout;
     window.addEventListener("notification", (e)=>{
         clearTimeout(notificationTimeout);
@@ -29,6 +25,13 @@ function initLoad(){
     link.href  = "../css/overwrite.css";
     head.appendChild(link);
     setTimeout(()=>{fadeOut(".loading-screen", 0.1)}, 200);
+
+    const mode = loadUrlParamLogic(client);
+    if(mode === "user"){
+        loadLogInLogic(client);
+        //ZoomMeetingAPI();
+        loadHeadLogic();
+    }
 }
 
 function fadeIn(query, durration, type, callabck){
@@ -60,6 +63,55 @@ function notification(text){
 function isValidEmail(email){
     let re = /\S+@\S+\.\S+/;
     return re.test(email);
+}
+function stripUrlParams(url){
+    try{
+        const parsedUrl = new URL(url);
+        return `${parsedUrl.origin}${parsedUrl.pathname}`;
+    }
+    catch(e){
+        console.error("Invalid URL:", url);
+        return url;
+    }
+}
+
+/*--URL Parameters Logic-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+function loadUrlParamLogic(client){
+    const urlParams = getUrlParams();
+    let mode = "user";
+    if(urlParams.id){
+        client.emit("get-user-display-data", urlParams.id);
+        mode = "user-view";
+    }
+
+    client.on("get-user-display-data-fail", ()=>{notification("Profile not found")});
+    client.on("receive-user-display-data", (userData)=>{
+        document.querySelector(".about-me-name").innerText = userData.username || "";
+        document.querySelector(".about-me-email").innerText = userData.email;
+        document.querySelector("#about-me-job").innerText = userData.jobTitle || "Not provided";
+        document.querySelector("#about-me-location").innerText = userData.location || "Not provided";
+        document.querySelector("#about-me-education").innerText = userData.education || "Not provided";
+        document.querySelector("#about-me-history").innerText = userData.history || "Not provided";
+        document.querySelector("#about-me-desc").innerText = userData.description || "Not provided";
+
+        const mainScreen = document.querySelector("#main");
+        while(mainScreen.children.length > 1) mainScreen.removeChild(mainScreen.firstChild);
+        document.querySelector("#about-me-screen").style.display = "block";
+        document.querySelector("#pre-main").style.display = "none";
+        document.querySelector(".pre-main-head").remove();
+        document.querySelector(".main-head").remove();
+        document.querySelector("#edit-info").remove();
+        mainScreen.style.display = "block";
+        document.querySelector(".about-me-share").onclick = ()=>{accountURL(userData.userID)}
+    });
+
+    return mode;
+}
+function getUrlParams(){
+    const result = {};
+    const params = new URLSearchParams(window.location.search);
+    for(const [key, value] of params.entries()) result[key] = value;
+    return result;
 }
 
 /*--Head Logic---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
