@@ -56,6 +56,7 @@ function loadAboutMeLogic(client, userData){
         inputD.value = editData.description;
         inputC.value = "";
 
+        console.log(iconFile)
         if(iconFile === null) editIcon.style.backgroundImage = "url('../assets/icons/default user.png')";
         else{
             const url = URL.createObjectURL(iconFile);
@@ -80,11 +81,21 @@ function loadAboutMeLogic(client, userData){
         document.querySelector("#about-me-job").innerText = userData.jobTitle;
         closeEditProfileWindow(false);
 
-        client.emit("update-user-data", userData);
+        const dataToSend = {
+            email:userData.email,
+            username:userData.username,
+            jobTitle:userData.jobTitle,
+            location:userData.location,
+            education:userData.education,
+            history:userData.history,
+            description:userData.description
+        }
+        client.emit("update-user-data", dataToSend);
+
         uploadIcon(userData.userID);
         uploadCV(userData.userID);
-        iconFile = iconFileTemp;
-        cvFile = cvFileTemp;
+        if(iconFileTemp !== null) iconFile = iconFileTemp;
+        if(cvFileTemp !== null) cvFile = cvFileTemp;
         iconFileTemp = null;
         cvFileTemp = null;
     }
@@ -111,9 +122,11 @@ function loadAboutMeLogic(client, userData){
         if(!cvFileTemp) return;
     }
     window.addEventListener("update-profile-image", ()=>{
-        const url = URL.createObjectURL(iconFile);
-        const userIcons = document.querySelectorAll(".user-icon");
-        for(let i = 0; i < userIcons.length; i++) userIcons[i].style.backgroundImage = `url(${url})`;
+        if(iconFile){
+            const url = URL.createObjectURL(iconFile);
+            const userIcons = document.querySelectorAll(".user-icon");
+            for(let i = 0; i < userIcons.length; i++) userIcons[i].style.backgroundImage = `url(${url})`;
+        }
     });
 
     client.on("upload-file-error", (type)=>{
@@ -126,8 +139,8 @@ function loadAboutMeLogic(client, userData){
 
     function closeEditProfileWindow(resetFiles){
         if(resetFiles){
-            cvFileTemp = null;
             iconFileTemp = null;
+            cvFileTemp = null;
         }
         fadeOut("#about-me-edit-screen", 0.1, ()=>{
             inputN.value = "";
@@ -141,6 +154,7 @@ function loadAboutMeLogic(client, userData){
     }
 }
 
+/*--Upload About Me Files----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 async function uploadCV(userID){
     const inputC = document.querySelector("#input-cv");
     if(inputC.files.length > 0){

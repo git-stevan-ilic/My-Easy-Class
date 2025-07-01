@@ -923,7 +923,9 @@ io.on("connection", (client)=>{
                 location:foundUser.location,
                 education:foundUser.education,
                 history:foundUser.history,
-                description:foundUser.description
+                description:foundUser.description,
+                icon:foundUser.icon,
+                cv:foundUser.cv
             });
         })
         .catch((error)=>{
@@ -1214,15 +1216,6 @@ async function extractTextFromImage(buffer) {
     if(detections.length > 0) return detections[0].description;
     return "";
 }
-
-
-
-
-
-
-
-
-
 
 /*--Setup Zoom Services------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 /*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
