@@ -30,6 +30,7 @@
     "pdf-parse": "^1.1.1",
     "querystring": "^0.2.1",
     "socket.io": "^4.8.1",
+    "stripe": "^18.3.0",
     "tmp": "^0.2.3"
   }
 }

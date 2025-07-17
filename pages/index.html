@@ -13,6 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../css/calendar.css">
     <link rel="stylesheet" type="text/css" href="../css/about me.css">
     <link rel="stylesheet" type="text/css" href="../css/students.css">
+    <link rel="stylesheet" type="text/css" href="../css/payment.css">
     <link rel="stylesheet" type="text/css" href="../css/login.css">
     <link rel="stylesheet" type="text/css" href="../css/drive.css">
     <link rel="stylesheet" type="text/css" href="../css/mail.css">
@@ -32,6 +33,7 @@
     <script type="text/javascript" src="../js/students.js"></script>
     <script type="text/javascript" src="../js/about me.js"></script>
     <script type="text/javascript" src="../js/calendar.js"></script>
+    <script type="text/javascript" src="../js/payment.js"></script>
     <script type="text/javascript" src="../js/purify.js"></script>
     <script type="text/javascript" src="../js/qrcode.js"></script>
     <script type="text/javascript" src="../js/drive.js"></script>
@@ -275,7 +277,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="screen tab-affected" id="drive-screen">
+                <div class="screen tab-affected" id="drive-screen" style="display:none;">
                     <div class="drive-head">
                         <input type="file" id="drive-file-upload">
                         <button id="drive-upload">Upload</button>
@@ -307,7 +309,7 @@
                     </div>
                     <div class="drive-body"></div>
                 </div>
-                <div class="screen tab-affected" id="students-screen" style="display:block;">
+                <div class="screen tab-affected" id="students-screen">
                     <div class="students-main-holder">
                         <div class="student-portrait-button-holder"></div>
                         <div class="class-list-window">
@@ -450,6 +452,121 @@
                         <div class="about-me-share"></div>
                     </div>
                     <div class="about-me-desc" id="about-me-desc">No description provided</div>
+                </div>
+                <div class="screen" id="pricing-screen" style="display:block;">
+                    <div class="pricing-title">Choose the best plan for you</div>
+                    <div class="plan-holder">
+                        <div class="plan">
+                            <div class="plan-title">Basic Plan</div>
+                            <div class="plan-value">$15</div>
+                            <div class="plan-text-small">per month</div>
+                            <button class="blue-button plan-button" id="buy-basic">Buy It</button>
+                            <div class="plan-divider"></div>
+                            <div class="plan-content-list">
+                                <div class="plan-content-item">
+                                    <div class="plan-check-mark"></div>
+                                    <div class="plan-content-value">1 click log in via Zoom or Google account</div>
+                                </div>
+                                <div class="plan-content-item">
+                                    <div class="plan-check-mark"></div>
+                                    <div class="plan-content-value">AI homework assistant (Chat GPT)</div>
+                                </div>
+                                <div class="plan-content-item">
+                                    <div class="plan-check-mark"></div>
+                                    <div class="plan-content-value">Class reminders</div>
+                                </div>
+                                <div class="plan-content-item">
+                                    <div class="plan-check-mark"></div>
+                                    <div class="plan-content-value">Google Drive</div>
+                                </div>
+                                <div class="plan-content-item">
+                                    <div class="plan-check-mark"></div>
+                                    <div class="plan-content-value">YouTube (soon)</div>
+                                </div>
+                                <div class="plan-content-item">
+                                    <div class="plan-check-mark"></div>
+                                    <div class="plan-content-value">CEFR Level checker</div>
+                                </div>
+                                <div class="plan-content-item">
+                                    <div class="plan-check-mark"></div>
+                                    <div class="plan-content-value">Convert audio & video to text</div>
+                                </div>
+                                <div class="plan-content-item">
+                                    <div class="plan-check-mark"></div>
+                                    <div class="plan-content-value">Scan text from webpage or screenshot</div>
+                                </div>
+                                <div class="plan-content-item">
+                                    <div class="plan-check-mark"></div>
+                                    <div class="plan-content-value">Export to PDF, Google Docs</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="plan">
+                            <div class="plan-title">Advanced Plan</div>
+                            <div class="plan-value">$25</div>
+                            <div class="plan-text-small">per month</div>
+                            <button class="blue-button plan-button" id="buy-advanced">Buy It</button>
+                            <div class="plan-divider"></div>
+                            <div class="plan-content-list">
+                                <div class="plan-content-item">
+                                    <div class="plan-check-mark"></div>
+                                    <div class="plan-content-value">1 click log in via Zoom or Google account</div>
+                                </div>
+                                <div class="plan-content-item">
+                                    <div class="plan-check-mark"></div>
+                                    <div class="plan-content-value">AI homework assistant (Chat GPT)</div>
+                                </div>
+                                <div class="plan-content-item">
+                                    <div class="plan-check-mark"></div>
+                                    <div class="plan-content-value">More advanced AI capabilities</div>
+                                    <div class="plan-info"></div>
+                                </div>
+                                <div class="plan-content-item">
+                                    <div class="plan-check-mark"></div>
+                                    <div class="plan-content-value">Class reminders</div>
+                                </div>
+                                <div class="plan-content-item">
+                                    <div class="plan-check-mark"></div>
+                                    <div class="plan-content-value">Google Drive</div>
+                                </div>
+                                <div class="plan-content-item">
+                                    <div class="plan-check-mark"></div>
+                                    <div class="plan-content-value">YouTube (soon)</div>
+                                </div>
+                                <div class="plan-content-item">
+                                    <div class="plan-check-mark"></div>
+                                    <div class="plan-content-value">CEFR Level checker</div>
+                                </div>
+                                <div class="plan-content-item">
+                                    <div class="plan-check-mark"></div>
+                                    <div class="plan-content-value">Convert audio & video to text</div>
+                                </div>
+                                <div class="plan-content-item">
+                                    <div class="plan-check-mark"></div>
+                                    <div class="plan-content-value">Scan text from webpage or screenshot</div>
+                                </div>
+                                <div class="plan-content-item">
+                                    <div class="plan-check-mark"></div>
+                                    <div class="plan-content-value">Export to PDF, Google Docs</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="plan-pad"></div>
+                    <div class="plan-info-window">
+                        <div class="plan-info-window-row">
+                            It can generate more abstract, imaginitive, or creative responses, as well as come up with new ideas or 
+                            perspectives that require some degree of creativity
+                        </div>
+                        <div class="plan-info-window-row">
+                            Capable of synthesizing knowledge across different fields and drawing on complex concepts, 
+                            integrating them to create more cohesive, well-rounded answer
+                        </div>
+                        <div class="plan-info-window-row">
+                            More adept at navigating contradictory information, understanding nuances in different viewpoints, 
+                            and providing balanced, nuanced responses
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

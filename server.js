@@ -24,6 +24,7 @@ const pdfParse = require("pdf-parse");
 const fs = require("fs-extra");
 const mammoth = require("mammoth");
 const stream = require("stream");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const visionClient = new vision.ImageAnnotatorClient();
 const openAI = new openai({apiKey:process.env.CHATGPT_API_KEY});
@@ -48,17 +49,20 @@ io.use(sharedsession(sessionMiddleware, {autoSave:true}));
 /*--Schemas------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 const Schema = mongoose.Schema;
 const usersSchema = new Schema({
-    userID:      {type:String, required:true},
-    username:    {type:String, required:true},
-    email:       {type:String, required:true},
-    password:    {type:String, required:false, default:null},
-    clientID:    {type:String, required:false, default:null},
-    sessionID:   {type:String, required:false, default:null},
-    jobTitle:    {type:String, required:false, default:null},
-    location:    {type:String, required:false, default:null},
-    education:   {type:String, required:false, default:null},
-    history:     {type:String, required:false, default:null},
-    description: {type:String, required:false, default:null},
+    userID:         {type:String, required:true},
+    username:       {type:String, required:true},
+    email:          {type:String, required:true},
+    password:       {type:String, required:false, default:null},
+    clientID:       {type:String, required:false, default:null},
+    sessionID:      {type:String, required:false, default:null},
+    jobTitle:       {type:String, required:false, default:null},
+    location:       {type:String, required:false, default:null},
+    education:      {type:String, required:false, default:null},
+    history:        {type:String, required:false, default:null},
+    description:    {type:String, required:false, default:null},
+    payID:          {type:String, required:false, default:null},
+    subscriptionID: {type:String, required:false, default:null},
+    subscription:   {type:Number, required:true,  default:0},
     cv:{
         mimeType: {type:String, required:false, default:null},
         filename: {type:String, required:false, default:null},
@@ -71,7 +75,7 @@ const usersSchema = new Schema({
     },
     googleConnected:    {type:Boolean, required:true,  default:false},
     googleRefreshToken: {type:String,  required:false, default:null},
-    googleUserID:       {type:String,  required:false, default:null}
+    googleUserID:       {type:String,  required:false, default:null},
 });
 const Users = mongoose.model("User", usersSchema);
 
@@ -114,7 +118,7 @@ function authentificateGoogleAPI(req, res, index){
     ];
     Users.find({userID:req.session.userID})
     .then((result)=>{
-        if(result.length === 0) console.error("Find user DB error: ", error);
+        if(result.length === 0) console.error("Find user DB error");
         else{
             const foundUser = result[0];
             const currFunc = googleFunctions[index]
@@ -867,18 +871,173 @@ app.post("/upload-icon/:userID", upload.single("iconFile"), async (req, res)=>{
     }
 });
 
+/*--Stripe Logic-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+app.post("/subscription", async (req, res)=>{
+    const subscriptionType = req.body.subscription;
+    const userID = req.body.userID;
+    if(!subscriptionType){
+        res.status(500).json({error:"Subscription type not found"});
+        return;
+    }
+    let price = process.env.STRIPE_BASIC_PRICE_ID;
+    if(subscriptionType === "advanced") price = process.env.STRIPE_ADVANCED_PRICE_ID;
+    try{
+        const payID = nanoid(10);
+        Users.find({userID:userID})
+        .then((result)=>{
+            if(result.length === 0){
+                console.error("Find user DB error: ", error);
+                client.emit("payment-fail", 1);
+                return;
+            }
+
+            const foundUser = result[0];
+            foundUser.payID = payID;
+            foundUser.save()
+            .then(async ()=>{stripePayment(res, userID, payID, price, subscriptionType)})
+            .catch((error)=>{
+                console.error("User payID update error: ", error);
+                client.emit("payment-fail", 2);
+                return;
+            });
+        })
+        .catch((error)=>{
+            console.error("Find user DB error: ", error);
+            client.emit("payment-fail", 0);
+        });
+    }
+    catch(error){
+        res.status(500).json({error:error.message});
+        console.log(error);
+    }
+});
+app.post("/verify-subscription", async (req, res)=>{
+    const subscription = req.body.subscription;
+    const sessionID = req.body.sessionID;
+    const success = req.body.success;
+    const userID = req.body.userID;
+    const payID = req.body.payID;
+
+    if(!userID || !payID){
+        res.status(500).json({error:"Invalid request"});
+        return;
+    }
+    Users.find({userID:userID})
+    .then(async (result)=>{
+        if(result.length === 0){
+            console.error("Find user DB error: ", error);
+            client.emit("payment-fail", 1);
+            return;
+        }
+
+        const foundUser = result[0];
+        if(foundUser.payID !== payID){
+            console.error("PayID doesn't match: ", error);
+            client.emit("payment-fail", 3);
+            return;
+        }
+        if(!success){
+            foundUser.payID = null;
+            foundUser.save()
+            .catch((error)=>{
+                console.error("User payID update error: ", error);
+                client.emit("payment-fail", 2);
+                return;
+            });
+            return;
+        }
+        
+        const session = await stripe.checkout.sessions.retrieve(sessionID);
+        const subscriptionID = session.subscription;
+
+        if(subscription === 2 && foundUser.subscription === 1 && foundUser.subscriptionID){
+            try{
+                const canceledSubscription = await stripe.subscriptions.cancel(foundUser.subscriptionID);
+                console.log("Cancel old success success: ", canceledSubscription);
+            }
+            catch(error){
+                console.error("Cancel Old Subscription Error: ", error);
+                client.emit("payment-fail", 5);
+            }
+        }
+
+        foundUser.subscriptionID = subscriptionID;
+        foundUser.subscription = subscription;
+        foundUser.payID = null;
+        foundUser.save()
+        .then(()=>{res.json({ok:true})})
+        .catch((error)=>{
+            console.error("User payID update error: ", error);
+            client.emit("payment-fail", 2);
+            return;
+        });
+    })
+    .catch((error)=>{
+        console.error("Find user DB error: ", error);
+        client.emit("payment-fail", 0);
+    });
+});
+
+async function stripePayment(res, userID, payID, price, subscriptionType){
+    const session = await stripe.checkout.sessions.create({
+        mode:"subscription",
+        payment_method_types:["card"],
+        line_items:[{
+            price:price,
+            quantity:1,
+        }],
+        success_url:process.env.URL+"/pages/payment_success.html?userID="+userID+"&payID="+payID+"&subscription="+subscriptionType+"&session_id={CHECKOUT_SESSION_ID}",
+        cancel_url:process.env.URL+"/pages/payment_fail.html?userID="+userID+"&payID="+payID+"&subscription="+subscriptionType,
+    });
+    res.json({url:session.url});
+}
+async function cancelSubscription(client, userID){
+    Users.find({userID:userID})
+    .then(async (result)=>{
+        if(result.length === 0){
+            console.error("Find user DB fail");
+            client.emit("payment-fail", 1);
+            return;
+        }
+
+        const foundUser = result[0];
+        try{
+            const canceledSubscription = await stripe.subscriptions.cancel(foundUser.subscriptionID);
+            console.log("Cancel success: ", canceledSubscription);
+
+            foundUser.subscriptionID = null;
+            foundUser.subscription = 0;
+            foundUser.save()
+            .then(()=>{client.emit("cancel-subscription-success")})
+            .catch((error)=>{
+                console.error("User payID update error: ", error);
+                client.emit("payment-fail", 2);
+                return;
+            });
+        }
+        catch(error){
+            console.error("Cancel Subscription Error: ", error);
+            client.emit("payment-fail", 4);
+        }
+    })
+    .catch((error)=>{
+        console.error("Find user DB error: ", error);
+        client.emit("payment-fail", 0);
+    });
+}
+
 /*--Input/Output-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 io.use((client, next) => {sessionMiddleware(client.request, {}, next);});
 io.on("connection", (client)=>{
     if(client.handshake.session.passport?.user){
         client.emit("google-status", client.handshake.session.passport.user);
     }
-
     client.on("disconnect", ()=>{userLogOff(client)});
     client.on("user-log-off", ()=>{userLogOff(client)});
     client.on("user-log-in", (email)=>{userLogIn(client, email, null, false, null)});
     client.on("session-log-in", (sessionID)=>{userLogIn(client, null, null, true, sessionID)});
     client.on("user-log-in-attempt", (email, password)=>{userLogIn(client, email, password, false, null)});
+    client.on("register-new-account", (newAccount)=>{userRegister(client, newAccount)});
     client.on("add-password", (userID, password)=>{
         Users.find({userID:userID})
         .then((result)=>{
@@ -906,7 +1065,6 @@ io.on("connection", (client)=>{
     client.on("google-log-in", ()=>{
         client.emit("google-redirect", "/auth/google");
     });
-
     client.on("get-user-display-data", (userID)=>{
         Users.find({userID:userID})
         .then((result)=>{
@@ -956,7 +1114,9 @@ io.on("connection", (client)=>{
             client.emit("get-user-display-data-fail");
         });
     });
-
+    client.on("cancel-subscription", (userID)=>{
+        cancelSubscription(client, userID);
+    });
     client.on("analize-cefr", (fileId)=>{
         Users.find({clientID:client.id})
         .then(async (result)=>{
@@ -1017,7 +1177,6 @@ io.on("connection", (client)=>{
             console.error("Find user DB error: ", error);
         });
     });
-
     client.on("new-chatgpt-message", (message)=>{
         openAI.chat.completions.create({
             model:"gpt-4o",
@@ -1111,7 +1270,8 @@ function userLogIn(client, email, password, sessionLogin, sessionID){
             cv:                foundUser.cv,
             icon:              foundUser.icon,
             description:       foundUser.description,
-            googleConnected:   foundUser.googleConnected,
+            subscription:      foundUser.subscription,
+            googleConnected:   foundUser.googleConnected
         }
         let requestPassword = false;
         if(foundUser.password === "") requestPassword = true;
@@ -1131,10 +1291,54 @@ function userLogIn(client, email, password, sessionLogin, sessionID){
         else client.emit("user-log-in-fail", 0);
     });
 }
+function userRegister(client, newAccount){
+    Users.find({email:newAccount.email})
+    .then((result)=>{
+        if(result.length > 0){
+            console.error("User already exists");
+            client.emit("user-register-fail", 1);
+            return;
+        }
+        const newUser = new Users({
+            userID:nanoid(10),
+            username:newAccount.username,
+            password:newAccount.password,
+            sessionID:nanoid(10),
+            email:newAccount.email,
+            googleConnected:false,
+            googleRefreshToken:null,
+            googleUserID:null
+        });
+        newUser.save()
+        .then(()=>{
+            console.log("New user '"+newUser.username+"' added");
+            client.emit("user-register-success", newUser);
+        })
+        .catch((error)=>{
+            console.error("New user DB error: ", error);
+            client.emit("user-register-fail", 0);
+        });
+    })
+    .catch((error)=>{
+        console.error("User register failed: ", error);
+        client.emit("user-register-fail", 0);
+    });
+}
 function checkUserExistGoogleLogin(profile){
     Users.find({email:profile.emails[0].value})
     .then((result)=>{
-        if(result.length > 0) return;
+        if(result.length > 0){
+            const foundUser = result[0];
+            if(!foundUser.googleConnected){
+                foundUser.googleConnected = true;
+                foundUser.googleRefreshToken = profile.refreshToken;
+                foundUser.googleUserID = profile.id;
+            }
+            foundUser.save().catch((error)=>{
+                console.error("Client ID update error: ", error);
+            });
+            return;
+        }
 
         const newUser = new Users({
             userID:nanoid(10),
@@ -1199,6 +1403,49 @@ async function analyzeCEFR(client, text){
         return null;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+async function setupStripeProduct() {
+    const product = await stripe.products.create({
+        name: 'Advanced Subscription',
+        description: 'Advanced subscription to MyEasyClass.',
+    });
+
+    const price = await stripe.prices.create({
+        unit_amount: 2500,  // $15.00
+        currency: 'usd',
+        recurring: { interval: 'month' },
+        product: product.id,
+    });
+
+    console.log('Product ID:', product.id);
+    console.log('Price ID:', price.id);
+}
+
+setupStripeProduct();
+*/
+
+
+
+
+
+
+
+
+
+
 
 
 
