@@ -3,6 +3,7 @@ window.onload = initLoad;
 
 function initLoad(){
     const client = io();
+    loadPreLoginPaymentLogic();
 
     let notificationTimeout;
     window.addEventListener("notification", (e)=>{
@@ -104,7 +105,7 @@ function loadProfileViewDIsplay(userData){
     document.querySelector("#about-me-desc").innerText = userData.description || "Not provided";
 
     const mainScreen = document.querySelector("#main");
-    while(mainScreen.children.length > 1) mainScreen.removeChild(mainScreen.firstChild);
+    while(mainScreen.children.length > 2) mainScreen.removeChild(mainScreen.firstChild);
     document.querySelector("#about-me-screen").style.display = "block";
     document.querySelector("#pre-main").style.display = "none";
     document.querySelector(".pre-main-head").remove();

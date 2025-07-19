@@ -7,6 +7,10 @@ function loadPaymentLogic(client, userID, subscription){
             window.addEventListener("click", closePaymentMoreInfo);
         });
     }
+    document.querySelector("#pricing-link").onclick = ()=>{
+        openPricingWindow();
+    }
+
     switch(subscription){
         default:break;
         case 1: subscriptionBasicEditDOM(client, userID); break;
@@ -29,6 +33,29 @@ function loadPaymentLogic(client, userID, subscription){
         notification("Subscription Caneled");
         setTimeout(()=>{window.location.reload()}, 2000);
     });
+}
+function loadPreLoginPaymentLogic(){
+    document.querySelector("#pricing-link").onclick = ()=>{
+        const preMainHead = document.querySelector(".pre-main-head");
+        if(preMainHead) preMainHead.style.display = "none";
+
+        document.querySelector("#about-me-screen").style.display = "none";
+        document.querySelector("#pre-main").style.display = "none";
+        document.querySelector("#main").style.display = "block";
+        openPricingWindow();
+    }
+    document.querySelector("#buy-basic").onclick = ()=>{
+        notification("You need to be logged in to get the subscription");
+    }
+    document.querySelector("#buy-advanced").onclick = ()=>{
+        notification("You need to be logged in to get the subscription");
+    }
+}
+function openPricingWindow(){
+    const closeTabsEvent = new Event("close-all-tabs");
+    window.dispatchEvent(closeTabsEvent);
+    document.querySelector("#pricing-screen").style.display = "block";
+    window.scrollTo(0, 0);
 }
 function closePaymentMoreInfo(){
     window.removeEventListener("click", closePaymentMoreInfo);

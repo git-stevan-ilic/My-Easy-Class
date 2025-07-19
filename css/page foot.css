@@ -45,11 +45,11 @@
     height:2rem;
     width:100%;
 
-    
     justify-content:center;
     text-decoration:none;
     align-items:center;
     user-select:text;
+    cursor:pointer;
     display:flex;
 }
 .footer-link:hover{
@@ -236,10 +236,14 @@
         height:20rem;
     }
     .footer-right-holder{
-        height:10rem;
+        max-width:55vw;
         width:17.5rem;
+        height:10rem;
         right:0px;
         left:auto;
+    }
+    .footer-contact-title{
+        display:none;
     }
     .company-info-holder{
         height:auto;
