@@ -81,7 +81,7 @@ button{
     border:1px solid var(--dark-blue);
     transform:translateY(0px);
     color:var(--dark-blue);
-    font-size:1.5rem;
+    font-size:1.25rem;
     height:3rem;
     width:8rem;
 
@@ -119,6 +119,19 @@ button:active:disabled{
 
     font-weight:bold;
     border:none;
+}
+.close{
+    background-image:url("../assets/icons/x dark.png");
+    background-position:center center;
+    background-repeat:no-repeat;
+    background-size:contain;
+    position:absolute;
+
+    border:none;
+    height:1.5rem;
+    width:1.5rem;
+    right:0.5rem;
+    top:0.5rem;
 }
 
 input[type=text],[type=password],[type=email],[type=time],[type=date]{
@@ -504,6 +517,9 @@ input[type=text].search-input{
 @media only screen and (max-width:480px) and (orientation:portrait){
     :root{
         font-size:12px;
+    }
+    button{
+        font-size:1rem;
     }
 }
 @media only screen and (max-width:768px) and (orientation:landscape){

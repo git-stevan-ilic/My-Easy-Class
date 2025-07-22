@@ -315,7 +315,7 @@
                         <div class="class-list-window">
                             <div class="search-holder" id="class-search-icon-holder">
                                 <div class="search-icon" id="class-search-icon"></div> 
-                                <input type="text" class="search-input" id="class-search">
+                                <input type="text" class="search-input" id="class-search" placeholder="Search for classes">
                             </div>
                             <div class="class-list-holder">
                                 <div class="class-list"></div>
@@ -371,24 +371,28 @@
                                             <div class="search-icon" id="student-search-icon"></div> 
                                             <input type="text" class="search-input" id="student-search" placeholder="Search for students">
                                         </div>
-                                        <div class="class-window-student-list-holder">
-                                            <div class="class-window-student-list"></div>
+                                        <div class="class-window-list-holder">
+                                            <div id="class-window-student-list" class="class-window-list"></div>
                                         </div>
                                     </div>
-                                    <div class="class-window-body-content" style="display:block;">
+                                    <div class="class-window-body-content">
                                         <div class="search-holder" id="assignment-search-icon-holder">
                                             <div class="search-icon" id="assignment-search-icon"></div> 
                                             <input type="text" class="search-input" id="assignment-search" placeholder="Search for assignments">
                                         </div>
                                         <div class="class-window-assignment-list-holder">
-                                            <div class="class-window-assignment-list">
-                                                <div class="assignment">Assignment 1</div>
-
-
-                                            </div>
+                                            <div id="class-window-assignment-list" class="class-window-list"></div>
                                         </div>
                                     </div>
-                                    <div class="class-window-body-content"></div>
+                                    <div class="class-window-body-content">
+                                        <div class="search-holder" id="homework-search-icon-holder">
+                                            <div class="search-icon" id="homework-search-icon"></div> 
+                                            <input type="text" class="search-input" id="homework-search" placeholder="Search for homework">
+                                        </div>
+                                        <div class="class-window-assignment-list-holder">
+                                            <div id="class-window-homework-list" class="class-window-list"></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -902,6 +906,19 @@
                 <div class="cefr-winow-foot">
                     <button id="cefr-close">Close</button>
                 </div>
+            </div>
+        </div>
+        <div class="screen-mask" id="display-assignment-screen">
+            <div class="screen-mask-background"></div>
+            <div class="display-assignment-window">
+                <div class="display-assignment-head">
+                    <div class="display-assignmeny-buttons">
+                        <button class="assignment-button" id="assignment-doc">DOC</button>
+                        <button class="assignment-button" id="assignment-pdf">PDF</button>
+                        <button class="close" id="assignment-close"></button>
+                    </div>
+                </div>
+                <div class="display-assignment-body"></div>
             </div>
         </div>
 

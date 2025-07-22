@@ -1,68 +1,50 @@
 /*--Initial------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 function loadStudentsLogic(username){
-    let lessons = [[], [], []], currlesson = 0, currClass = 0;
-    let classes = [
-        {name:"All Students", students:[], assugnments:[], homework:[]},
-        {name:"Ungrouped", students:[], assugnments:[], homework:[]}
-    ];
-    let classNameSearch = "", studentListSearch = "", inviteStudendSearch = "";
-    generateClasses(classNameSearch, classes);
-    generateNewClassLogic();
-    addStudentEvents(username);
-    displayCurrClass(classes[currClass], studentListSearch);
-    generateLessons(lessons[currlesson], currlesson);
-    studentResizeLogic();
+    let studentListSearch = "", assignmentSearch = "", homeworkSearch = "";
+    let classNameSearch = "", inviteStudendSearch = "";
+    let currLesson = 0, lessons = [[], [], []];
+    let currClass = 0, classes = [
+        {name:"All Students", 
+            students:[
+                {id:"1", name:"Student 1", iconURL:""}
+            ],
+            assignments:[
+                {id:"1", name:"Assignment Essay", type:"essay", content:"This is te essay requirement"},
+                {id:"2", name:"Assignment Name ABC", type:"abc", questionNum:5, answerNum:3, questionLevel:"C1-C2", questions:[
+                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]},
+                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]},
+                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]},
+                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]},
+                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]}
+                ]}
+            ],
+            homework:[
 
-    const classSearchIcon = document.querySelector("#class-search-icon");
-    const classSearch = document.querySelector("#class-search");
-    classSearch.value = "";
-    classSearchIcon.onclick = ()=>{
-        classNameSearch = classSearch.value;
-        generateClasses(classNameSearch, classes);
-    }
-    classSearch.oninput = ()=>{
-        classNameSearch = classSearch.value;
-        generateClasses(classNameSearch, classes);
-    }
-
-    const studentSearchIcon = document.querySelector("#student-search-icon");
-    const studentSearch = document.querySelector("#student-search");
-    studentSearch.value = "";
-    studentSearchIcon.onclick = ()=>{
-        studentListSearch = studentSearch.value;
-        displayCurrClass(classes[currClass], studentListSearch);
-    }
-    studentSearch.oninput = ()=>{
-        studentListSearch = studentSearch.value;
-        displayCurrClass(classes[currClass], studentListSearch);
-    }
-
-    const inviteListSearchIcon = document.querySelector("#invite-list-search-icon");
-    const inviteListSearch = document.querySelector("#invite-list-search");
-    inviteListSearchIcon.onclick = ()=>{
-        inviteStudendSearch = inviteListSearch.value;
-        let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
-        let availableStudents = classes[0].students.filter(item => !currClassIDs.has(item.id)); 
-        inviteListSearchApply(availableStudents, inviteStudendSearch);
-    }
-    inviteListSearch.oninput = ()=>{
-        inviteStudendSearch = inviteListSearch.value;
-        let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
-        let availableStudents = classes[0].students.filter(item => !currClassIDs.has(item.id)); 
-        inviteListSearchApply(availableStudents, inviteStudendSearch);
-    }
-
-    const lessonTabs = document.querySelectorAll(".lesson-tab");
-    for(let i = 0; i < lessonTabs.length; i++){
-        lessonTabs[i].onclick = ()=>{
-            if(!lessonTabs[i].classList.contains("lesson-selected-tab")){
-                document.querySelector(".lesson-selected-tab").classList.remove("lesson-selected-tab");
-                lessonTabs[i].classList.add("lesson-selected-tab");
-                currlesson = i;
-                generateLessons(lessons[currlesson], currlesson);
+            ]},
+        {name:"Ungrouped", students:[], assignments:[
+            {
+                id:"1", name:"Assignment Name QnA", type:"qna", questionNum:5, questionLevel:"C1-C2", questions:[
+                    {text:"What is this?"},
+                    {text:"What is this?"},
+                    {text:"What is this?"},
+                    {text:"What is this?"},
+                    {text:"What is this?"}
+                ]
             }
-        }
-    }
+        ], homework:[]}
+    ];
+
+    studentPageSearch(classNameSearch, studentListSearch, assignmentSearch, homeworkSearch, inviteStudendSearch, classes, currClass);
+    studentPageTabLogic(lessons, currLesson);
+    studentResizeLogic();
+    
+    generateNewClassLogic();
+    generateClasses(classNameSearch, classes);
+    generateLessons(lessons[currLesson], currLesson);
+    displayCurrClass(classes[currClass], studentListSearch);
+    displayAssignmentsList(classes[currClass], assignmentSearch, false);
+    displayAssignmentsList(classes[currClass], homeworkSearch, true);
+    addStudentEvents(username);
 
     const newLessonName = document.querySelector("#new-lesson-input-name");
     const newLessonContent = document.querySelector("#new-lesson-input-content");
@@ -101,7 +83,10 @@ function loadStudentsLogic(username){
             time:newLessonTime.value
         });
         document.querySelector("#new-button-cancel").click();
-        generateLessons(lessons[currlesson], currlesson);
+        generateLessons(lessons[currLesson], currLesson);
+    }
+    document.querySelector("#assignment-close").onclick = ()=>{
+        fadeOut("#display-assignment-screen", 0.1, null);
     }
 
     window.addEventListener("new-class", (e)=>{
@@ -152,12 +137,17 @@ function loadStudentsLogic(username){
     });
     window.addEventListener("display-curr-class", ()=>{
         displayCurrClass(classes[currClass], studentListSearch);
+        displayAssignmentsList(classes[currClass], assignmentSearch, false);
+        displayAssignmentsList(classes[currClass], homeworkSearch, true);
     });
     window.addEventListener("change-curr-class", (e)=>{
+        const studentSearch = document.querySelector("#student-search");
         currClass = e.detail.newCurrClass;
         studentListSearch = "";
         studentSearch.value = studentListSearch;
         displayCurrClass(classes[currClass], studentListSearch);
+        displayAssignmentsList(classes[currClass], assignmentSearch, false);
+        displayAssignmentsList(classes[currClass], homeworkSearch, true);
     });
     window.addEventListener("delete-student", (e)=>{
         for(let i = 0; i < classes.length; i++){
@@ -187,6 +177,16 @@ function loadStudentsLogic(username){
         generateClasses(classNameSearch, classes);
         displayCurrClass(classes[currClass], studentListSearch);
     });
+    window.addEventListener("delete-assignment", (e)=>{
+        for(let i = 0; i < classes[currClass].assignments.length; i++){
+            if(classes[currClass].assignments[i].id === e.detail.id){
+                classes[currClass].assignments.splice(i, 1);
+            }
+        }
+        let searchQuery = assignmentSearch;
+        if(e.detail.isHomework) searchQuery = homeworkSearch;
+        displayAssignmentsList(classes[currClass], searchQuery, e.detail.isHomework);
+    });
 }
 function studentResizeLogic(){
     const portraitButtonHolder = document.querySelector(".student-portrait-button-holder");
@@ -211,6 +211,94 @@ function studentResizeLogic(){
             portraitMode = false;
         }
     });
+}
+function studentPageSearch(classNameSearch, studentListSearch, assignmentListSearch, homeworkListSearch, inviteStudendSearch, classes, currClass){
+    const classSearchIcon = document.querySelector("#class-search-icon");
+    const classSearch = document.querySelector("#class-search");
+    classSearch.value = "";
+    classSearchIcon.onclick = ()=>{
+        classNameSearch = classSearch.value;
+        generateClasses(classNameSearch, classes);
+    }
+    classSearch.oninput = ()=>{
+        classNameSearch = classSearch.value;
+        generateClasses(classNameSearch, classes);
+    }
+
+    const studentSearchIcon = document.querySelector("#student-search-icon");
+    const studentSearch = document.querySelector("#student-search");
+    studentSearch.value = "";
+    studentSearchIcon.onclick = ()=>{
+        studentListSearch = studentSearch.value;
+        displayCurrClass(classes[currClass], studentListSearch);
+    }
+    studentSearch.oninput = ()=>{
+        studentListSearch = studentSearch.value;
+        displayCurrClass(classes[currClass], studentListSearch);
+    }
+
+    const assignmentSearchIcon = document.querySelector("#assignment-search-icon");
+    const assignmentSearch = document.querySelector("#assignment-search");
+    assignmentSearch.value = "";
+    assignmentSearchIcon.onclick = ()=>{
+        assignmentListSearch = assignmentSearch.value;
+        displayAssignmentsList(classes[currClass], assignmentListSearch, false);
+    }
+    assignmentSearch.oninput = ()=>{
+        assignmentListSearch = assignmentSearch.value;
+        displayAssignmentsList(classes[currClass], assignmentListSearch, false);
+    }
+
+    const homeworkSearchIcon = document.querySelector("#homework-search-icon");
+    const homeworkSearch = document.querySelector("#homework-search");
+    homeworkSearch.value = "";
+    homeworkSearchIcon.onclick = ()=>{
+        homeworkListSearch = homeworkSearch.value;
+        displayAssignmentsList(classes[currClass], homeworkListSearch, true);
+    }
+    homeworkSearch.oninput = ()=>{
+        homeworkListSearch = homeworkSearch.value;
+        displayAssignmentsList(classes[currClass], homeworkListSearch, true);
+    }
+
+    const inviteListSearchIcon = document.querySelector("#invite-list-search-icon");
+    const inviteListSearch = document.querySelector("#invite-list-search");
+    inviteListSearchIcon.onclick = ()=>{
+        inviteStudendSearch = inviteListSearch.value;
+        let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
+        let availableStudents = classes[0].students.filter(item => !currClassIDs.has(item.id)); 
+        inviteListSearchApply(availableStudents, inviteStudendSearch);
+    }
+    inviteListSearch.oninput = ()=>{
+        inviteStudendSearch = inviteListSearch.value;
+        let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
+        let availableStudents = classes[0].students.filter(item => !currClassIDs.has(item.id)); 
+        inviteListSearchApply(availableStudents, inviteStudendSearch);
+    }
+}
+function studentPageTabLogic(lessons, currLesson){
+    const lessonTabs = document.querySelectorAll(".lesson-tab");
+    for(let i = 0; i < lessonTabs.length; i++){
+        lessonTabs[i].onclick = ()=>{
+            if(!lessonTabs[i].classList.contains("lesson-selected-tab")){
+                document.querySelector(".lesson-selected-tab").classList.remove("lesson-selected-tab");
+                lessonTabs[i].classList.add("lesson-selected-tab");
+                currLesson = i;
+                generateLessons(lessons[currLesson], currLesson);
+            }
+        }
+    }
+
+    const classWindowBodyContent = document.querySelectorAll(".class-window-body-content");
+    const classWindowTabs = document.querySelectorAll(".class-window-tab");
+    for(let i = 0; i < classWindowTabs.length; i++){
+        classWindowTabs[i].onclick = ()=>{
+            for(let j = 0; j < classWindowBodyContent.length; j++) classWindowBodyContent[j].style.display = "none";
+            document.querySelector(".class-window-selected-tab").classList.remove("class-window-selected-tab");
+            classWindowTabs[i].classList.add("class-window-selected-tab");
+            classWindowBodyContent[i].style.display = "block";
+        }
+    }
 }
 
 /*--Classes List-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -287,9 +375,11 @@ function generateNewClassLogic(){
         newClassCancel.click();
     }
 }
+
+/*--Display Windows----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 function displayCurrClass(currClass, studentListSearch){
     document.querySelector(".class-title").innerText = currClass.name;
-    const studentList = document.querySelector(".class-window-student-list");
+    const studentList = document.querySelector("#class-window-student-list");
     while(studentList.children.length > 0) studentList.removeChild(studentList.lastChild);
     if(currClass.students.length === 0) studentList.innerHTML = "No students in classroom";
     else{
@@ -301,49 +391,209 @@ function displayCurrClass(currClass, studentListSearch){
                 displayedStudents.push(currClass.students[i]);
             }
         }
-        if(displayedStudents.length === 0) studentList.innerHTML = "No students in classroom";
-        else{
-            studentList.innerHTML = "";
-            for(let i = 0; i <displayedStudents.length; i++){
-                const student = document.createElement("div");
-                const studentIcon = document.createElement("div");
-                const studentName = document.createElement("div");
+        if(displayedStudents.length === 0){
+            studentList.innerHTML = "No students in classroom";
+            return;
+        }
+        studentList.innerHTML = "";
+        for(let i = 0; i <displayedStudents.length; i++){
+            const student = document.createElement("div");
+            const studentIcon = document.createElement("div");
+            const studentName = document.createElement("div");
             
-                student.className = "class-window-student";
-                studentIcon.className = "class-window-student-icon";
-                studentName.className = "class-window-student-name";
-                studentName.innerText = displayedStudents[i].name;
+            student.className = "class-window-list-item";
+            studentIcon.className = "class-window-list-item-icon";
+            studentName.className = "class-window-list-item-name";
+            studentName.innerText = displayedStudents[i].name;
     
-                student.appendChild(studentIcon);
-                student.appendChild(studentName);
-                studentList.appendChild(student);
+            student.appendChild(studentIcon);
+            student.appendChild(studentName);
+            studentList.appendChild(student);
 
-
-                const studentDelete = document.createElement("div");
-                studentDelete.className = "class-window-student-delete";
-                student.appendChild(studentDelete);
-                if(currClass.name === "All Students" || currClass.name === "Ungrouped"){
-                    studentDelete.onclick = ()=>{
-                        if(confirm("Are you sure you want to remove this student from all classes?")){
-                            const data = {detail:{id:displayedStudents[i].id}}
-                            const deleteStudentEvent = new CustomEvent("delete-student", data);
-                            window.dispatchEvent(deleteStudentEvent);
-                        }
+            const studentDelete = document.createElement("div");
+            studentDelete.className = "class-window-list-item-delete";
+            student.appendChild(studentDelete);
+            if(currClass.name === "All Students" || currClass.name === "Ungrouped"){
+                studentDelete.onclick = ()=>{
+                    if(confirm("Are you sure you want to remove this student from all classes?")){
+                        const data = {detail:{id:displayedStudents[i].id}}
+                        const deleteStudentEvent = new CustomEvent("delete-student", data);
+                        window.dispatchEvent(deleteStudentEvent);
                     }
                 }
-                else{
-                    studentDelete.classList.add("class-window-student-remove");
-                    studentDelete.onclick = ()=>{
-                        if(confirm("Are you sure you want to remove this student from this class?")){
-                            const data = {detail:{id:displayedStudents[i].id, currClass:currClass}}
-                            const deleteStudentEvent = new CustomEvent("remove-student", data);
-                            window.dispatchEvent(deleteStudentEvent);
-                        }
+            }
+            else{
+                studentDelete.classList.add("class-window-student-remove");
+                studentDelete.onclick = ()=>{
+                    if(confirm("Are you sure you want to remove this student from this class?")){
+                        const data = {detail:{id:displayedStudents[i].id, currClass:currClass}}
+                        const deleteStudentEvent = new CustomEvent("remove-student", data);
+                        window.dispatchEvent(deleteStudentEvent);
                     }
                 }
             }
         }
     }
+}
+function displayAssignmentsList(currClass, searchParam, isHomework){
+    let domSearchParam = "#class-window-assignment-list";
+    if(isHomework) domSearchParam = "#class-window-homework-list";
+    const assignmentList = document.querySelector(domSearchParam);
+    while(assignmentList.children.length > 0) assignmentList.removeChild(assignmentList.lastChild);
+    
+    let length = currClass.assignments.lenght;
+    let list = currClass.assignments;
+    let displayText = "assignment";
+    if(isHomework){
+        length = currClass.homework.length;
+        list = currClass.homework;
+        displayText = "homework";
+    }
+    if(length === 0){
+        assignmentList.innerHTML = "No "+displayText+"s in classroom";
+        return;
+    }
+
+    let displayedAssignments = [];
+    for(let i = 0; i < list.length; i++){
+        let conditionName = list[i].name.toLowerCase();
+        let containCondition = conditionName.indexOf(searchParam.toLowerCase()) !== -1; 
+        if(searchParam === "" || containCondition) displayedAssignments.push(list[i]);
+    }
+    if(displayedAssignments.length === 0){
+        assignmentList.innerHTML = "No "+displayText+"s in classroom";
+        return;
+    }
+
+    assignmentList.innerHTML = "";
+    for(let i = 0; i < displayedAssignments.length; i++){
+        const listItem = document.createElement("div");
+        const listItemName = document.createElement("div");
+            
+        listItem.className = "class-window-list-item";
+        listItemName.className = "class-window-list-item-name";
+        listItemName.innerText = displayedAssignments[i].name;
+    
+        listItem.appendChild(listItemName);
+        assignmentList.appendChild(listItem);
+
+        const listItemDelete = document.createElement("div");
+        listItemDelete.className = "class-window-list-item-delete";
+        listItem.appendChild(listItemDelete);
+
+        listItem.onclick = ()=>{displayAssignmentWindow(displayedAssignments[i])}
+        listItemDelete.onclick = (e)=>{
+            e.stopPropagation();
+            if(confirm("Are you sure you want to remove this "+displayText+" from this class?")){
+                const data = {detail:{id:displayedAssignments[i].id, isHomework:isHomework}}
+                const deleteStudentEvent = new CustomEvent("delete-assignment", data);
+                window.dispatchEvent(deleteStudentEvent);
+            }
+        }
+    }   
+}
+function displayAssignmentWindow(assignment){
+    let html = `
+    <!DOCTYPE html>
+    <html xmlns:o="urn:schemas-microsoft-com:office:office"
+          xmlns:w="urn:schemas-microsoft-com:office:word"
+          xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+        <meta charset="utf-8">
+        <style>
+            body{
+                font-family:'Arial';
+                color:rgb(016, 047, 068);
+                padding:1rem;
+            }
+        </style>
+    </head>
+    <body>`;
+
+    const displayAssignmentBody = document.querySelector(".display-assignment-body");
+    while(displayAssignmentBody.children.length > 0) displayAssignmentBody.removeChild(displayAssignmentBody.lastChild);
+
+    const title = document.createElement("div");
+    title.className = "display-assignment-title";
+    title.innerText = assignment.name;
+    displayAssignmentBody.appendChild(title);
+    html += "<h1>"+assignment.name+"</h1><br>";
+
+    const letters = [
+        "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", 
+        "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"
+    ];
+
+    if(assignment.type === "qna" || assignment.type === "abc"){
+        for(let i = 0; i < assignment.questions.length; i++){
+            const question = document.createElement("div");
+            question.className = "display-assignemnt-question";
+            question.innerText = (i+1) + ") "+assignment.questions[i].text;
+            displayAssignmentBody.appendChild(question);
+            html += "<div style='font-weight:bold; margin-top:1rem;'>" + (i+1) + ") "+assignment.questions[i].text+"<br></div>";
+
+            if(assignment.type === "qna"){
+                const empty = document.createElement("div");
+                empty.className = "display-assignemnt-empty";
+                displayAssignmentBody.appendChild(empty);
+                html += "<br>";
+            }
+            else{
+                for(let j = 0; j < assignment.questions[i].answers.length; j++){
+                    const answer = document.createElement("div");
+                    answer.className = "display-assignemnt-answer";
+                    answer.innerText = letters[j]+") "+ assignment.questions[i].answers[j];
+                    displayAssignmentBody.appendChild(answer);
+                    html += "<div style='margin-left:1rem;'>" + letters[j]+") "+ assignment.questions[i].answers[j] + "</div>";
+                }
+            }
+        }
+    }
+    else{
+        const requirement = document.createElement("div");
+        requirement.className = "display-assignment-requirement";
+        requirement.innerText = assignment.content;
+        displayAssignmentBody.appendChild(requirement);
+        html += "<div style='margin-bottom:5rem;'>"+assignment.content+"<br></div>";
+    }
+    
+    html += "</body></html>";
+    fadeIn("#display-assignment-screen", 0.1, "block", null);
+
+    const docButton = document.querySelector("#assignment-doc");
+    const pdfButton = document.querySelector("#assignment-pdf");
+    docButton.onclick = ()=>{
+        requestDownloadAssignment("doc", assignment.name, html);
+        docButton.disabled = true;
+    }
+    pdfButton.onclick = ()=>{
+        requestDownloadAssignment("pdf", assignment.name, html);
+        pdfButton.disabled = true;
+    }
+}
+async function requestDownloadAssignment(type, name, html){
+    const docButton = document.querySelector("#assignment-doc");
+    const pdfButton = document.querySelector("#assignment-pdf");
+
+    const response = await fetch("/generate-"+type, {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({htmlContent:html})
+    });
+    if(type === "doc") docButton.disabled = false;
+    else pdfButton.disabled = false; 
+    if(!response.ok){
+        alert("Failed to generate ."+type+" file");
+        return;
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name + "." + type; 
+    a.click();
+    window.URL.revokeObjectURL(url);
 }
 
 /*--Add Students-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -534,7 +784,7 @@ function inviteListSearchApply(students, inviteStudendSearch){
 }
 
 /*--Lessons-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function generateLessons(lessons, currlesson){
+function generateLessons(lessons, currLesson){
     const listHolder = document.querySelector(".lesson-list-holder");
     while(listHolder.children.length > 0) listHolder.removeChild(listHolder.lastChild);
     for(let i = 0; i < lessons.length; i++){
@@ -567,7 +817,7 @@ function generateLessons(lessons, currlesson){
         lesson.appendChild(lessonA);
         listHolder.appendChild(lesson);
 
-        switch(currlesson){
+        switch(currLesson){
             default:break;
             case 0:
                 const startButton = document.createElement("button");
@@ -613,6 +863,87 @@ function generateLessons(lessons, currlesson){
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

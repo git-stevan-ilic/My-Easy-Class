@@ -24,8 +24,10 @@ const pdfParse = require("pdf-parse");
 const fs = require("fs-extra");
 const mammoth = require("mammoth");
 const stream = require("stream");
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const puppeteer = require("puppeteer");
+const bodyParser = require("body-parser");
 
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const visionClient = new vision.ImageAnnotatorClient();
 const openAI = new openai({apiKey:process.env.CHATGPT_API_KEY});
 const app = express();
@@ -39,6 +41,7 @@ const sessionMiddleware = session({
     saveUninitialized:true,
     cookie:{secure:false} // Set to true in production with HTTPS
 });
+app.use(bodyParser.json({limit:"10mb"}));
 app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
@@ -213,7 +216,7 @@ async function getEmailInbox(req, res, refreshToken){
     }
     catch(error){
         console.error("Gmail error:", error);
-        res.status(error.status).json({error:"Failed to fetch emails"});
+        res.status(500).json({error:"Failed to fetch emails"});
     }
 }
 async function getEmailContent(req, res, refreshToken){
@@ -253,7 +256,7 @@ async function getEmailContent(req, res, refreshToken){
     }
     catch(error){
         console.error("Error fetching email:", error);
-        res.status(error.status).json({error:"Failed to fetch email"});
+        res.status(500).json({error:"Failed to fetch email"});
     }
 }
 async function readEmail(req, res, refreshToken){
@@ -273,7 +276,7 @@ async function readEmail(req, res, refreshToken){
     }
     catch(error){
         console.error("Error marking email as read:", error);
-        res.status(error.status).json({error:"Failed to update email status"});
+        res.status(500).json({error:"Failed to update email status"});
     }
 }
 async function starEmail(req, res, refreshToken){
@@ -298,7 +301,7 @@ async function starEmail(req, res, refreshToken){
     }
     catch(error){
         console.error("Error:", error);
-        res.status(error.status).json({success:false});
+        res.status(500).json({success:false});
     }
 }
 async function importanceEmail(req, res, refreshToken){
@@ -323,7 +326,7 @@ async function importanceEmail(req, res, refreshToken){
     }
     catch(error){
         console.error("Error:", error);
-        res.status(error.status).json({success:false});
+        res.status(500).json({success:false});
     }
 }
 async function sendEmail(req, res, refreshToken){
@@ -390,7 +393,7 @@ async function sendEmail(req, res, refreshToken){
     }
     catch(error){
         console.error("Error sending email:", error);
-        res.status(error.status).json({error:"Failed to send email"});
+        res.status(500).json({error:"Failed to send email"});
     }
 }
 async function deleteEmail(req, res, refreshToken){
@@ -410,7 +413,7 @@ async function deleteEmail(req, res, refreshToken){
     }
     catch(error){
         console.error("Delete error:", error);
-        res.status(error.status).json({ 
+        res.status(500).json({ 
             success:false,
             message:error.message.includes("404") ? 'Email not found' : 'Failed to delete email'
         });
@@ -449,8 +452,9 @@ async function getDriveList(req, res, refreshToken){
         res.json(response.data.files);
     }
     catch(error){
+        console.error(500);
         console.error("Drive API Error:", error);
-        res.status(error.status).json({error:"Failed to fetch drive data"});
+        res.status(500).json({error:"Failed to fetch drive data"});
     }
 }
 async function getDriveFile(req, res, refreshToken){
@@ -483,44 +487,9 @@ async function getDriveFile(req, res, refreshToken){
         }
 
         if(conditionTrue){
-            //if(conditionIndex === 0){
-                /*const tempDir = tmp.dirSync({ unsafeCleanup: true });
-                const inputPath = path.join(tempDir.name, "input.docx");
-                const outputDir = tempDir.name;
-
-                const response = await drive.files.get({ fileId, alt: "media" }, { responseType: "stream" });
-                const writeStream = fs.createWriteStream(inputPath);
-
-                /*await new Promise((resolve, reject) => {
-                    response.data.pipe(writeStream);
-                    writeStream.on("finish", resolve);
-                    writeStream.on("error", reject);
-                });
-
-                await new Promise((resolve, reject) => {
-                    exec(`soffice --headless --convert-to html --outdir "${outputDir}" "${inputPath}"`, (err, stdout, stderr) => {
-                        if (err) return reject(stderr);
-                        resolve(stdout);
-                    });
-                });
-
-                const outputHtmlPath = inputPath.replace(/\.docx$/, ".html");
-                if (!fs.existsSync(outputHtmlPath)) {
-                    return res.status(500).json({ error: "HTML conversion failed" });
-                }
-
-                // Read and return the HTML
-                const htmlContent = await fs.readFile(outputHtmlPath, "utf8");
-
-                // Cleanup
-                tempDir.removeCallback();
-                res.send(htmlContent)*/
-            //}
-            //else{
-                const response = await drive.files.get({fileId, alt:"media"}, {responseType:"stream"});
-                res.setHeader("Content-Type", mimeType);
-                response.data.pipe(res);
-            //}
+            const response = await drive.files.get({fileId, alt:"media"}, {responseType:"stream"});
+            res.setHeader("Content-Type", mimeType);
+            response.data.pipe(res);
         }
         else{
             res.status(400).send("Unsupported file type");
@@ -528,7 +497,7 @@ async function getDriveFile(req, res, refreshToken){
     }
     catch(error){
         console.error("Drive API Error:", error);
-        res.status(error.status).json({error:"Failed to fetch file content"});
+        res.status(500).json({error:"Failed to fetch file content"});
     }
 }
 async function driveDownload(req, res, refreshToken){
@@ -574,12 +543,12 @@ async function driveDownload(req, res, refreshToken){
         }
         response.data.on("error", (error)=>{
             console.error("Error streaming file:", error);
-            res.status(error.status).send("Error downloading file");
+            res.status(500).send("Error downloading file");
         }).pipe(res);
     }
     catch(error){
         console.error("Drive API Error:", error);
-        res.status(error.status).json({error:"Failed to download drive data"});
+        res.status(500).json({error:"Failed to download drive data"});
     }
 }
 async function driveUpload(req, res, refreshToken){
@@ -602,7 +571,7 @@ async function driveUpload(req, res, refreshToken){
     }
     catch(error){
         console.error("Upload error:", error);
-        res.status(error.status).json({success:false});
+        res.status(500).json({success:false});
     }
 }
 async function driveDelete(req, res, refreshToken){
@@ -622,7 +591,7 @@ async function driveDelete(req, res, refreshToken){
     }
     catch(error){
         console.error("Delete error:", error);
-        res.status(error.status).json({success:false, message:"Failed to delete file"});
+        res.status(500).json({success:false, message:"Failed to delete file"});
     }
 }
 
@@ -679,7 +648,7 @@ async function getCalendar(req, res, refreshToken){
     catch(error){
         client.emit("google-calendar-error", error);
         console.error("Calendar API Error:", error);
-        res.status(error.status).json({error:"Failed to fetch calendar events"});
+        res.status(500).json({error:"Failed to fetch calendar events"});
     }
 }
 async function addCalendarEvent(req, res, refreshToken){
@@ -712,7 +681,7 @@ async function addCalendarEvent(req, res, refreshToken){
     }
     catch(error){
         console.error("Calendar event add error: ", error);
-        res.status(error.status).json({error:"Failed to add event", details:error.response?.data?.error});
+        res.status(500).json({error:"Failed to add event", details:error.response?.data?.error});
     }
 }
 async function editCalendarEvent(req, res, refreshToken){
@@ -756,7 +725,7 @@ async function editCalendarEvent(req, res, refreshToken){
     }
     catch(error){
         console.error("Calendar event update error: ", error);
-        res.status(error.status).json({error:"Failed to update event", details:error.response?.data?.error});
+        res.status(500).json({error:"Failed to update event", details:error.response?.data?.error});
     }
 }
 async function deleteCalendarEvent(req, res, refreshToken){
@@ -780,7 +749,7 @@ async function deleteCalendarEvent(req, res, refreshToken){
     }
     catch(error){
         console.error("Calendar event delete error: ", error);
-        res.status(error.status).json({error:"Failed to delete event", details:error.response?.data?.error});
+        res.status(500).json({error:"Failed to delete event", details:error.response?.data?.error});
     }
 }
 function getColorHex(colorId){
@@ -1025,6 +994,40 @@ async function cancelSubscription(client, userID){
         client.emit("payment-fail", 0);
     });
 }
+
+/*--Assignment Download------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+app.post("/generate-doc", (req, res)=>{
+    const { htmlContent } = req.body;
+    if(!htmlContent) return res.status(400).send("Missing HTML content");
+
+    const wordDocument = htmlContent;
+    res.setHeader("Content-Disposition", "attachment; filename=document.doc");
+    res.setHeader("Content-Type", "application/msword");
+    res.send(wordDocument);
+});
+app.post("/generate-pdf", async (req, res)=>{
+    const { htmlContent } = req.body;
+    if(!htmlContent) return res.status(400).send("Missing HTML content");
+
+    try{
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+        await page.setContent(htmlContent, { waitUntil:"networkidle0"});
+    
+        const pdfBuffer = await page.pdf({format:"A4"});
+        await browser.close();
+    
+        res.set({
+          "Content-Type":"application/pdf",
+          "Content-Disposition":"attachment; filename='document.pdf"
+        });
+        res.send(pdfBuffer);
+    }
+    catch(error){
+        console.error("PDF generation failed:", error);
+        res.status(500).send("Failed to generate PDF");
+    }
+});
 
 /*--Input/Output-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 io.use((client, next) => {sessionMiddleware(client.request, {}, next);});

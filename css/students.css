@@ -277,7 +277,7 @@
     margin-top:0.25rem;
     margin-left:50%;
     height:2.5rem;
-    width:40rem;
+    width:100%;
 
     justify-content:space-evenly;
     align-items:center;
@@ -288,8 +288,8 @@
     border:1px solid var(--border-gray-1);
     border-radius:var(--border-radius-1);
     max-width:calc(33% - 0.5rem);
-    width:13rem;
     height:2rem;
+    width:32%;
    
     transition:ease-in-out 0.1s;
     justify-content:center;
@@ -316,18 +316,19 @@
 .class-window-selected-tab:active{
     background-color:var(--background-gray-2);
 }
-#student-search-icon-holder, #assignment-search-icon-holder{
-    transform:translate(calc(-50% + 1rem));
-    max-width:calc(100% + 1.5rem);
+#student-search-icon-holder, #assignment-search-icon-holder, #homework-search-icon-holder{
+    transform:translate(-50%);
     margin-bottom:1rem;
-    margin-left:50%;
     margin-top:0.5rem;
-    width:40rem;
+    margin-left:50%;
+    width:100%;
 }
 .class-window-body{
     position:relative;
-    height:calc(18rem + 2px);
-    width:calc(100% - 2rem);
+    height:calc(17.5rem + 2px);
+    margin-top:0.5rem;
+    margin-left:0.25rem;
+    width:calc(100% - 0.5rem);
 }
 .class-window-body-content{
     position:absolute;
@@ -337,29 +338,33 @@
     left:0px;
     top:0px;
 }
-.class-window-student-list-holder{
+.class-window-body-content:first-child{
+    display:block;
+}
+.class-window-list-holder{
     height:calc(100% - 2.5rem);
     margin-top:1rem;
     width:100%;
-
-    overflow-x:hidden;
-    overflow-y:auto;
 }
-.class-window-student-list{
+.class-window-list{
     color:var(--gray-1);
     height:fit-content;
     text-align:center;
     padding-bottom:1rem;
     width:100%;
+    max-height:14rem;
+    overflow-x:hidden;
+    overflow-y:auto;
 }
-.class-window-student{
+.class-window-list-item{
     border:1px solid var(--border-gray-1);
     border-radius:var(--border-radius-2);
+    max-width:calc(100% - 4px);
     transform:translate(-50%);
     margin-top:0.5rem;
     margin-left:50%;
     height:3rem;
-    width:50%;
+    width:100%;
 
     transition:ease-in-out 0.1s;
     cursor:pointer;
@@ -368,13 +373,13 @@
     align-items:center;
     display:flex;
 }
-.class-window-student:hover{
+.class-window-list-item:hover{
     background-color:var(--background-gray-1);
 }
-.class-window-student:active{
+.class-window-list-item:active{
     background-color:var(--background-gray-2);
 }
-.class-window-student-icon{
+.class-window-list-item-icon{
     background-image:url("../assets/icons/default user.png");
     background-position:center center;
     background-repeat:no-repeat;
@@ -387,7 +392,7 @@
     flex-shrink:0;
     height:2.5rem;
 }
-.class-window-student-name{
+.class-window-list-item-name{
     justify-content:flex-start;
     align-items:center;
     display:flex;
@@ -397,7 +402,7 @@
     height:100%;
     width:100%;
 }
-.class-window-student-delete{
+.class-window-list-item-delete{
     background-image:url("../assets/icons/delete mail.png");
     background-position:center center;
     background-repeat:no-repeat;
@@ -409,13 +414,13 @@
     flex-shrink:0;
     height:1.5rem;
 }
-.class-window-student-delete:hover{
+.class-window-list-item-delete:hover{
     transform:scale(1.1);
 }
-.class-window-student-delete:active{
+.class-window-list-item-delete:active{
     transform:scale(1);
 }
-.class-window-student-remove{
+.class-window-list-item-remove{
     background-image:url("../assets/icons/x gray.png");
 }
 
@@ -833,7 +838,7 @@
 }
 .lesson-list-element{
     border-right:1px solid var(--border-gray-1);
-    width:calc(25% - 1px - 1rem);
+    width:calc(25% - 1rem);
     height:calc(100% - 1rem);
     padding:0.5rem;
 }
@@ -842,7 +847,7 @@
     width:10rem;
 }
 
-/*--New lesson--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*--New Lesson--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .new-lesson-window{
     box-shadow:0.25rem 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
     background-color:var(--background-white);
@@ -887,6 +892,81 @@
     width:100%;
 }
 
+/*--Display Assignment-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+.display-assignment-window{
+    box-shadow:0.25rem 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+    background-color:var(--background-white);
+    border-radius:var(--border-radius-1);
+    max-height:calc(100vh - 4rem);
+    max-width:calc(100vw - 5rem);
+    transform:translate(-50%);
+    padding:1rem;
+    width:40rem;
+    left:50%;
+    top:1rem;
+    position:absolute;
+}
+.display-assignment-head{
+    justify-content:flex-start;
+    align-items:center;
+    display:flex;
+
+    margin-bottom:1rem;
+    width:100%;
+}
+.display-assignment-body{
+    max-height:calc(100vh - 6rem);
+    height:fit-content;
+    overflow-x:hidden;
+    overflow-y:auto;
+    width:100%;
+}
+.display-assignmeny-buttons{
+    justify-content:flex-start;
+    align-items:center;
+    display:flex;
+    height:2rem;
+    width:100%;
+}
+.assignment-button{
+    margin-right:0.5rem;
+    font-size:1rem;
+    height:1.5rem;
+    width:5rem;
+}
+.display-assignment-title{
+    color:var(--dark-blue);
+    margin-bottom:3rem;
+    font-weight:bold;
+    font-size:2rem;
+    height:100%;
+    width:100%;
+
+    justify-content:flex-start;
+    align-items:center;
+    overflow:hidden;
+    display:flex;
+}
+.display-assignemnt-question{
+    color:var(--dark-blue);
+    font-weight:bold;
+    margin-bottom:0.5rem;
+    margin-top:1rem;
+}
+.display-assignemnt-answer{
+    color:var(--dark-blue);
+    margin-bottom:0.5rem;
+    margin-left:1rem;
+}
+.display-assignment-requirement{
+    color:var(--dark-blue);
+    margin-bottom:5rem;   
+}
+.display-assignemnt-empty{
+    height:1.5rem;
+    width:100%;
+}
+
 /*--Mobile Dispaly-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 @media only screen and (max-width:1150px){
     .students-main-holder{
@@ -914,5 +994,8 @@
 @media only screen and (max-width:700px) and (orientation:portrait){
     .class-list-window{
         width:13rem;
+    }
+    .class-window-tab{
+        font-size:0.8rem;
     }
 }
