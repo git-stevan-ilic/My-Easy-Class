@@ -1110,12 +1110,27 @@ io.on("connection", (client)=>{
             client.emit("get-user-display-data-fail");
         });
     });
+    client.on("get-class-display-data", (classID)=>{
+        Classes.find({classID:classID})
+        .then((result)=>{
+            if(result.length === 0){
+                console.error("Find Class DB error: ", error);
+                client.emit("get-class-display-data-fail");
+                return;
+            }
+            const foundClass = result[0];
+            client.emit("receive-class-display-data", foundClass); 
+        })
+        .catch((error)=>{
+            console.error("Find Class DB error: ", error);
+            client.emit("get-class-display-data-fail");
+        });
+    });
     client.on("class-data-request", (userID)=>{
         getClassData(client, userID, false);
     });
     client.on("new-class", async (name, userID)=>{
         const newClassID = await createClass(name, userID);
-        console.log(newClassID)
         if(!newClassID) client.emit("new-class-error");
         else getClassData(client, userID, true);
     });

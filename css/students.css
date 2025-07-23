@@ -153,26 +153,26 @@
     font-weight:bold;
     display:flex;
 }
-.class-head-buttons{
-    justify-content:flex-end;
-    align-items:center;
-    display:flex;
-
-    flex-shrink:0;
-    height:100%;
-    width:25rem;
+.students-top-buttons-elements{
+    position:absolute;
+    right:1rem;
+    top:1rem;
 }
-#new-lesson{
-    margin-left:0.5rem;
-    margin-top:0px;
-    height:2.5rem;
+.class-head-buttons{
+    max-width:calc(100vw - 19rem);
+    height:fit-content;
     width:12rem;
+}
+.class-head-button{
+    position:relative;
+    margin-bottom:0.5rem;
+    margin-top:0rem;
+    font-size:1rem;
+    height:2.5rem;
+    width:100%;
+    z-index:1;
 }
 #add-students{
-    margin-left:0.5rem;
-    margin-top:0px;
-    height:2.5rem;
-    width:12rem;
     z-index:3;
 }
 
@@ -186,11 +186,11 @@
     overflow:hidden;
    
     transform:translate(50%, -1rem);
-    width:calc(12rem - 2px);
-    right:calc(6rem - 1px);
+    width:calc(12rem - 1px);
+    right:calc(6rem - 0px);
     padding-bottom:0.5rem;
     padding-top:1.5rem;
-    top:3.25rem;
+    top:2.5rem;
     transform:translate(50%, -50%) scaleY(0);
     z-index:2;
 }
@@ -316,24 +316,10 @@
 .class-window-selected-tab:active{
     background-color:var(--background-gray-2);
 }
-#student-search-icon-holder{
+#student-search-icon-holder, #assignment-search-icon-holder, #homework-search-icon-holder{
     margin-bottom:1rem;
     margin-top:0.5rem;
     width:100%;
-}
-#assignment-search-icon-holder, #homework-search-icon-holder{
-    margin-bottom:1rem;
-    margin-top:0.5rem;
-    width:66%;
-}
-.generate-button{
-    position:absolute;
-    top:-0.5rem;
-    right:0px;
-}
-#generate-assignment, #generate-homework{
-    height:calc(2rem + 2px);
-    width:33%;
 }
 .class-window-body{
     position:relative;
@@ -990,27 +976,13 @@
 }
 
 /*--Mobile Dispaly-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-@media only screen and (max-width:1150px){
+@media only screen and (max-width:1340px){
     .students-main-holder{
         flex-direction:column;
     }
     .students-main{
         min-width:calc(100% - 2rem);
         margin-top:2rem;
-    }
-    .student-portrait-button-holder{
-        position:absolute;
-        display:block;
-        right:1rem;
-        top:1.25rem;
-    }
-    .class-head-buttons{
-        width:calc(100vw - 17.5rem);
-        flex-wrap:wrap-reverse;
-    }
-    .class-head-buttons > *{
-        height:fit-content;
-        margin-bottom:0.5rem;
     }
 }
 @media only screen and (max-width:700px) and (orientation:portrait){
@@ -1020,7 +992,7 @@
     .class-window-tab{
         font-size:0.8rem;
     }
-    .generate-button{
-        font-size:0.8rem;
+    .add-student-drop-down{
+        border-top-left-radius:var(--border-radius-2);
     }
 }

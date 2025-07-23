@@ -6,6 +6,7 @@
     <meta name="viewport" content="initial-scale=1, maximum-scale=1, width=device-width, height=device-height, user-scalable=0, viewport-fit=cover">
     <meta name="emotion-insertion-point" content="" />
 
+    <link rel="stylesheet" type="text/css" href="../css/main.css">
     <link rel="stylesheet" type="text/css" href="../css/pre load.css">
     <link rel="stylesheet" type="text/css" href="../css/page head.css">
     <link rel="stylesheet" type="text/css" href="../css/page foot.css">
@@ -17,7 +18,6 @@
     <link rel="stylesheet" type="text/css" href="../css/login.css">
     <link rel="stylesheet" type="text/css" href="../css/drive.css">
     <link rel="stylesheet" type="text/css" href="../css/mail.css">
-    <link rel="stylesheet" type="text/css" href="../css/main.css">
 
     <!--<script type="text/javascript" src="../js/zoom/react.min.js"></script>
     <script type="text/javascript" src="../js/zoom/react-dom.min.js"></script>
@@ -331,33 +331,34 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="students-top-buttons-elements class-required">
+                            <div class="add-student-drop-down">
+                                <div class="add-student-row">
+                                    <div class="add-student-icon add-student-email-icon"></div>
+                                    <div class="add-student-text" id="invite-email">Invite by e-mail</div>
+                                </div>
+                                <div class="add-student-row">
+                                    <div class="add-student-icon add-student-link-icon"></div>
+                                    <div class="add-student-text" id="invite-link">Invite by link</div>
+                                </div>
+                                <div class="add-student-row">
+                                    <div class="add-student-icon add-student-qr-icon"></div>
+                                    <div class="add-student-text" id="invite-qr">Invite by QR code</div>
+                                </div>
+                                <div class="add-student-row">
+                                    <div class="add-student-icon add-student-list-icon"></div>
+                                    <div class="add-student-text" id="invite-list">Invite from my students</div>
+                                </div>
+                            </div>
+                            <div class="class-head-buttons">
+                                <button class="blue-button class-head-button" id="add-students">Add Students</button>
+                                <button class="blue-button class-head-button" id="new-lesson">New Lesson</button>
+                                <button class="blue-button class-head-button" id="new-assignment">Generate Assignment</button>
+                            </div>
+                        </div>
                         <div class="students-main class-required">
                             <div class="students-main-head">
                                 <div class="class-title">All Students</div>
-                                <div class="students-top-buttons-elements">
-                                    <div class="class-head-buttons">
-                                        <button class="blue-button" id="new-lesson">New lesson</button>
-                                        <button class="blue-button" id="add-students">Add Students</button>
-                                    </div>
-                                    <div class="add-student-drop-down">
-                                        <div class="add-student-row">
-                                            <div class="add-student-icon add-student-email-icon"></div>
-                                            <div class="add-student-text" id="invite-email">Invite by e-mail</div>
-                                        </div>
-                                        <div class="add-student-row">
-                                            <div class="add-student-icon add-student-link-icon"></div>
-                                            <div class="add-student-text" id="invite-link">Invite by link</div>
-                                        </div>
-                                        <div class="add-student-row">
-                                            <div class="add-student-icon add-student-qr-icon"></div>
-                                            <div class="add-student-text" id="invite-qr">Invite by QR code</div>
-                                        </div>
-                                        <div class="add-student-row">
-                                            <div class="add-student-icon add-student-list-icon"></div>
-                                            <div class="add-student-text" id="invite-list">Invite from my students</div>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                             <div class="class-window">
                                 <div class="class-window-tab-holder">
@@ -380,7 +381,6 @@
                                             <div class="search-icon" id="assignment-search-icon"></div> 
                                             <input type="text" class="search-input" id="assignment-search" placeholder="Search for assignments">
                                         </div>
-                                        <button class="blue-button generate-button" id="generate-assignment">Generate Assignment</button>
                                         <div class="class-window-assignment-list-holder">
                                             <div id="class-window-assignment-list" class="class-window-list"></div>
                                         </div>
@@ -390,7 +390,6 @@
                                             <div class="search-icon" id="homework-search-icon"></div> 
                                             <input type="text" class="search-input" id="homework-search" placeholder="Search for homework">
                                         </div>
-                                        <button class="blue-button generate-button" id="generate-homework">Generate homework</button>
                                         <div class="class-window-assignment-list-holder">
                                             <div id="class-window-homework-list" class="class-window-list"></div>
                                         </div>

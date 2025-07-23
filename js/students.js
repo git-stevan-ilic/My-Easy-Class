@@ -4,12 +4,11 @@ function loadStudentsLogic(client, userID, username){
     let classNameSearch = "", inviteStudendSearch = "";
     let currLesson = 0, lessons = [[], [], []];
     let currClass = 0, classes = [];
+    let firstEventLoaded = false;
 
     classesExist(classes.length);
-    studentResizeLogic();
     generateNewClassLogic();
     generateClasses(classNameSearch, classes);
-    addStudentEvents(username);
 
     const newLessonName = document.querySelector("#new-lesson-input-name");
     const newLessonContent = document.querySelector("#new-lesson-input-content");
@@ -35,6 +34,11 @@ function loadStudentsLogic(client, userID, username){
             notification("Input all values");
             return;
         }
+
+        notification("Zoom connection not secure");
+        return;
+
+
         let studentNames = [];
         for(let i = 0; i < classes[currClass].students.length; i++){
             studentNames.push(classes[currClass].students[i].name);
@@ -93,21 +97,23 @@ function loadStudentsLogic(client, userID, username){
         document.querySelector("#invite-list-window-close").click();
         classes[currClass].students = classes[currClass].students.concat(addedStudents);
         generateClasses(classNameSearch, classes);
-        displayCurrClass(classes[currClass], studentListSearch);
+        displayCurrClass(classes[currClass], studentListSearch, false);
     });
     window.addEventListener("display-curr-class", ()=>{
-        displayCurrClass(classes[currClass], studentListSearch);
-        displayAssignmentsList(classes[currClass], assignmentSearch, false);
-        displayAssignmentsList(classes[currClass], homeworkSearch, true);
+        displayCurrClass(classes[currClass], studentListSearch, false);
+        displayAssignmentsList(classes[currClass], assignmentSearch, false, false);
+        displayAssignmentsList(classes[currClass], homeworkSearch, true, false);
     });
     window.addEventListener("change-curr-class", (e)=>{
         const studentSearch = document.querySelector("#student-search");
         currClass = e.detail.newCurrClass;
         studentListSearch = "";
         studentSearch.value = studentListSearch;
-        displayCurrClass(classes[currClass], studentListSearch);
-        displayAssignmentsList(classes[currClass], assignmentSearch, false);
-        displayAssignmentsList(classes[currClass], homeworkSearch, true);
+        displayCurrClass(classes[currClass], studentListSearch, false);
+        displayAssignmentsList(classes[currClass], assignmentSearch, false, false);
+        displayAssignmentsList(classes[currClass], homeworkSearch, true, false);
+        addStudentEvents(username, classes[currClass].classID, !firstEventLoaded);
+        if(!firstEventLoaded) firstEventLoaded = true;
     });
     window.addEventListener("delete-student", (e)=>{
         for(let i = 0; i < classes.length; i++){
@@ -119,7 +125,7 @@ function loadStudentsLogic(client, userID, username){
             }
         }
         generateClasses(classNameSearch, classes);
-        displayCurrClass(classes[currClass], studentListSearch);
+        displayCurrClass(classes[currClass], studentListSearch, false);
     });
     window.addEventListener("remove-student", (e)=>{
         for(let i = 0; i < classes.length; i++){
@@ -135,7 +141,7 @@ function loadStudentsLogic(client, userID, username){
             }
         }
         generateClasses(classNameSearch, classes);
-        displayCurrClass(classes[currClass], studentListSearch);
+        displayCurrClass(classes[currClass], studentListSearch, false);
     });
     window.addEventListener("delete-assignment", (e)=>{
         for(let i = 0; i < classes[currClass].assignments.length; i++){
@@ -145,7 +151,7 @@ function loadStudentsLogic(client, userID, username){
         }
         let searchQuery = assignmentSearch;
         if(e.detail.isHomework) searchQuery = homeworkSearch;
-        displayAssignmentsList(classes[currClass], searchQuery, e.detail.isHomework);
+        displayAssignmentsList(classes[currClass], searchQuery, e.detail.isHomework, false);
     });
 
     client.emit("class-data-request", userID);
@@ -165,52 +171,77 @@ function loadStudentsLogic(client, userID, username){
             classData[currClass].lessons.canceled
         ];
         classes = classData;
-        
+
+        addStudentEvents(username, classes[currClass].classID);
         classesExist(classes.length);
-        studentPageSearch(classNameSearch, studentListSearch, assignmentSearch, homeworkSearch, inviteStudendSearch, classes, currClass);
+        studentPageSearch(classNameSearch, studentListSearch, assignmentSearch, homeworkSearch, inviteStudendSearch, classes, currClass, false);
         studentPageTabLogic(lessons, currLesson);
         generateClasses(classNameSearch, classes);
         generateLessons(lessons[currLesson], currLesson);
-        displayCurrClass(classes[currClass], studentListSearch);
-        displayAssignmentsList(classes[currClass], assignmentSearch, false);
-        displayAssignmentsList(classes[currClass], homeworkSearch, true);
+        displayCurrClass(classes[currClass], studentListSearch, false);
+        displayAssignmentsList(classes[currClass], assignmentSearch, false, false);
+        displayAssignmentsList(classes[currClass], homeworkSearch, true, false);
     });
 }
-function studentResizeLogic(){
-    const portraitButtonHolder = document.querySelector(".student-portrait-button-holder");
-    const buttonsElements = document.querySelector(".students-top-buttons-elements");
-    const studentsMainHead = document.querySelector(".students-main-head");
-    const dropMenu = document.querySelector(".add-student-drop-down");
+function loadClassViewDisplay(receivedClass){
+    const mainScreen = document.querySelector("#main");
+    while(mainScreen.children.length > 3) mainScreen.removeChild(mainScreen.firstChild);
+    mainScreen.removeChild(mainScreen.children[1]);
 
-    let portraitMode = false;
-    if(window.innerWidth <= 1150){
-        portraitButtonHolder.appendChild(buttonsElements);
-        portraitMode = true;
-    }
+    document.querySelector(".lesson-action").innerText = "Student Action";
+    document.querySelector("#students-screen").style.display = "block";
+    document.querySelector(".students-main").style.marginTop = "1rem";
+    document.querySelector("#pre-main").style.display = "none";
+    mainScreen.style.display = "block";
+    
+    document.querySelector(".students-top-buttons-elements").remove();
+    document.querySelector(".class-list-window").remove();
+    document.querySelector(".pre-main-head").remove();
+    document.querySelector(".main-head").remove();
+    overwriteTitleMedia();
 
-    window.addEventListener("resize", ()=>{
-        dropMenu.style.animation = "none";
-        if(window.innerWidth <= 1150){
-            if(!portraitMode) portraitButtonHolder.appendChild(buttonsElements);
-            portraitMode = true;
-        }
-        else{
-            if(portraitMode) studentsMainHead.appendChild(buttonsElements);
-            portraitMode = false;
-        }
-    });
+    let studentListSearch = "", assignmentSearch = "", homeworkSearch = "";
+    let currLesson = 0, lessons = [
+        receivedClass.lessons.upcoming,
+        receivedClass.lessons.completed,
+        receivedClass.lessons.canceled
+    ];
+
+    displayCurrClass(receivedClass, studentListSearch, true);
+    displayAssignmentsList(receivedClass, assignmentSearch, false, true);
+    displayAssignmentsList(receivedClass, homeworkSearch, true, true);
+    studentPageSearch(null, studentListSearch, assignmentSearch, homeworkSearch, null, [receivedClass], 0, true);
+    generateLessons(lessons[currLesson], currLesson);
+    studentPageTabLogic(lessons, currLesson)
 }
-function studentPageSearch(classNameSearch, studentListSearch, assignmentListSearch, homeworkListSearch, inviteStudendSearch, classes, currClass){
-    const classSearchIcon = document.querySelector("#class-search-icon");
-    const classSearch = document.querySelector("#class-search");
-    classSearch.value = "";
-    classSearchIcon.onclick = ()=>{
-        classNameSearch = classSearch.value;
-        generateClasses(classNameSearch, classes);
-    }
-    classSearch.oninput = ()=>{
-        classNameSearch = classSearch.value;
-        generateClasses(classNameSearch, classes);
+function studentPageSearch(classNameSearch, studentListSearch, assignmentListSearch, homeworkListSearch, inviteStudendSearch, classes, currClass, studentView){
+    if(!studentView){
+        const classSearchIcon = document.querySelector("#class-search-icon");
+        const classSearch = document.querySelector("#class-search");
+        classSearch.value = "";
+        classSearchIcon.onclick = ()=>{
+            classNameSearch = classSearch.value;
+            generateClasses(classNameSearch, classes);
+        }
+        classSearch.oninput = ()=>{
+            classNameSearch = classSearch.value;
+            generateClasses(classNameSearch, classes);
+        }
+
+        const inviteListSearchIcon = document.querySelector("#invite-list-search-icon");
+        const inviteListSearch = document.querySelector("#invite-list-search");
+        inviteListSearchIcon.onclick = ()=>{
+            inviteStudendSearch = inviteListSearch.value;
+            let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
+            let availableStudents = classes[0].students.filter(item => !currClassIDs.has(item.id)); 
+            inviteListSearchApply(availableStudents, inviteStudendSearch);
+        }
+        inviteListSearch.oninput = ()=>{
+            inviteStudendSearch = inviteListSearch.value;
+            let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
+            let availableStudents = classes[0].students.filter(item => !currClassIDs.has(item.id)); 
+            inviteListSearchApply(availableStudents, inviteStudendSearch);
+        }
     }
 
     const studentSearchIcon = document.querySelector("#student-search-icon");
@@ -218,23 +249,23 @@ function studentPageSearch(classNameSearch, studentListSearch, assignmentListSea
     studentSearch.value = "";
     studentSearchIcon.onclick = ()=>{
         studentListSearch = studentSearch.value;
-        displayCurrClass(classes[currClass], studentListSearch);
+        displayCurrClass(classes[currClass], studentListSearch, studentView);
     }
     studentSearch.oninput = ()=>{
         studentListSearch = studentSearch.value;
-        displayCurrClass(classes[currClass], studentListSearch);
+        displayCurrClass(classes[currClass], studentListSearch, studentView);
     }
-
+    
     const assignmentSearchIcon = document.querySelector("#assignment-search-icon");
     const assignmentSearch = document.querySelector("#assignment-search");
     assignmentSearch.value = "";
     assignmentSearchIcon.onclick = ()=>{
         assignmentListSearch = assignmentSearch.value;
-        displayAssignmentsList(classes[currClass], assignmentListSearch, false);
+        displayAssignmentsList(classes[currClass], assignmentListSearch, false, studentView);
     }
     assignmentSearch.oninput = ()=>{
         assignmentListSearch = assignmentSearch.value;
-        displayAssignmentsList(classes[currClass], assignmentListSearch, false);
+        displayAssignmentsList(classes[currClass], assignmentListSearch, false, studentView);
     }
 
     const homeworkSearchIcon = document.querySelector("#homework-search-icon");
@@ -242,26 +273,11 @@ function studentPageSearch(classNameSearch, studentListSearch, assignmentListSea
     homeworkSearch.value = "";
     homeworkSearchIcon.onclick = ()=>{
         homeworkListSearch = homeworkSearch.value;
-        displayAssignmentsList(classes[currClass], homeworkListSearch, true);
+        displayAssignmentsList(classes[currClass], homeworkListSearch, true, studentView);
     }
     homeworkSearch.oninput = ()=>{
         homeworkListSearch = homeworkSearch.value;
-        displayAssignmentsList(classes[currClass], homeworkListSearch, true);
-    }
-
-    const inviteListSearchIcon = document.querySelector("#invite-list-search-icon");
-    const inviteListSearch = document.querySelector("#invite-list-search");
-    inviteListSearchIcon.onclick = ()=>{
-        inviteStudendSearch = inviteListSearch.value;
-        let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
-        let availableStudents = classes[0].students.filter(item => !currClassIDs.has(item.id)); 
-        inviteListSearchApply(availableStudents, inviteStudendSearch);
-    }
-    inviteListSearch.oninput = ()=>{
-        inviteStudendSearch = inviteListSearch.value;
-        let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
-        let availableStudents = classes[0].students.filter(item => !currClassIDs.has(item.id)); 
-        inviteListSearchApply(availableStudents, inviteStudendSearch);
+        displayAssignmentsList(classes[currClass], homeworkListSearch, true, studentView);
     }
 }
 function studentPageTabLogic(lessons, currLesson){
@@ -371,7 +387,7 @@ function classesExist(classNum){
     else for(let i = 0; i < classRequired.length; i++) classRequired[i].style.display = "block";
     
 }
-function displayCurrClass(currClass, studentListSearch){
+function displayCurrClass(currClass, studentListSearch, studentView){
     if(!currClass) return;
     document.querySelector(".class-title").innerText = currClass.name;
     const studentList = document.querySelector("#class-window-student-list");
@@ -405,32 +421,34 @@ function displayCurrClass(currClass, studentListSearch){
             student.appendChild(studentName);
             studentList.appendChild(student);
 
-            const studentDelete = document.createElement("div");
-            studentDelete.className = "class-window-list-item-delete";
-            student.appendChild(studentDelete);
-            if(currClass.name === "All Students" || currClass.name === "Ungrouped"){
-                studentDelete.onclick = ()=>{
-                    if(confirm("Are you sure you want to remove this student from all classes?")){
-                        const data = {detail:{id:displayedStudents[i].id}}
-                        const deleteStudentEvent = new CustomEvent("delete-student", data);
-                        window.dispatchEvent(deleteStudentEvent);
+            if(!studentView){
+                const studentDelete = document.createElement("div");
+                studentDelete.className = "class-window-list-item-delete";
+                student.appendChild(studentDelete);
+                if(currClass.name === "All Students" || currClass.name === "Ungrouped"){
+                    studentDelete.onclick = ()=>{
+                        if(confirm("Are you sure you want to remove this student from all classes?")){
+                            const data = {detail:{id:displayedStudents[i].id}}
+                            const deleteStudentEvent = new CustomEvent("delete-student", data);
+                            window.dispatchEvent(deleteStudentEvent);
+                        }
                     }
                 }
-            }
-            else{
-                studentDelete.classList.add("class-window-student-remove");
-                studentDelete.onclick = ()=>{
-                    if(confirm("Are you sure you want to remove this student from this class?")){
-                        const data = {detail:{id:displayedStudents[i].id, currClass:currClass}}
-                        const deleteStudentEvent = new CustomEvent("remove-student", data);
-                        window.dispatchEvent(deleteStudentEvent);
+                else{
+                    studentDelete.classList.add("class-window-student-remove");
+                    studentDelete.onclick = ()=>{
+                        if(confirm("Are you sure you want to remove this student from this class?")){
+                            const data = {detail:{id:displayedStudents[i].id, currClass:currClass}}
+                            const deleteStudentEvent = new CustomEvent("remove-student", data);
+                            window.dispatchEvent(deleteStudentEvent);
+                        }
                     }
                 }
             }
         }
     }
 }
-function displayAssignmentsList(currClass, searchParam, isHomework){
+function displayAssignmentsList(currClass, searchParam, isHomework, studentView){
     if(!currClass) return;
     let domSearchParam = "#class-window-assignment-list";
     if(isHomework) domSearchParam = "#class-window-homework-list";
@@ -472,18 +490,19 @@ function displayAssignmentsList(currClass, searchParam, isHomework){
     
         listItem.appendChild(listItemName);
         assignmentList.appendChild(listItem);
-
-        const listItemDelete = document.createElement("div");
-        listItemDelete.className = "class-window-list-item-delete";
-        listItem.appendChild(listItemDelete);
-
         listItem.onclick = ()=>{displayAssignmentWindow(displayedAssignments[i])}
-        listItemDelete.onclick = (e)=>{
-            e.stopPropagation();
-            if(confirm("Are you sure you want to remove this "+displayText+" from this class?")){
-                const data = {detail:{id:displayedAssignments[i].id, isHomework:isHomework}}
-                const deleteStudentEvent = new CustomEvent("delete-assignment", data);
-                window.dispatchEvent(deleteStudentEvent);
+
+        if(!studentView){
+            const listItemDelete = document.createElement("div");
+            listItemDelete.className = "class-window-list-item-delete";
+            listItem.appendChild(listItemDelete);
+            listItemDelete.onclick = (e)=>{
+                e.stopPropagation();
+                if(confirm("Are you sure you want to remove this "+displayText+" from this class?")){
+                    const data = {detail:{id:displayedAssignments[i].id, isHomework:isHomework}}
+                    const deleteStudentEvent = new CustomEvent("delete-assignment", data);
+                    window.dispatchEvent(deleteStudentEvent);
+                }
             }
         }
     }   
@@ -593,7 +612,7 @@ async function requestDownloadAssignment(type, name, html){
 }
 
 /*--Add Students-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function addStudentEvents(username){
+function addStudentEvents(username, classID, first){
     const dropMenu = document.querySelector(".add-student-drop-down");
     const inviteList = document.querySelector(".invite-list");
     let addStudentDropDown = false;
@@ -632,12 +651,14 @@ function addStudentEvents(username){
         addStudentDropDown = false;
     }
     document.querySelector("#invite-link").onclick = ()=>{
+        copyURL("classID", classID)
         notification("Link copied");
         closeDropDown();
     }
     document.querySelector("#invite-qr").onclick = ()=>{
+        const currBaseURL = stripUrlParams(window.location.href);
         new QRCode(document.querySelector(".invite-qr"),{
-            text:"this is a display link",
+            text:currBaseURL+"?classID="+classID,
             width:512,
             height:512,
             colorDark:"#000000",
@@ -660,6 +681,9 @@ function addStudentEvents(username){
     document.querySelector("#invite-email-button").onclick = ()=>{
         if(!isValidEmail(inviteEmailInput.value)) notification("Invalid email");
         else{
+            notification("Email Server Error");
+            return;
+
             let style = "background-color:rgb(087, 160, 211);color:var(255,255,255);height:50px;width:150px;font:20px Arial bold;";
             let emailContent = "<!DOCTYPE html><html><body>";
             emailContent += "<h2>My Easy Class</h2>"
@@ -670,14 +694,6 @@ function addStudentEvents(username){
             sendMail(inviteEmailInput.value, "My Easy Class Invite", emailContent, [], "invite");
         }
     }
-    window.addEventListener("invite-email-sent", (e)=>{
-        inviteEmailInput.value = "";
-        if(inviteList.children.length === 0) inviteList.innerText = "";
-        const invited = document.createElement("div");
-        invited.className = "invited";
-        invited.innerText =  e.detail.email;
-        inviteList.appendChild(invited);
-    });
     document.querySelector("#move-to-class").onclick = ()=>{
         let addedStudents = [];
         const list = document.querySelector(".student-list");
@@ -689,6 +705,16 @@ function addStudentEvents(username){
         const addStudentsData = {detail:{students:addedStudents}}
         const addStudents = new CustomEvent("add-students-list", addStudentsData);
         window.dispatchEvent(addStudents);
+    }
+    if(first){
+        window.addEventListener("invite-email-sent", (e)=>{
+            inviteEmailInput.value = "";
+            if(inviteList.children.length === 0) inviteList.innerText = "";
+            const invited = document.createElement("div");
+            invited.className = "invited";
+            invited.innerText =  e.detail.email;
+            inviteList.appendChild(invited);
+        });
     }
     
     function closeDropDown(){

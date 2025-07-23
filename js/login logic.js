@@ -59,7 +59,7 @@ function logIn(client, userData, requestPassword){
     document.querySelector(".dashboard-account-name").innerText = userData.username;
     document.querySelector(".dashboard-account-email").innerText = userData.email;
     document.querySelector(".dashboard-account-desc").innerText = userData.description || "Not provided";
-    document.querySelector(".dashboard-account-share").onclick = ()=>{accountURL(userData.userID)}
+    document.querySelector(".dashboard-account-share").onclick = ()=>{copyURL("userID", userData.userID)}
 
     document.querySelector(".about-me-name").innerText = userData.username || "";
     document.querySelector(".about-me-email").innerText = userData.email;
@@ -250,9 +250,9 @@ function googleLogin(client){
         }
     });
 }
-function accountURL(userID){
+function copyURL(param, userID){
     const currBaseURL = stripUrlParams(window.location.href);
-    const userURL = currBaseURL + "?id="+userID;
+    const userURL = currBaseURL + "?"+param+"="+userID;
 
     navigator.clipboard.writeText(userURL)
     .then(()=>{notification("URL copied to clipboard!")})
