@@ -4,39 +4,6 @@ function loadStudentsLogic(client, userID, username){
     let classNameSearch = "", inviteStudendSearch = "";
     let currLesson = 0, lessons = [[], [], []];
     let currClass = 0, classes = [];
-    
-    
-    //class-required
-    /*classes = [
-        {name:"All Students", 
-            students:[
-                {id:"1", name:"Student 1", iconURL:""}
-            ],
-            assignments:[
-                {id:"1", name:"Assignment Essay", type:"essay", content:"This is te essay requirement"},
-                {id:"2", name:"Assignment Name ABC", type:"abc", questionNum:5, answerNum:3, questionLevel:"C1-C2", questions:[
-                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]},
-                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]},
-                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]},
-                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]},
-                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]}
-                ]}
-            ],
-            homework:[
-
-            ]},
-        {name:"Ungrouped", students:[], assignments:[
-            {
-                id:"1", name:"Assignment Name QnA", type:"qna", questionNum:5, questionLevel:"C1-C2", questions:[
-                    {text:"What is this?"},
-                    {text:"What is this?"},
-                    {text:"What is this?"},
-                    {text:"What is this?"},
-                    {text:"What is this?"}
-                ]
-            }
-        ], homework:[]}
-    ];*/
 
     classesExist(classes.length);
     studentResizeLogic();
@@ -182,14 +149,23 @@ function loadStudentsLogic(client, userID, username){
     });
 
     client.emit("class-data-request", userID);
+    client.on("new-class-error", ()=>{
+        console.error("Failed creating a new Class");
+        notification("Class Create Error");
+    });
     client.on("class-data-request-fail", ()=>{
         console.error("Failed getting class data");
         notification("Class Data Error");
     })
     client.on("class-data-received", (classData, newCurrClass)=>{
         if(newCurrClass > -1 && newCurrClass < classData.length) currClass = newCurrClass;
+        lessons = [
+            classData[currClass].lessons.upcoming,
+            classData[currClass].lessons.completed,
+            classData[currClass].lessons.canceled
+        ];
         classes = classData;
-        console.log(classData)
+        
         classesExist(classes.length);
         studentPageSearch(classNameSearch, studentListSearch, assignmentSearch, homeworkSearch, inviteStudendSearch, classes, currClass);
         studentPageTabLogic(lessons, currLesson);
@@ -199,16 +175,6 @@ function loadStudentsLogic(client, userID, username){
         displayAssignmentsList(classes[currClass], assignmentSearch, false);
         displayAssignmentsList(classes[currClass], homeworkSearch, true);
     });
-    client.on("new-class-error", ()=>{
-        console.error("Failed creating a new Class");
-        notification("Class Create Error");
-    });
-
-
-    /*classes.push({name:eventName, students:[]});
-            generateClasses(classNameSearch, classes);
-            currClass = classes.length - 1;
-            displayCurrClass(classes[currClass], studentListSearch);*/
 }
 function studentResizeLogic(){
     const portraitButtonHolder = document.querySelector(".student-portrait-button-holder");
@@ -952,10 +918,38 @@ function generateLessons(lessons, currLesson){
 
 
 
+    
+    //class-required
+    /*classes = [
+        {name:"All Students", 
+            students:[
+                {id:"1", name:"Student 1", iconURL:""}
+            ],
+            assignments:[
+                {id:"1", name:"Assignment Essay", type:"essay", content:"This is te essay requirement"},
+                {id:"2", name:"Assignment Name ABC", type:"abc", questionNum:5, answerNum:3, questionLevel:"C1-C2", questions:[
+                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]},
+                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]},
+                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]},
+                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]},
+                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]}
+                ]}
+            ],
+            homework:[
 
-
-
-
+            ]},
+        {name:"Ungrouped", students:[], assignments:[
+            {
+                id:"1", name:"Assignment Name QnA", type:"qna", questionNum:5, questionLevel:"C1-C2", questions:[
+                    {text:"What is this?"},
+                    {text:"What is this?"},
+                    {text:"What is this?"},
+                    {text:"What is this?"},
+                    {text:"What is this?"}
+                ]
+            }
+        ], homework:[]}
+    ];*/
 
 
 

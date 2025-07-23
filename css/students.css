@@ -316,12 +316,24 @@
 .class-window-selected-tab:active{
     background-color:var(--background-gray-2);
 }
-#student-search-icon-holder, #assignment-search-icon-holder, #homework-search-icon-holder{
-    transform:translate(-50%);
+#student-search-icon-holder{
     margin-bottom:1rem;
     margin-top:0.5rem;
-    margin-left:50%;
     width:100%;
+}
+#assignment-search-icon-holder, #homework-search-icon-holder{
+    margin-bottom:1rem;
+    margin-top:0.5rem;
+    width:66%;
+}
+.generate-button{
+    position:absolute;
+    top:-0.5rem;
+    right:0px;
+}
+#generate-assignment, #generate-homework{
+    height:calc(2rem + 2px);
+    width:33%;
 }
 .class-window-body{
     position:relative;
@@ -695,7 +707,7 @@
 
     transform:translateY(1px);
     height:1.5rem;
-    width:21rem;
+    width:22.5rem;
     z-index:2;
 }
 .lesson-tab{
@@ -704,7 +716,7 @@
     background-color:var(--background-gray-2);
     color:var(--dark-blue);
     height:calc(100% - 1px);
-    width:7rem;
+    width:7.5rem;
 
     justify-content:flex-start;
     align-items:center;
@@ -739,11 +751,11 @@
     aspect-ratio:1;
     height:1rem;
 }
-#coming-tab{
-    background-image:url("../assets/icons/coming.png");
+#upcoming-tab{
+    background-image:url("../assets/icons/upcoming.png");
 }
-#finished-tab{
-    background-image:url("../assets/icons/finished.png");
+#completed-tab{
+    background-image:url("../assets/icons/completed.png");
 }
 #canceled-tab{
     background-image:url("../assets/icons/cancel.png");
@@ -1006,6 +1018,9 @@
         width:13rem;
     }
     .class-window-tab{
+        font-size:0.8rem;
+    }
+    .generate-button{
         font-size:0.8rem;
     }
 }

@@ -82,12 +82,17 @@ const usersSchema = new Schema({
     googleUserID:       {type:String,  required:false, default:null},
 });
 const classSchema = new Schema({
-    classID:     {type:String, required:true},
-    ownerID:     {type:String, required:true},
-    name:        {type:String, required:true},
-    students:    {type:Array,  required:true, default:[]},
-    assignments: {type:Array,  required:true, default:[]},
-    homework:    {type:Array,  required:true, default:[]}
+    classID:       {type:String, required:true},
+    ownerID:       {type:String, required:true},
+    name:          {type:String, required:true},
+    students:      {type:Array,  required:true, default:[]},
+    assignments:   {type:Array,  required:true, default:[]},
+    homework:      {type:Array,  required:true, default:[]},
+    lessons:{
+        upcoming:  {type:Array,  required:true, default:[]},
+        completed: {type:Array,  required:true, default:[]},
+        canceled:  {type:Array,  required:true, default:[]}
+    }
 });
  
 const Users = mongoose.model("User", usersSchema);
@@ -1183,6 +1188,7 @@ io.on("connection", (client)=>{
                     else{
                         console.error("Unsupported file type for CEFR analysis");
                         client.emit("cefr-read-error", 1);
+                        return;
                     }
                     if(!textContent.trim()){
                         console.error("No readable text found");
@@ -1318,8 +1324,8 @@ function userRegister(client, newAccount){
             return;
         }
         const userID = nanoid(10)
-        const allStudentsClass = await createClass("All Students", userID);
-        const ungroupedClass = await createClass("Ungrouped", userID);
+        const allStudentsClass = await createClass("All Students", userID, false);
+        const ungroupedClass = await createClass("Ungrouped", userID, false);
         if(!allStudentsClass || !ungroupedClass){
             client.emit("user-register-fail", 2);
             console.log("Class Creation Error")
@@ -1350,9 +1356,9 @@ function userRegister(client, newAccount){
         client.emit("user-register-fail", 0);
     });
 }
-function checkUserExistGoogleLogin(profile){
-    Users.find({email:profile.emails[0].value})
-    .then(async (result)=>{
+async function checkUserExistGoogleLogin(profile){
+    try{
+        const result = await Users.find({email: profile.emails[0].value});
         if(result.length > 0){
             const foundUser = result[0];
             if(!foundUser.googleConnected){
@@ -1360,37 +1366,41 @@ function checkUserExistGoogleLogin(profile){
                 foundUser.googleRefreshToken = profile.refreshToken;
                 foundUser.googleUserID = profile.id;
             }
-            foundUser.save().catch((error)=>{
+            await foundUser.save().catch((error)=>{
                 console.error("Client ID update error: ", error);
             });
             return;
         }
 
-        const userID = nanoid(10)
-        const allStudentsClass = await createClass("All Students", userID);
-        const ungroupedClass = await createClass("Ungrouped", userID);
-        if(!allStudentsClass || !ungroupedClass){
-            client.emit("user-register-fail", 2);
-            console.log("Class Creation Error")
-        }
+        const userID = nanoid(10);
         const newUser = new Users({
             userID:userID,
             username:profile.displayName,
             password:"",
             sessionID:nanoid(10),
             email:profile.emails[0].value,
-            classes:[allStudentsClass, ungroupedClass],
+            classes:[],
             googleConnected:true,
             googleRefreshToken:profile.refreshToken,
             googleUserID:profile.id
         });
+
         await newUser.save()
-        .then(()=>{console.log("New user '"+newUser.username+"' added")})
+        .then(async ()=>{
+            console.log("New user '"+newUser.username+"' added");
+
+            const allStudentsClass = await createClass("All Students", userID, false);
+            const ungroupedClass = await createClass("Ungrouped", userID, false);
+            if(!allStudentsClass || !ungroupedClass){
+                console.log("Class Creation Error");
+                return;
+            }
+        })
         .catch((error)=>{console.error("New user DB error: ", error)});
-    })
-    .catch((error)=>{
+    }
+    catch(error){
         console.error("Find user DB error: ", error);
-    });
+    }
 }
 async function createClass(name, ownerID){
     try{
@@ -1400,7 +1410,12 @@ async function createClass(name, ownerID){
             name:name,
             students:[],
             assignments:[],
-            homework:[]
+            homework:[],
+            lessons:{
+                upcoming:[],
+                completed:[],
+                canceled:[],
+            }
         });
         await newClass.save();
         const foundUser = await Users.findOne({userID:ownerID});
@@ -1485,16 +1500,16 @@ async function analyzeCEFR(client, text){
         - "totalLevel": The estimated overall CEFR level (A1, A2, B1, B2, C1, or C2).
         - "components": {
             "vocabulary": {
-                "level": string (A1–C2),
+                "level": string (A1-C2),
                 "distribution": { "A1": number, "A2": number, "B1": number, "B2": number, "C1": number, "C2": number }
             },
             "grammar": {
-                "level": string (A1–C2),
+                "level": string (A1-C2),
                 "distribution": { "A1": number, "A2": number, "B1": number, "B2": number, "C1": number, "C2": number },
                 "features": string[] (e.g. ["present simple", "past perfect", "passive voice"])
             },
             "syntax": {
-                "level": string (A1–C2),
+                "level": string (A1-C2),
                 "distribution": { "A1": number, "A2": number, "B1": number, "B2": number, "C1": number, "C2": number },
                 "features": string[] (e.g. ["compound sentences", "relative clauses"])
             }

@@ -265,7 +265,7 @@
 
 /*--File Display-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .file-display{
-    background-image:linear-gradient(to bottom, rgb(0,0,0), rgba(0,0,0,0));
+    background-image:linear-gradient(to bottom, rgb(0, 0, 0, 0.8), rgba(0, 0, 0, 0));
     background-color:rgba(0, 0, 0, 0.5);
     position:fixed;
     display:none;
@@ -283,13 +283,14 @@
 .file-display-title{
     color:var(--background-white);
     position:absolute;
-    width:calc(100% - 8rem);
+    width:calc(100% - 14rem);
     font-size:1.5rem;
     height:4rem;
-    left:4rem;
+    left:7rem;
     top:0px;
 
     justify-content:center;
+    word-wrap:break-word;
     align-items:center;
     font-weight:bold;
     display:flex;
@@ -324,7 +325,8 @@
     border:1px solid rgb(0, 0, 0);
     height:2.5rem;
     width:2.5rem;
-    top:0.75rem;
+    top:0.5rem;
+    z-index:2;
 }
 #file-display-download{
     background-image:url("../assets/icons/download.png");
@@ -338,8 +340,9 @@
     color:var(--background-white);
     aspect-ratio:auto;
     height:2.5rem;
-    width:5rem;
-    left:6.5rem;
+    width:5.5rem;
+    left:0.5rem;
+    top:3.5rem;
 }
 .file-display-body{
     height:calc(100% - 4rem);
@@ -613,6 +616,6 @@
         top:4rem;
     }
     #file-display-cefr{
-        top:4rem;
+        top:7rem;
     }
 }
