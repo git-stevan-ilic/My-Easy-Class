@@ -76,11 +76,22 @@ const usersSchema = new Schema({
         filename: {type:String, required:false, default:null},
         data:     {type:Buffer, required:false, default:null}
     },
+    classes:            {type:Array,   required:true},
     googleConnected:    {type:Boolean, required:true,  default:false},
     googleRefreshToken: {type:String,  required:false, default:null},
     googleUserID:       {type:String,  required:false, default:null},
 });
+const classSchema = new Schema({
+    classID:     {type:String, required:true},
+    ownerID:     {type:String, required:true},
+    name:        {type:String, required:true},
+    students:    {type:Array,  required:true, default:[]},
+    assignments: {type:Array,  required:true, default:[]},
+    homework:    {type:Array,  required:true, default:[]}
+});
+ 
 const Users = mongoose.model("User", usersSchema);
+const Classes = mongoose.model("Class", classSchema);
 
 /*--Setup Google Services----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 passport.use(new GoogleStrategy({
@@ -1094,6 +1105,15 @@ io.on("connection", (client)=>{
             client.emit("get-user-display-data-fail");
         });
     });
+    client.on("class-data-request", (userID)=>{
+        getClassData(client, userID, false);
+    });
+    client.on("new-class", async (name, userID)=>{
+        const newClassID = await createClass(name, userID);
+        console.log(newClassID)
+        if(!newClassID) client.emit("new-class-error");
+        else getClassData(client, userID, true);
+    });
     client.on("update-user-data", (userData)=>{
         Users.find({email:userData.email})
         .then((result)=>{
@@ -1152,7 +1172,7 @@ io.on("connection", (client)=>{
                         const result = await mammoth.extractRawText({buffer});
                         textContent = result.value;
                     }
-                    else if(mimeType.startsWith("image/")){
+                    /*else if(mimeType.startsWith("image/")){
                         textContent = await extractTextFromImage(buffer);
                     }
                     /*else if(mimeType.startsWith("image/")){
@@ -1192,12 +1212,6 @@ io.on("connection", (client)=>{
             console.error("AI Error: ", error);
             client.emit("chatgpt-message-error", error);
         });
-    });
-    client.on("chatgpt-assignment", (material)=>{
-
-    });
-    client.on("chatgpt-homework", (material)=>{
-
     });
 });
 
@@ -1274,6 +1288,7 @@ function userLogIn(client, email, password, sessionLogin, sessionID){
             icon:              foundUser.icon,
             description:       foundUser.description,
             subscription:      foundUser.subscription,
+            classes:           foundUser.classes,
             googleConnected:   foundUser.googleConnected
         }
         let requestPassword = false;
@@ -1296,23 +1311,31 @@ function userLogIn(client, email, password, sessionLogin, sessionID){
 }
 function userRegister(client, newAccount){
     Users.find({email:newAccount.email})
-    .then((result)=>{
+    .then(async (result)=>{
         if(result.length > 0){
             console.error("User already exists");
             client.emit("user-register-fail", 1);
             return;
         }
+        const userID = nanoid(10)
+        const allStudentsClass = await createClass("All Students", userID);
+        const ungroupedClass = await createClass("Ungrouped", userID);
+        if(!allStudentsClass || !ungroupedClass){
+            client.emit("user-register-fail", 2);
+            console.log("Class Creation Error")
+        }
         const newUser = new Users({
-            userID:nanoid(10),
+            userID:userID,
             username:newAccount.username,
             password:newAccount.password,
             sessionID:nanoid(10),
             email:newAccount.email,
+            classes:[allStudentsClass, ungroupedClass],
             googleConnected:false,
             googleRefreshToken:null,
             googleUserID:null
         });
-        newUser.save()
+        await newUser.save()
         .then(()=>{
             console.log("New user '"+newUser.username+"' added");
             client.emit("user-register-success", newUser);
@@ -1329,7 +1352,7 @@ function userRegister(client, newAccount){
 }
 function checkUserExistGoogleLogin(profile){
     Users.find({email:profile.emails[0].value})
-    .then((result)=>{
+    .then(async (result)=>{
         if(result.length > 0){
             const foundUser = result[0];
             if(!foundUser.googleConnected){
@@ -1343,22 +1366,114 @@ function checkUserExistGoogleLogin(profile){
             return;
         }
 
+        const userID = nanoid(10)
+        const allStudentsClass = await createClass("All Students", userID);
+        const ungroupedClass = await createClass("Ungrouped", userID);
+        if(!allStudentsClass || !ungroupedClass){
+            client.emit("user-register-fail", 2);
+            console.log("Class Creation Error")
+        }
         const newUser = new Users({
-            userID:nanoid(10),
+            userID:userID,
             username:profile.displayName,
             password:"",
             sessionID:nanoid(10),
             email:profile.emails[0].value,
+            classes:[allStudentsClass, ungroupedClass],
             googleConnected:true,
             googleRefreshToken:profile.refreshToken,
             googleUserID:profile.id
         });
-        newUser.save()
+        await newUser.save()
         .then(()=>{console.log("New user '"+newUser.username+"' added")})
         .catch((error)=>{console.error("New user DB error: ", error)});
     })
     .catch((error)=>{
         console.error("Find user DB error: ", error);
+    });
+}
+async function createClass(name, ownerID){
+    try{
+        const newClass = new Classes({
+            classID:nanoid(10),
+            ownerID:ownerID,
+            name:name,
+            students:[],
+            assignments:[],
+            homework:[]
+        });
+        await newClass.save();
+        const foundUser = await Users.findOne({userID:ownerID});
+        if(!foundUser){
+            console.error("New class DB error: User not found");
+            return null;
+        }
+        let idPresent = false;
+        for(let i = 0; i < foundUser.classes.length; i++){
+            if(foundUser.classes[i] === newClass.classID){
+                idPresent = true;
+                break;
+            }
+        }
+        if(!idPresent){
+            foundUser.classes.push(newClass.classID);
+            await foundUser.save();
+        }
+        return newClass.classID;
+    }
+    catch(error){
+        console.error("New class DB error: ", error);
+        return null;
+    }
+}
+function getClassData(client, userID, newClass){
+    Users.find({userID:userID})
+    .then((result)=>{
+        if(result.length === 0){
+            client.emit("class-data-request-fail");
+            return;
+        }
+
+        let error = false;
+        const foundUser = result[0], classData = [], classDataReceived = [];
+        for(let i = 0; i < foundUser.classes.length; i++) classDataReceived.push(false);
+        for(let i = 0; i < foundUser.classes.length; i++){
+            Classes.find({classID:foundUser.classes[i]})
+            .then((result)=>{
+                if(result.length === 0){
+                    console.error("Class not found DB");
+                    error = true;
+                    return;
+                }
+                classData[i] = result[0];
+                classDataReceived[i] = true;
+                if(error) client.emit("class-data-request-fail");
+                else if(checkClassRetreiveCompletge()){
+                    let newCurrClass = -1;
+                    if(newClass) newCurrClass = foundUser.classes.length-1;
+                    client.emit("class-data-received", classData, newCurrClass);
+                }
+            })
+            .catch((error)=>{
+                console.error("Find Class DB error: ", error);
+                error = true;
+            });
+        }
+
+        function checkClassRetreiveCompletge(){
+            let allReceived = true;
+            for(let i = 0; i < classDataReceived.length; i++){
+                if(!classDataReceived[i]){
+                    allReceived = false;
+                    break;
+                }
+            }
+            return allReceived;
+        }
+    })
+    .catch((error)=>{
+        console.error("Find user DB error: ", error);
+        client.emit("class-data-request-fail");
     });
 }
 async function analyzeCEFR(client, text){
@@ -1419,6 +1534,46 @@ async function analyzeCEFR(client, text){
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
 async function setupStripeProduct() {
     const product = await stripe.products.create({
@@ -1466,6 +1621,19 @@ async function extractTextFromImage(buffer) {
     if(detections.length > 0) return detections[0].description;
     return "";
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*--Setup Zoom Services------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 /*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/

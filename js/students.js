@@ -1,9 +1,13 @@
 /*--Initial------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function loadStudentsLogic(username){
+function loadStudentsLogic(client, userID, username){
     let studentListSearch = "", assignmentSearch = "", homeworkSearch = "";
     let classNameSearch = "", inviteStudendSearch = "";
     let currLesson = 0, lessons = [[], [], []];
-    let currClass = 0, classes = [
+    let currClass = 0, classes = [];
+    
+    
+    //class-required
+    /*classes = [
         {name:"All Students", 
             students:[
                 {id:"1", name:"Student 1", iconURL:""}
@@ -32,18 +36,12 @@ function loadStudentsLogic(username){
                 ]
             }
         ], homework:[]}
-    ];
+    ];*/
 
-    studentPageSearch(classNameSearch, studentListSearch, assignmentSearch, homeworkSearch, inviteStudendSearch, classes, currClass);
-    studentPageTabLogic(lessons, currLesson);
+    classesExist(classes.length);
     studentResizeLogic();
-    
     generateNewClassLogic();
     generateClasses(classNameSearch, classes);
-    generateLessons(lessons[currLesson], currLesson);
-    displayCurrClass(classes[currClass], studentListSearch);
-    displayAssignmentsList(classes[currClass], assignmentSearch, false);
-    displayAssignmentsList(classes[currClass], homeworkSearch, true);
     addStudentEvents(username);
 
     const newLessonName = document.querySelector("#new-lesson-input-name");
@@ -99,12 +97,7 @@ function loadStudentsLogic(username){
                 break;
             }
         }
-        if(!nameMatch){
-            classes.push({name:eventName, students:[]});
-            generateClasses(classNameSearch, classes);
-            currClass = classes.length - 1;
-            displayCurrClass(classes[currClass], studentListSearch);
-        }
+        if(!nameMatch) client.emit("new-class", eventName, userID);
     });
     window.addEventListener("request-student-list", ()=>{
         let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
@@ -187,6 +180,35 @@ function loadStudentsLogic(username){
         if(e.detail.isHomework) searchQuery = homeworkSearch;
         displayAssignmentsList(classes[currClass], searchQuery, e.detail.isHomework);
     });
+
+    client.emit("class-data-request", userID);
+    client.on("class-data-request-fail", ()=>{
+        console.error("Failed getting class data");
+        notification("Class Data Error");
+    })
+    client.on("class-data-received", (classData, newCurrClass)=>{
+        if(newCurrClass > -1 && newCurrClass < classData.length) currClass = newCurrClass;
+        classes = classData;
+        console.log(classData)
+        classesExist(classes.length);
+        studentPageSearch(classNameSearch, studentListSearch, assignmentSearch, homeworkSearch, inviteStudendSearch, classes, currClass);
+        studentPageTabLogic(lessons, currLesson);
+        generateClasses(classNameSearch, classes);
+        generateLessons(lessons[currLesson], currLesson);
+        displayCurrClass(classes[currClass], studentListSearch);
+        displayAssignmentsList(classes[currClass], assignmentSearch, false);
+        displayAssignmentsList(classes[currClass], homeworkSearch, true);
+    });
+    client.on("new-class-error", ()=>{
+        console.error("Failed creating a new Class");
+        notification("Class Create Error");
+    });
+
+
+    /*classes.push({name:eventName, students:[]});
+            generateClasses(classNameSearch, classes);
+            currClass = classes.length - 1;
+            displayCurrClass(classes[currClass], studentListSearch);*/
 }
 function studentResizeLogic(){
     const portraitButtonHolder = document.querySelector(".student-portrait-button-holder");
@@ -377,7 +399,14 @@ function generateNewClassLogic(){
 }
 
 /*--Display Windows----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+function classesExist(classNum){
+    const classRequired = document.querySelectorAll(".class-required");
+    if(classNum === 0) for(let i = 0; i < classRequired.length; i++) classRequired[i].style.display = "none";
+    else for(let i = 0; i < classRequired.length; i++) classRequired[i].style.display = "block";
+    
+}
 function displayCurrClass(currClass, studentListSearch){
+    if(!currClass) return;
     document.querySelector(".class-title").innerText = currClass.name;
     const studentList = document.querySelector("#class-window-student-list");
     while(studentList.children.length > 0) studentList.removeChild(studentList.lastChild);
@@ -436,6 +465,7 @@ function displayCurrClass(currClass, studentListSearch){
     }
 }
 function displayAssignmentsList(currClass, searchParam, isHomework){
+    if(!currClass) return;
     let domSearchParam = "#class-window-assignment-list";
     if(isHomework) domSearchParam = "#class-window-homework-list";
     const assignmentList = document.querySelector(domSearchParam);
@@ -787,6 +817,13 @@ function inviteListSearchApply(students, inviteStudendSearch){
 function generateLessons(lessons, currLesson){
     const listHolder = document.querySelector(".lesson-list-holder");
     while(listHolder.children.length > 0) listHolder.removeChild(listHolder.lastChild);
+    if(lessons.length === 0){
+        const noLesson = document.createElement("div");
+        noLesson.className = "no-lesson";
+        noLesson.innerHTML = "No lessons present";
+        listHolder.appendChild(noLesson);
+        return;
+    }
     for(let i = 0; i < lessons.length; i++){
         const  lesson = document.createElement("div"); 
         const lessonN = document.createElement("div"); 

@@ -24,7 +24,8 @@ function loadLogInLogic(client){
     client.on("user-register-fail", (errorType)=>{
         const errorTexts = [
             "Database Error",
-            "User already exists"
+            "User already exists",
+            "Classes Creation Error"
         ];
         document.querySelector("#sign-in-confirm").disabled = false;
         console.error("User register error: "+errorTexts[errorType]);
@@ -74,7 +75,7 @@ function logIn(client, userData, requestPassword){
     fadeIn(".assistant-holder", 0.1);
 
     loadPaymentLogic(client, userData.userID, userData.subscription);
-    loadStudentsLogic(userData.username);
+    loadStudentsLogic(client, userData.userID, userData.username);
     loadAboutMeLogic(client, userData);
     loadAssistantLogic(client);
     
