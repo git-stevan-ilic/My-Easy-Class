@@ -185,9 +185,11 @@ function loadStudentsLogic(client, userID, username){
 }
 function loadClassViewDisplay(receivedClass){
     const mainScreen = document.querySelector("#main");
-    while(mainScreen.children.length > 3) mainScreen.removeChild(mainScreen.firstChild);
+    while(mainScreen.children.length > 4) mainScreen.removeChild(mainScreen.firstChild);
+    mainScreen.removeChild(mainScreen.children[2]);
     mainScreen.removeChild(mainScreen.children[1]);
 
+    document.querySelector(".students-main-holder").style.justifyContent = "center";
     document.querySelector(".lesson-action").innerText = "Student Action";
     document.querySelector("#students-screen").style.display = "block";
     document.querySelector(".students-main").style.marginTop = "1rem";

@@ -28,7 +28,9 @@ const puppeteer = require("puppeteer");
 const bodyParser = require("body-parser");
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const visionClient = new vision.ImageAnnotatorClient();
+const visionClient = new vision.ImageAnnotatorClient({
+    keyFile:"./json/plenary-cascade-452811-p1-d482cdc02704.json"
+});
 const openAI = new openai({apiKey:process.env.CHATGPT_API_KEY});
 const app = express();
 const server = createServer(app);
@@ -1194,6 +1196,8 @@ io.on("connection", (client)=>{
                     }
                     /*else if(mimeType.startsWith("image/")){
                         textContent = await extractTextFromImage(buffer);
+                        console.log(textContent)
+                        return;
                     }
                     /*else if(mimeType.startsWith("image/")){
                         const [result] = await visionClient.textDetection({image:{content:buffer}});
@@ -1551,6 +1555,13 @@ async function analyzeCEFR(client, text){
         return null;
     }
 }
+async function extractTextFromImage(buffer){
+    const [result] = await visionClient.textDetection({image:{content:buffer}});
+    const detections = result.textAnnotations;
+    if(detections.length > 0) return detections[0].description;
+    return "";
+}
+
 
 
 
@@ -1642,15 +1653,6 @@ setupStripeProduct();
 
 
 
-
-
-
-async function extractTextFromImage(buffer) {
-    const [result] = await visionClient.textDetection({image:{content:buffer}});
-    const detections = result.textAnnotations;
-    if(detections.length > 0) return detections[0].description;
-    return "";
-}
 
 
 
