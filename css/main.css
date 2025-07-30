@@ -134,7 +134,7 @@ button:active:disabled{
     top:0.5rem;
 }
 
-input[type=text],[type=password],[type=email],[type=time],[type=date]{
+input[type=text],[type=number],[type=password],[type=url],[type=email],[type=time],[type=date]{
     background-color:var(--background-gray-1);
     border:1px solid var(--border-gray-1);
     border-radius:var(--border-radius-1);
@@ -144,8 +144,27 @@ input[type=text],[type=password],[type=email],[type=time],[type=date]{
     font-size:1rem;
     height:2rem;
 }
-input[type=text]:disabled,[type=password]:disabled,[type=email]:disabled,[type=time]:disabled,[type=date]:disabled{
+input[type=text]:disabled,[type=number]:disabled,[type=password]:disabled,[type=url]:disabled,[type=email]:disabled,[type=time]:disabled,[type=date]:disabled{
     opacity:0.5;
+}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{
+    -webkit-appearance:none;
+    margin: 0;
+}
+input[type=number]{
+    -moz-appearance:textfield;
+}
+
+textarea{
+    background-color:var(--background-white);
+    border:1px solid var(--border-gray-1);
+    border-radius:var(--border-radius-1);
+    color:var(--dark-blue);
+    font-family:"Inter";
+    font-size:1rem;
+    height:10rem;
+    resize:none;
 }
 
 .check-holder{
@@ -186,6 +205,19 @@ input[type=text]:disabled,[type=password]:disabled,[type=email]:disabled,[type=t
     transform:translateY(-10%) rotate(45deg);
     height:1.25rem;
     width:0.75rem;
+}
+
+select{
+    background-color:var(--background-white);
+    border:1px solid var(--border-gray-1);
+    border-radius:var(--border-radius-1);
+    color:var(--dark-blue);
+    font-size:1.25rem;
+    height:2.5rem;
+    width:8rem;
+
+    font-family:"Inter";
+    cursor:pointer;
 }
 
 .search-holder{

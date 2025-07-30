@@ -309,7 +309,7 @@
                     </div>
                     <div class="drive-body"></div>
                 </div>
-                <div class="screen tab-affected" id="students-screen">
+                <div class="screen tab-affected" id="students-screen" style="display:block;">
                     <div class="students-main-holder">
                         <div class="student-portrait-button-holder class-required"></div>
                         <div class="class-list-window">
@@ -426,29 +426,102 @@
                         </div>
                     </div>
                 </div>
-                <div class="screen" id="generate-assignment-screen" style="display:block;">
-                    <div class="preview-holder">
-                        <div class="preview-page"></div>
-                    </div>
-                    <div class="generate-settings-holder">
-                        <div class="generate-settings-title">Generate Assignment</div>
-                        <div class="generate-settings-sub-title">Type:</div>
-                        <div class="generate-select-type-holder">
-                            <div class="generate-select-type">
-                                <div class="check-holder" id="generate-assignment-check">
-                                    <div class="check" id="generate-assignment-check-mark">
-                                        <div class="check-lines"></div>
-                                    </div>
-                                </div>
-                                <div class="generate-select-type-text">Assignment</div>
+                <div class="screen" id="generate-assignment-screen">
+                    <div class="generate-holder">
+                        <div class="preview-holder">
+                            <div class="preview-page" contenteditable="true"></div>
+                            <div class="preview-load-mask">
+                                <div class="preview-loader"></div>
                             </div>
-                            <div class="generate-select-type">
-                                <div class="check-holder" id="generate-homework-check">
-                                    <div class="check" id="generate-homework-check-mark">
-                                        <div class="check-lines"></div>
+                        </div>
+                        <div class="generate-settings-holder">
+                            <div class="generate-settings">
+                                <div class="generate-settings-title">
+                                    Generate Assignment
+                                    <button id="generate-back">Go Back</button>
+                                </div>
+                                <div class="generate-settings-sub-title">Type:</div>
+                                <div class="generate-select-type-holder" id="generate-type">
+                                    <div class="generate-select-type">
+                                        <div class="check-holder" id="generate-assignment-check">
+                                            <div class="check" id="generate-assignment-check-mark">
+                                                <div class="check-lines"></div>
+                                            </div>
+                                        </div>
+                                        <div class="generate-select-type-text">Assignment</div>
+                                    </div>
+                                    <div class="generate-select-type">
+                                        <div class="check-holder" id="generate-homework-check">
+                                            <div class="check" id="generate-homework-check-mark">
+                                                <div class="check-lines"></div>
+                                            </div>
+                                        </div>
+                                        <div class="generate-select-type-text">Homework</div>
                                     </div>
                                 </div>
-                                <div class="generate-select-type-text">Homework</div>
+                                <div class="generate-settings-sub-title">Format:</div>
+                                <div class="generate-select-type-holder" id="generate-format">
+                                    <div class="generate-select-type">
+                                        <div class="check-holder" id="format-essay-check">
+                                            <div class="check" id="format-essay-check-mark">
+                                                <div class="check-lines"></div>
+                                            </div>
+                                        </div>
+                                        <div class="generate-select-type-text">Essay</div>
+                                    </div>
+                                    <div class="generate-select-type">
+                                        <div class="check-holder" id="format-abc-check">
+                                            <div class="check" id="format-abc-check-mark">
+                                                <div class="check-lines"></div>
+                                            </div>
+                                        </div>
+                                        <div class="generate-select-type-text">ABC Questions</div>
+                                    </div>
+                                    <div class="generate-select-type">
+                                        <div class="check-holder" id="format-qna-check">
+                                            <div class="check" id="format-qna-check-mark">
+                                                <div class="check-lines"></div>
+                                            </div>
+                                        </div>
+                                        <div class="generate-select-type-text">Question and Answer</div>
+                                    </div>
+                                </div>
+
+                                <div class="generate-display">
+                                    <div class="generate-settings-sub-title">Name *:</div>
+                                    <input type="text" class="generate-input" id="generate-name">
+                                </div>
+                                <div class="generate-display">
+                                    <div class="generate-settings-sub-title">Theme *:</div>
+                                    <input type="text" class="generate-input" id="generate-theme">
+                                </div>
+                                <div class="generate-display">
+                                    <div class="generate-settings-sub-title">Question Level:</div>
+                                    <select name="genrate-level-select" id="genrate-level-select" class="generate-input">
+                                        <option value="a1-a2">A1 - A2</option>
+                                        <option value="b1-b2">B1 - B2</option>
+                                        <option value="c1-c2">C1 - C2</option>
+                                    </select>
+                                </div>
+                                <div class="generate-display">
+                                    <div class="generate-settings-sub-title">Number of Questions *:</div>
+                                    <input type="number" class="generate-input" id="generate-question-number">
+                                </div>
+                                <div class="generate-display">
+                                    <div class="generate-settings-sub-title">Number of Answers *:</div>
+                                    <input type="number" class="generate-input" id="generate-answer-number">
+                                </div>
+                                <div class="generate-settings-sub-title">Refrence Links:</div>
+                                <div class="generate-assignment-url-holder">
+                                    <input type="url" class="generate-input">
+                                </div>
+                                <button class="blue-button" id="generate-add-url">New Link</button>
+                                <div class="generate-settings-sub-title">Additional Notes:</div>
+                                <textarea id="generate-notes" class="generate-input"></textarea>
+                                
+                                <button class="blue-button" id="generate">Generate</button>
+                                <button class="blue-button" id="generate-save" disabled>Save</button>
+                                <button class="blue-button" id="generate-cefr" disabled>Check CEFR</button>
                             </div>
                         </div>
                     </div>

@@ -26,15 +26,16 @@ const mammoth = require("mammoth");
 const stream = require("stream");
 const puppeteer = require("puppeteer");
 const bodyParser = require("body-parser");
+const cheerio = require("cheerio");
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const visionClient = new vision.ImageAnnotatorClient({
-    keyFile:"./json/plenary-cascade-452811-p1-d482cdc02704.json"
-});
 const openAI = new openai({apiKey:process.env.CHATGPT_API_KEY});
 const app = express();
 const server = createServer(app);
 const io = new Server(server);
+const visionClient = new vision.ImageAnnotatorClient({
+    keyFile:"./json/plenary-cascade-452811-p1-d482cdc02704.json"
+});
 
 app.use(cookieParser());
 const sessionMiddleware = session({
@@ -1050,9 +1051,7 @@ app.post("/generate-pdf", async (req, res)=>{
 /*--Input/Output-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 io.use((client, next) => {sessionMiddleware(client.request, {}, next);});
 io.on("connection", (client)=>{
-    if(client.handshake.session.passport?.user){
-        client.emit("google-status", client.handshake.session.passport.user);
-    }
+    if(client.handshake.session.passport?.user) client.emit("google-status", client.handshake.session.passport.user);
     client.on("disconnect", ()=>{userLogOff(client)});
     client.on("user-log-off", ()=>{userLogOff(client)});
     client.on("user-log-in", (email)=>{userLogIn(client, email, null, false, null)});
@@ -1238,6 +1237,23 @@ io.on("connection", (client)=>{
             client.emit("chatgpt-message-error", error);
         });
     });
+    client.on("generate-assignment", async (assignment)=>{
+        const prompt = await generateAssignmentPrompt(assignment);
+        openAI.chat.completions.create({
+            model:"gpt-4o",
+            messages:[{role:"user", content:prompt}]
+        })
+        .then((result)=>{
+            client.emit("generate-assignment-success", result.choices[0].message.content);
+        })
+        .catch((error)=>{
+            console.error("AI Assignment Error: ", error);
+            client.emit("generate-assignment-fail", error);
+        });
+    });
+    client.on("generate-assignment-cefr", (text)=>{
+        analyzeCEFR(client, text);
+    });
 });
 
 /*--Start Server-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -1253,6 +1269,7 @@ mongoose.connect(process.env.DB_URL,{})
     server.listen(process.env.PORT, ()=>{console.log("Running at port "+process.env.PORT)});
 });
 
+/*--Account Functions--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 function userLogOff(client){
     Users.find({clientID:client.id})
     .then((result)=>{
@@ -1421,6 +1438,8 @@ async function checkUserExistGoogleLogin(profile){
         console.error("Find user DB error: ", error);
     }
 }
+
+/*--Class Functions----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 async function createClass(name, ownerID){
     try{
         const newClass = new Classes({
@@ -1510,6 +1529,8 @@ function getClassData(client, userID, newClass){
         client.emit("class-data-request-fail");
     });
 }
+
+/*--AI Functions-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 async function analyzeCEFR(client, text){
     if(!text.trim()) return null;
     const systemPrompt = `
@@ -1555,14 +1576,92 @@ async function analyzeCEFR(client, text){
         return null;
     }
 }
+async function generateAssignmentPrompt(settings){
+    const {format, name, theme, questionNum, answerNum, notes, questionLevel, type} = settings;
+    const noteText = notes ? `Additional notes: ${notes}` : "";
+    let referenceContent = "";
+    for(const url of settings.urls){
+        const content = await getTextFromURL(url);
+        if(content) referenceContent += `\n\n---\nReference from ${url}:\n${content}`;
+    }
+    switch(format){
+        default: return `Unsupported format: ${format}`;
+        case "Essay":
+            return `
+                You are an educational AI. Generate a JSON object with this structure:
+                {
+                    name: "...",
+                    format: "Essay",
+                    assignmentType: "${type}",
+                    content: "..."
+                }
+                Generate an assignment titled "${name}", where the student is required to write an essay on the theme: "${theme}".
+                ${noteText}
+                Use the following reference material to inform the assignment:
+                ${referenceContent}
+            `;
+        case "ABC Question":
+            return `
+                You are an educational AI. Generate a JSON object with this structure:
+                {
+                    name: "...",
+                    format: "ABC Question",
+                    assignmentType: "${type}",
+                    questionNum: ...,
+                    answerNum: ...,
+                    questionLevel: "...",
+                    questions: [
+                        { text: "...", answers: ["...", "...", ...], correct: "..." },
+                        ...
+                    ]
+                }
+
+                Generate ${questionNum} multiple-choice questions on the theme: "${theme}", with ${answerNum} answers per question.
+                Randomize the order of the answers. Do NOT always place the correct answer first.
+                IMPORTANT: Vary the correct answer positions across questions. The correct answer should sometimes be first, sometimes second, etc.
+                Try to balance the positions across all questions so the correct answer does not appear most often in one place.
+                Use the field "correct" (a number like 0, 1, 2, etc.) to mark which option is correct **based on the shuffled array**.
+                The assignment should be titled "${name}".
+                CEFR Level: "${questionLevel}". 
+                ${noteText}
+                Use the following reference material to inform the assignment:
+                ${referenceContent}
+            `;
+        case "Question and Answer":
+            return `
+                You are an educational AI. Generate a JSON object with this structure:
+                {
+                    name: "...",
+                    format: "Question and Answer",
+                    assignmentType: "${type}",
+                    questionNum: ...,
+                    questionLevel: "...",
+                    questions: [
+                        { text: "..." },
+                        ...
+                    ]
+                }
+
+                Generate ${questionNum} short-answer questions about: "${theme}".
+                The assignment should be called "${name}".
+                CEFR Level: "${questionLevel}". 
+                ${noteText}
+                Use the following reference material to inform the assignment:
+                ${referenceContent}
+            `;
+    }
+}
+async function getTextFromURL(url){
+  const { data } = await axios.get(url);
+  const $ = cheerio.load(data);
+  return $('body').text().replace(/\s+/g, ' ').trim().slice(0, 3000);;
+}
 async function extractTextFromImage(buffer){
     const [result] = await visionClient.textDetection({image:{content:buffer}});
     const detections = result.textAnnotations;
     if(detections.length > 0) return detections[0].description;
     return "";
 }
-
-
 
 
 

@@ -257,6 +257,7 @@ function generateDashboardDriveElements(client, allDates){
     }
 }
 function displayCEFR(analysis){
+    document.querySelector("#generate-cefr").disabled = false;
     document.querySelector("#file-display-cefr").disabled = false;
     if(analysis === null){
         console.error("CEFR analysis failed");

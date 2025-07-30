@@ -172,6 +172,7 @@ function loadStudentsLogic(client, userID, username){
         ];
         classes = classData;
 
+        loadGenerateLogic(client, classes[currClass].classID);
         addStudentEvents(username, classes[currClass].classID);
         classesExist(classes.length);
         studentPageSearch(classNameSearch, studentListSearch, assignmentSearch, homeworkSearch, inviteStudendSearch, classes, currClass, false);
@@ -807,7 +808,7 @@ function inviteListSearchApply(students, inviteStudendSearch){
     else noIniteList.style.display = "none";
 }
 
-/*--Lessons-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*--Lessons------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 function generateLessons(lessons, currLesson){
     const listHolder = document.querySelector(".lesson-list-holder");
     while(listHolder.children.length > 0) listHolder.removeChild(listHolder.lastChild);
@@ -895,37 +896,281 @@ function generateLessons(lessons, currLesson){
     }
 }
 
+/*--Generate Assignment Logic------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+function loadGenerateLogic(client, classID){
+    let assignmentType = 0, format = 0;
+    displayEssayGeneration();
 
+    const generateType = document.querySelector("#generate-type");
+    for(let i = 0; i < generateType.children.length; i++){
+        generateType.children[i].children[0].onclick = ()=>{
+            for(let j = 0; j < generateType.children.length; j++){
+                const currCheck = generateType.children[j].children[0].children[0];
+                currCheck.style.display = "none";
+            }
+            const check = generateType.children[i].children[0].children[0];
+            check.style.display = "flex";
+            assignmentType = i;
+        }
+    }
 
+    const formatFunctions = [displayEssayGeneration, displayABCGeneration, displayQnAGeneration];
+    const generateFormat = document.querySelector("#generate-format");
+    for(let i = 0; i < generateFormat.children.length; i++){
+        generateFormat.children[i].children[0].onclick = ()=>{
+            for(let j = 0; j < generateFormat.children.length; j++){
+                const currCheck = generateFormat.children[j].children[0].children[0];
+                currCheck.style.display = "none";
+            }
+            const check = generateFormat.children[i].children[0].children[0];
+            check.style.display = "flex";
+            format = i;
+            formatFunctions[i]();
+        }
+    }
 
+    const urlHolder = document.querySelector(".generate-assignment-url-holder");
+    const generateCEFR = document.querySelector("#generate-cefr");
+    const generateSave = document.querySelector("#generate-save");
+    const generateButton = document.querySelector("#generate");
+    document.querySelector("#generate-add-url").onclick = ()=>{
+        const urlInput = document.createElement("input");
+        urlInput.className = "generate-input";
+        urlInput.type = "url";
+        urlHolder.appendChild(urlInput);
+    }
+    document.querySelector("#generate-back").onclick = ()=>{
+        fadeOut("#generate-assignment-screen", 0.1, ()=>{
+            fadeIn("#students-screen", 0.1, "block", null);
+        });
+    }
+    document.querySelector("#new-assignment").onclick = ()=>{
+        openGenerateAssignment();
+    }
+    generateButton.onclick = ()=>{
+        const assignment = generateAssignmentObject(assignmentType, format);
+        if(!assignment){
+            notification("Input all required fields");
+            return;
+        }
+        generateButton.disabled = true;
+        generateSave.disabled = true;
+        generateCEFR.disabled = true;
+        client.emit("generate-assignment", assignment);
+        fadeIn(".preview-load-mask", 0.1, "block", null);
+    }
 
+    window.addEventListener("reset-generate-assignment-settings", (e)=>{
+        assignmentType = 0;
+        format = 0;
+    });
 
+    client.on("generate-assignment-fail", (error)=>{
+        generateButton.disabled = false;
+        notification("Failed generating assignment");
+        fadeOut(".preview-load-mask", 0.1, null);
+        console.error(error);
+    });
+    client.on("generate-assignment-success", (result)=>{
+        generateButton.disabled = false;
+        generateSave.disabled = false;
+        generateCEFR.disabled = false;
+        const assignment = extractJSON(result);
+        if(!assignment){
+            generateButton.disabled = false;
+            notification("Failed generating assignment");
+            fadeOut(".preview-load-mask", 0.1, null);
+        }
+        generateAssignmentPreview(assignment);
+        fadeOut(".preview-load-mask", 0.1, null);
 
+        generateCEFR.onclick = ()=>{
+            const text = assignmentToText(assignment);
+            client.emit("generate-assignment-cefr", text);
+            generateCEFR.disabled = true;
+        }
+    });
 
+    setTimeout(()=>{
+        document.querySelector("#new-assignment").click()
+    }, 200)
+}
+function generateAssignmentObject(assignmentType, format){
+    const assignmentTypes = ["Assignment", "Homework"];
+    const assignmentFormats = ["Essay", "ABC Question", "Question and Answer"];
+    const assignment = {
+        type:assignmentTypes[assignmentType],
+        format:assignmentFormats[format],
+    }
 
+    const urlHolder = document.querySelector(".generate-assignment-url-holder");
+    const theme =  document.querySelector("#generate-theme").value;
+    const notes = document.querySelector("#generate-notes").value;
+    const name = document.querySelector("#generate-name").value;
+    if(!name || !theme) return null;
+    assignment.theme = theme;
+    assignment.notes = notes;
+    assignment.name = name;
+    assignment.urls = [];
+    for(let i = 0; i < urlHolder.children.length; i++){
+        if(isValidURL(urlHolder.children[i].value)) assignment.urls.push(urlHolder.children[i].value);
+    }
 
+    if(format > 0){
+        const questionLevel = document.querySelector("#genrate-level-select").value;
+        assignment.questionLevel = questionLevel;
 
+        const questionNum = document.querySelector("#generate-question-number").value;
+        if(!questionNum) return null;
+        assignment.questionNum = parseInt(questionNum);
 
+        if(format === 1){
+            const answerNum = document.querySelector("#generate-answer-number").value;
+            if(!answerNum) return null;
+            assignment.answerNum = parseInt(answerNum);
+        }
+    }
+    return assignment;
+}
+function extractJSON(content){
+    try{
+        const start = content.indexOf("{");
+        const end = content.lastIndexOf("}");
+        if (start === -1 || end === -1) return null;
 
+        const jsonString = content.substring(start, end + 1);
+        return JSON.parse(jsonString);
+    }
+    catch(error){
+        console.error("JSON parse error:", error);
+        return null;
+    }
+}
+function assignmentToText(assignment){
+    let output = `Assignment: ${assignment.name}\nType: ${assignment.format}\n`;
+    if(assignment.format === "Essay") output += `Essay Task:\n${assignment.content}\n`;
+    else{
+        output += `Questions:\n`;
+        assignment.questions.forEach((q, i)=>{
+            output += `Q${i + 1}: ${q.text}\n`;
+            if(q.answers){
+                q.answers.forEach((a, idx)=>{
+                    output += `  - ${a}\n`;
+                });
+            }
+        });
+    }
+    return output;
+}
+function isValidURL(text){
+    try{
+        new URL(text);
+        return true;
+    }
+    catch{
+        return false;
+    }
+}
 
+/*--Generate Assignment DOM--------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+function openGenerateAssignment(){
+    resetGenerateAssignmentSettings();
+    fadeOut("#students-screen", 0.1, ()=>{
+        fadeIn("#generate-assignment-screen", 0.1, "block", null);
+    });
+}
+function resetGenerateAssignmentSettings(){
+    document.querySelector(".preview-page").innerHTML = "";
+    document.querySelector("#generate-cefr").disabled = true;
+    document.querySelector("#generate-save").disabled = true;
+    document.querySelector("#genrate-level-select").value = "a1-a2";
+    document.querySelector("#generate-question-number").value = 5;
+    document.querySelector("#generate-answer-number").value = 3;
+    document.querySelector("#generate-theme").value = "";
+    document.querySelector("#generate-notes").value = "";
+    document.querySelector("#generate-name").value = "";
 
+    const generateType = document.querySelector("#generate-type");
+    for(let i = 0; i < generateType.children.length; i++) generateType.children[i].children[0].children[0].style.display = "none";
+    generateType.children[0].children[0].children[0].style.display = "flex";
 
+    const generateFormat = document.querySelector("#generate-format");
+    for(let i = 0; i < generateFormat.children.length; i++) generateFormat.children[i].children[0].children[0].style.display = "none";
+    generateFormat.children[0].children[0].children[0].style.display = "flex";
 
+    const generateAssignmentURLHolder = document.querySelector(".generate-assignment-url-holder");
+    while(generateAssignmentURLHolder.children.length > 1) generateAssignmentURLHolder.removeChild(generateAssignmentURLHolder.lastChild);
+    generateAssignmentURLHolder.children[0].value = "";
 
+    const resetSettingsEvent = new Event("reset-generate-assignment-settings");
+    window.dispatchEvent(resetSettingsEvent);
+}
+function displayEssayGeneration(){
+    const generateDisplay = document.querySelectorAll(".generate-display");
+    for(let i = 0; i < generateDisplay.length; i++) generateDisplay[i].style.display = "none";
+    generateDisplay[0].style.display = "block";
+    generateDisplay[1].style.display = "block";
+}
+function displayABCGeneration(){
+    const generateDisplay = document.querySelectorAll(".generate-display");
+    for(let i = 0; i < generateDisplay.length; i++) generateDisplay[i].style.display = "none";
+    generateDisplay[0].style.display = "block";
+    generateDisplay[1].style.display = "block";
+    generateDisplay[2].style.display = "block";
+    generateDisplay[3].style.display = "block";
+    generateDisplay[4].style.display = "block";
+}
+function displayQnAGeneration(){
+    const generateDisplay = document.querySelectorAll(".generate-display");
+    for(let i = 0; i < generateDisplay.length; i++) generateDisplay[i].style.display = "none";
+    generateDisplay[0].style.display = "block";
+    generateDisplay[1].style.display = "block";
+    generateDisplay[2].style.display = "block";
+    generateDisplay[3].style.display = "block";
+}
+function generateAssignmentPreview(assignment){
+    const previewPage = document.querySelector(".preview-page");
+    previewPage.innerHTML = "";
 
+    const title = document.createElement("div");
+    title.className = "display-assignment-title";
+    title.innerText = assignment.name;
+    previewPage.appendChild(title);
 
+    const letters = [
+        "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", 
+        "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"
+    ];
 
+    if(assignment.format === "Question and Answer" || assignment.format === "ABC Question"){
+        for(let i = 0; i < assignment.questions.length; i++){
+            const question = document.createElement("div");
+            question.className = "display-assignemnt-question";
+            question.innerText = (i+1) + ") "+assignment.questions[i].text;
+            previewPage.appendChild(question);
 
-
-
-
-
-
-
-
-
-
-
+            if(assignment.format === "Question and Answer"){
+                const empty = document.createElement("div");
+                empty.className = "display-assignemnt-empty";
+                previewPage.appendChild(empty);
+            }
+            else{
+                for(let j = 0; j < assignment.questions[i].answers.length; j++){
+                    const answer = document.createElement("div");
+                    answer.className = "display-assignemnt-answer";
+                    answer.innerText = letters[j]+") "+ assignment.questions[i].answers[j];
+                    previewPage.appendChild(answer);
+                }
+            }
+        }
+    }
+    else{
+        const requirement = document.createElement("div");
+        requirement.className = "display-assignment-requirement";
+        requirement.innerText = assignment.content;
+        previewPage.appendChild(requirement);
+    }
+}
 
 
 
