@@ -278,36 +278,38 @@
                     </div>
                 </div>
                 <div class="screen tab-affected" id="drive-screen">
-                    <div class="drive-head">
-                        <input type="file" id="drive-file-upload">
-                        <button id="drive-upload">Upload</button>
-                        <div class="search-holder" id="drive-search-holder">
-                            <div class="search-icon" id="drive-search-icon"></div>
-                            <input type="text" class="search-input" id="drive-search">
-                        </div>
-                        <div class="filter">Filter: None</div>
-                        <div class="filter-window-holder">
-                            <div class="filter-window-arrow"></div>
-                            <div class="filter-window">
-                                <div class="filter-window-body">
-                                    <div class="filter-window-text">File Type</div>
-                                    <select class="filter-select" name="filter-select" value="none">
-                                        <option value="none" >None    </option>
-                                        <option value="text" >Text    </option>
-                                        <option value="pdf"  >PDF     </option>
-                                        <option value="doc"  >Document</option>
-                                        <option value="image">Image   </option>
-                                        <option value="video">Video   </option>
-                                    </select>
-                                </div>
-                                <div class="filter-window-foot">
-                                    <button class="filter-button" id="filter-save">Save</button>
-                                    <button class="filter-button" id="filter-cancel">Cancel</button>
+                    <div class="drive-holder">
+                        <div class="drive-head">
+                            <input type="file" id="drive-file-upload">
+                            <button id="drive-upload">Upload</button>
+                            <div class="search-holder" id="drive-search-holder">
+                                <div class="search-icon" id="drive-search-icon"></div>
+                                <input type="text" class="search-input" id="drive-search">
+                            </div>
+                            <div class="filter">Filter: None</div>
+                            <div class="filter-window-holder">
+                                <div class="filter-window-arrow"></div>
+                                <div class="filter-window">
+                                    <div class="filter-window-body">
+                                        <div class="filter-window-text">File Type</div>
+                                        <select class="filter-select" name="filter-select" value="none">
+                                            <option value="none" >None    </option>
+                                            <option value="text" >Text    </option>
+                                            <option value="pdf"  >PDF     </option>
+                                            <option value="doc"  >Document</option>
+                                            <option value="image">Image   </option>
+                                            <option value="video">Video   </option>
+                                        </select>
+                                    </div>
+                                    <div class="filter-window-foot">
+                                        <button class="filter-button" id="filter-save">Save</button>
+                                        <button class="filter-button" id="filter-cancel">Cancel</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                        <div class="drive-body"></div>
                     </div>
-                    <div class="drive-body"></div>
                 </div>
                 <div class="screen tab-affected" id="students-screen" style="display:block;">
                     <div class="students-main-holder">
@@ -523,9 +525,9 @@
                                     <div class="file-input-text" id="generate-input-file-text"></div>
                                 </div>
                                 <div class="generate-settings-sub-title">Browse Drive:</div>
-                                <div class="file-input-holder" id="generate-input-drive">
-                                    <button class="blue-button file-input-button">Browse</button>
-                                    <div class="file-input-text"></div>
+                                <div class="file-input-holder">
+                                    <button class="blue-button file-input-button" id="generate-input-drive">Browse</button>
+                                    <div class="file-input-text" id="generate-input-drive-text"></div>
                                 </div>
                                 <div class="generate-settings-sub-title">Additional Notes:</div>
                                 <textarea id="generate-notes" class="generate-input"></textarea>
@@ -1031,6 +1033,19 @@
                     </div>
                 </div>
                 <div class="display-assignment-body"></div>
+            </div>
+        </div>
+        <div class="screen-mask" id="display-assignment-drive">
+            <div class="screen-mask-background"></div>
+            <div class="display-drive-window">
+                <div class="display-drive-window-head">
+                    Select Drive Files
+                    <button class="close" id="display-assignment-drive-close"></button>
+                </div>
+                <div class="display-drive-window-body"></div>
+                <div class="display-drive-window-foot">
+                    <button class="blue-button" id="generate-assignment-drive-confirm">Confrim</button>
+                </div>
             </div>
         </div>
 

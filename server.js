@@ -1576,11 +1576,16 @@ async function analyzeCEFR(client, text){
     }
 }
 async function generateAssignmentPrompt(settings){
-    const {format, name, theme, questionNum, answerNum, notes, questionLevel, type, files} = settings;
+    const {format, name, theme, questionNum, answerNum, notes, questionLevel, type, files, selectedIDs, userID} = settings;
     let fileContent = "";
     for(let i = 0; i < files.length; i++){
         const fileText = await extractTextFromFile(files[i]);
         if(fileText !== null) fileContent += `\n\n---\nContent from ${files[i].name}:\n${fileText}`;
+    }
+    let driveContent = "";
+    for(let i = 0; i < selectedIDs.length; i++){
+        const fileText = await extractTextFromDriveFile(userID, selectedIDs[i]);
+        if(fileText !== null) driveContent += `\n\n---\nContent from drive file:\n${fileText}`;
     }
     
     const noteText = notes ? `Additional notes: ${notes}` : "";
@@ -1606,6 +1611,8 @@ async function generateAssignmentPrompt(settings){
                 ${referenceContent}
                 Use the following material from uploaded files to inform the assignment:
                 ${fileContent}
+                Use the following material from drive files to inform the assignment:
+                ${driveContent}
             `;
         case "ABC Question":
             return `
@@ -1635,6 +1642,8 @@ async function generateAssignmentPrompt(settings){
                 ${referenceContent}
                 Use the following material from uploaded files to inform the assignment:
                 ${fileContent}
+                Use the following material from drive files to inform the assignment:
+                ${driveContent}
             `;
         case "Question and Answer":
             return `
@@ -1659,6 +1668,8 @@ async function generateAssignmentPrompt(settings){
                 ${referenceContent}
                 Use the following material from uploaded files to inform the assignment:
                 ${fileContent}
+                Use the following material from drive files to inform the assignment:
+                ${driveContent}
             `;
     }
 }
@@ -1684,6 +1695,55 @@ async function extractTextFromFile(fileData){
     }
     else text = null;
     return text;
+}
+async function extractTextFromDriveFile(userID, fileId){
+    try{
+        const result = await Users.find({userID:userID});
+        if(result.length === 0){
+            console.error("Find user DB error: User not found");
+            return null;
+        }
+
+        const foundUser = result[0];
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.GOOGLE_REDIRECT_URL
+        );
+        oauth2Client.setCredentials({refresh_token:foundUser.googleRefreshToken});
+        await oauth2Client.getAccessToken();
+
+        const drive = google.drive({version:"v3", auth:oauth2Client});
+        const metadata = await drive.files.get({fileId, fields:"mimeType"});
+        const mimeType = metadata.data.mimeType;
+
+        const res = await drive.files.get({fileId, alt:"media"}, {responseType:"arraybuffer"});
+        const buffer = Buffer.from(res.data);
+        let textContent = "";
+
+        if(mimeType.startsWith("text/")) textContent = buffer.toString("utf8");
+        else if(mimeType === "application/pdf"){
+            const pdfData = await pdfParse(buffer);
+            textContent = pdfData.text;
+        }
+        else if(mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"){
+            const result = await mammoth.extractRawText({buffer});
+            textContent = result.value;
+        }
+        else{
+            console.error("Unsupported file type for CEFR analysis");
+            return null;
+        }
+        if(!textContent.trim()){
+            console.error("No readable text found");
+            return null;
+        }
+        return textContent;
+    }
+    catch(error){
+        console.error("Reading Drive error: ", error);
+        return null;
+    }
 }
 async function extractTextFromImage(buffer){
     const [result] = await visionClient.textDetection({image:{content:buffer}});

@@ -65,14 +65,40 @@ function loadDriveLogic(client){
         generateDriveData(client, driveFiles, currFilter, currSearch);
     }
 
+    const displayDriveBody = document.querySelector(".display-drive-window-body");
+    const driveScreen = document.querySelector("#drive-screen");
+    const driveHolder = document.querySelector(".drive-holder");
+    let generateAssignment = false;
+
     getDriveFiles().then((files)=>{
-        generateDriveData(client, files, currFilter, currSearch);
+        generateDriveData(client, files, currFilter, currSearch, generateAssignment);
         driveFiles = files;
     });
     document.addEventListener("reload-drive-files", ()=>{
         getDriveFiles().then((files)=>{
-            generateDriveData(client, files, currFilter, currSearch);
+            generateDriveData(client, files, currFilter, currSearch, generateAssignment);
             driveFiles = files;
+        });
+    });
+    window.addEventListener("generate-assignment-drive", ()=>{
+        generateAssignment = !generateAssignment;
+        if(generateAssignment) displayDriveBody.appendChild(driveHolder);
+        getDriveFiles().then((files)=>{
+            generateDriveData(client, files, currFilter, currSearch, generateAssignment);
+            driveFiles = files;
+
+            if(!generateAssignment){
+                fadeOut("#display-assignment-drive", 0.1, ()=>{
+                    document.querySelector("#display-assignment-drive-close").disabled = false;
+                    document.querySelector("#generate-assignment-drive-confirm").disabled = false;
+                    driveScreen.appendChild(driveHolder);
+                });
+            }
+            else{
+                fadeIn("#display-assignment-drive", 0.1, "block", ()=>{
+                    document.querySelector("#generate-input-drive").disabled = false;
+                });
+            }
         });
     });
 
@@ -97,7 +123,7 @@ async function getDriveFiles(){
 }
 
 /*--Generate Drive Data------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function generateDriveData(client, files, filter, fileName){
+function generateDriveData(client, files, filter, fileName, generateAssignment){
     let allDates = [];
     for(let i = 0; i < files.length; i++){
         let fileFormat = "";
@@ -151,7 +177,7 @@ function generateDriveData(client, files, filter, fileName){
             }
         }
     }
-    generateDriveElements(client, allDates);
+    generateDriveElements(client, allDates, generateAssignment);
     generateDashboardDriveElements(client, allDates);
 }
 function convertByteSize(bytes){
@@ -162,7 +188,7 @@ function convertByteSize(bytes){
 }
 
 /*--Generate Drive Elements--------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function generateDriveElements(client, dates){
+function generateDriveElements(client, dates, generateAssignment){
     const driveBody = document.querySelector(".drive-body");
     while(driveBody.children.length > 0) driveBody.removeChild(driveBody.lastChild);
 
@@ -175,7 +201,7 @@ function generateDriveElements(client, dates){
     else{
         for(let i = 0; i < dates.length; i++){
             const divider = generateDriveDivider(dates[i].date);
-            const holder = generateDriveHolder(client, dates[i].files);
+            const holder = generateDriveHolder(client, dates[i].files, generateAssignment);
             driveBody.appendChild(divider);
             driveBody.appendChild(holder);
         }
@@ -198,7 +224,7 @@ function generateDriveDivider(date){
     divider.appendChild(divivderLineBig);
     return divider;
 }
-function generateDriveHolder(client, files){
+function generateDriveHolder(client, files, generateAssignment){
     const holder = document.createElement("div");
     holder.className = "drive-holder";
 
@@ -226,7 +252,11 @@ function generateDriveHolder(client, files){
         driveItem.appendChild(driveItemInfo);
         holder.appendChild(driveItem);
 
-        driveItem.onclick = ()=>{displayFile(client, files[i].id, files[i].name, files[i].mimeType)}
+        if(!generateAssignment) driveItem.onclick = ()=>{displayFile(client, files[i].id, files[i].name, files[i].mimeType)}
+        else driveItem.onclick = ()=>{
+            const generateDriveClick = new CustomEvent("generate-drive-click", {detail:{id:files[i].id, element:driveItem}});
+            window.dispatchEvent(generateDriveClick);
+        }
     }
     return holder;
 }

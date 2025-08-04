@@ -1098,6 +1098,58 @@ input[type=text].generate-input{
     height:2rem;
 }
 
+/*--Display Drive Window-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+.display-drive-window{
+    box-shadow:0.25rem 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+    background-color:var(--background-white);
+    border-radius:var(--border-radius-1);
+    transform:translate(-50%, -50%);
+    height:calc(100vh - 3rem);
+    width:calc(100% - 3rem);
+    padding:1rem;
+    left:50%;
+    top:50%;
+    position:absolute;
+    color:var(--dark-blue);
+
+    justify-content:flex-start;
+    align-items:flex-start;
+    flex-direction:column;
+    display:flex;
+}
+.display-drive-window-head{
+    justify-content:center;
+    align-items:flex-start;
+    font-weight:bold;
+    display:flex;
+
+    font-size:2rem;
+    flex-shrink:0;
+    height:4rem;
+    width:100%;
+}
+.display-drive-window-body{
+    background-color:var(--background-gray-1);
+    border:1px solid var(--border-gray-1);
+    border-radius:var(--border-radius-1);
+    overflow-x:hidden;
+    overflow-y:auto;
+    height:100%;
+    width:100%;
+}
+.display-drive-window-foot{
+    justify-content:center;
+    align-items:center;
+    display:flex;
+
+    flex-shrink:0;
+    height:4rem;
+    width:100%;
+}
+#generate-assignment-drive-confirm{
+    width:10rem;
+}
+
 /*--Mobile Dispaly-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 @media only screen and (max-width:1340px){
     .students-main-holder{

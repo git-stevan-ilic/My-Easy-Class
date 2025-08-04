@@ -222,6 +222,10 @@
     color:var(--gray-1);
     height:2.5rem;
 }
+.generate-drive-selected{
+    box-shadow:0px 0px 1rem var(--accent-blue-1);
+    border:1px solid var(--accent-blue-1);
+}
 
 .download-notification{
     box-shadow:0.25rem 0.25rem 0.5rem rgba(0, 0, 0, 0.15);

@@ -172,7 +172,7 @@ function loadStudentsLogic(client, userID, username){
         ];
         classes = classData;
 
-        loadGenerateLogic(client, classes[currClass].classID);
+        loadGenerateLogic(client, userID, classes[currClass].classID);
         addStudentEvents(username, classes[currClass].classID);
         classesExist(classes.length);
         studentPageSearch(classNameSearch, studentListSearch, assignmentSearch, homeworkSearch, inviteStudendSearch, classes, currClass, false);
@@ -182,6 +182,17 @@ function loadStudentsLogic(client, userID, username){
         displayCurrClass(classes[currClass], studentListSearch, false);
         displayAssignmentsList(classes[currClass], assignmentSearch, false, false);
         displayAssignmentsList(classes[currClass], homeworkSearch, true, false);
+    });
+    client.on("drive-read-error", (type)=>{
+        document.querySelector("#file-display-cefr").disabled = false;
+        const errorTexts = [
+            "Reading Drive file error",
+            "Unsupported file typ",
+            "No readable text found",
+            "Drive file reading failed"
+        ];
+        console.error(errorTexts[type]);
+        notification(errorTexts[type]);
     });
 }
 function loadClassViewDisplay(receivedClass){
@@ -897,7 +908,7 @@ function generateLessons(lessons, currLesson){
 }
 
 /*--Generate Assignment Logic------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function loadGenerateLogic(client, classID){
+function loadGenerateLogic(client, userID, classID){
     let assignmentType = 0, format = 0;
     displayEssayGeneration();
 
@@ -929,6 +940,7 @@ function loadGenerateLogic(client, classID){
         }
     }
 
+    const generateInputDriveText = document.querySelector("#generate-input-drive-text");
     const urlHolder = document.querySelector(".generate-assignment-url-holder");
     const generateFileInput = document.querySelector("#generate-file-input");
     const generateCEFR = document.querySelector("#generate-cefr");
@@ -953,12 +965,38 @@ function loadGenerateLogic(client, classID){
     document.querySelector("#generate-input-file").onclick = ()=>{
         generateFileInput.click();
     }
+    document.querySelector("#generate-input-drive").onclick = async ()=>{
+        document.querySelector("#generate-input-drive").disabled = true;
+        const generateAssignmentDrive = new Event("generate-assignment-drive");
+        window.dispatchEvent(generateAssignmentDrive);
+        selectedIDs = [];
+    }
+    document.querySelector("#display-assignment-drive-close").onclick = ()=>{
+        document.querySelector("#display-assignment-drive-close").disabled = true;
+        document.querySelector("#generate-assignment-drive-confirm").disabled = true;
+        const generateAssignmentDrive = new Event("generate-assignment-drive");
+        window.dispatchEvent(generateAssignmentDrive);
+        generateInputDriveText.innerText = "";
+        selectedIDs = [];
+    }
+    document.querySelector("#generate-assignment-drive-confirm").onclick = ()=>{
+        document.querySelector("#display-assignment-drive-close").disabled = true;
+        document.querySelector("#generate-assignment-drive-confirm").disabled = true;
+        const generateAssignmentDrive = new Event("generate-assignment-drive");
+        window.dispatchEvent(generateAssignmentDrive);
+
+        let s = "";
+        if(selectedIDs.length > 1) s = "s"
+        generateInputDriveText.innerText = selectedIDs.length + " file"+s+" selected";
+    }
+
     generateButton.onclick = async ()=>{
-        const assignment = await generateAssignmentObject(assignmentType, format);
+        const assignment = await generateAssignmentObject(assignmentType, format, selectedIDs);
         if(!assignment){
             notification("Input all required fields");
             return;
         }
+        assignment.userID = userID;
         generateButton.disabled = true;
         generateSave.disabled = true;
         generateCEFR.disabled = true;
@@ -975,9 +1013,31 @@ function loadGenerateLogic(client, classID){
         }
     }
 
+    let selectedIDs = [];
     window.addEventListener("reset-generate-assignment-settings", (e)=>{
         assignmentType = 0;
         format = 0;
+    });
+    window.addEventListener("generate-drive-click", (e)=>{
+        const element = e.detail.element;
+        const id = e.detail.id;
+
+        let selected = false, index;
+        for(let i = 0; i < selectedIDs.length; i++){
+            if(selectedIDs[i] === id){
+                selected = true;
+                index = i;
+                break;
+            }
+        }
+        if(!selected){
+            element.classList.add("generate-drive-selected");
+            selectedIDs.push(id);
+        }
+        else{
+            element.classList.remove("generate-drive-selected");
+            selectedIDs.splice(index, 1);
+        }
     });
 
     client.on("generate-assignment-fail", (error)=>{
@@ -1010,12 +1070,13 @@ function loadGenerateLogic(client, classID){
         document.querySelector("#new-assignment").click()
     }, 200)
 }
-async function generateAssignmentObject(assignmentType, format){
+async function generateAssignmentObject(assignmentType, format, selectedIDs){
     const assignmentTypes = ["Assignment", "Homework"];
     const assignmentFormats = ["Essay", "ABC Question", "Question and Answer"];
     const assignment = {
         type:assignmentTypes[assignmentType],
         format:assignmentFormats[format],
+        selectedIDs:selectedIDs,
     }
 
     const generateFileInput = document.querySelector("#generate-file-input");
