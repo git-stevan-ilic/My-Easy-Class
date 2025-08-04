@@ -155,6 +155,32 @@ input[type=number]::-webkit-inner-spin-button{
 input[type=number]{
     -moz-appearance:textfield;
 }
+input[type=file]{
+    display:none;
+}
+.file-input-holder{
+    justify-content:flex-start;
+    align-items:center;
+    display:flex;
+    height:2rem;
+}
+.file-input-button{
+    margin-top:0px;
+    font-size:1rem;
+    flex-shrink:0;
+    width:5.5rem;
+    height:2rem;
+}
+.file-input-text{
+    justify-content:flex-start;
+    align-items:center;
+    display:flex;
+    
+    color:var(--gray-1);
+    margin-left:0.5rem;
+    height:100%;
+    width:100%;
+}
 
 textarea{
     background-color:var(--background-white);

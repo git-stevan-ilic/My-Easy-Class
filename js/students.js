@@ -930,9 +930,12 @@ function loadGenerateLogic(client, classID){
     }
 
     const urlHolder = document.querySelector(".generate-assignment-url-holder");
+    const generateFileInput = document.querySelector("#generate-file-input");
     const generateCEFR = document.querySelector("#generate-cefr");
     const generateSave = document.querySelector("#generate-save");
     const generateButton = document.querySelector("#generate");
+    generateFileInput.value = "";
+
     document.querySelector("#generate-add-url").onclick = ()=>{
         const urlInput = document.createElement("input");
         urlInput.className = "generate-input";
@@ -947,8 +950,11 @@ function loadGenerateLogic(client, classID){
     document.querySelector("#new-assignment").onclick = ()=>{
         openGenerateAssignment();
     }
-    generateButton.onclick = ()=>{
-        const assignment = generateAssignmentObject(assignmentType, format);
+    document.querySelector("#generate-input-file").onclick = ()=>{
+        generateFileInput.click();
+    }
+    generateButton.onclick = async ()=>{
+        const assignment = await generateAssignmentObject(assignmentType, format);
         if(!assignment){
             notification("Input all required fields");
             return;
@@ -958,6 +964,15 @@ function loadGenerateLogic(client, classID){
         generateCEFR.disabled = true;
         client.emit("generate-assignment", assignment);
         fadeIn(".preview-load-mask", 0.1, "block", null);
+    }
+    generateFileInput.oninput = ()=>{
+        const generateInputFileText = document.querySelector("#generate-input-file-text");
+        if(generateFileInput.files.length === 0) generateInputFileText.innerText = "";
+        else{
+            let s = "";
+            if(generateFileInput.files.length !== 1) s = "s";
+            generateInputFileText.innerText = generateFileInput.files.length+" file"+s+" selected";
+        }
     }
 
     window.addEventListener("reset-generate-assignment-settings", (e)=>{
@@ -995,7 +1010,7 @@ function loadGenerateLogic(client, classID){
         document.querySelector("#new-assignment").click()
     }, 200)
 }
-function generateAssignmentObject(assignmentType, format){
+async function generateAssignmentObject(assignmentType, format){
     const assignmentTypes = ["Assignment", "Homework"];
     const assignmentFormats = ["Essay", "ABC Question", "Question and Answer"];
     const assignment = {
@@ -1003,6 +1018,7 @@ function generateAssignmentObject(assignmentType, format){
         format:assignmentFormats[format],
     }
 
+    const generateFileInput = document.querySelector("#generate-file-input");
     const urlHolder = document.querySelector(".generate-assignment-url-holder");
     const theme =  document.querySelector("#generate-theme").value;
     const notes = document.querySelector("#generate-notes").value;
@@ -1014,6 +1030,17 @@ function generateAssignmentObject(assignmentType, format){
     assignment.urls = [];
     for(let i = 0; i < urlHolder.children.length; i++){
         if(isValidURL(urlHolder.children[i].value)) assignment.urls.push(urlHolder.children[i].value);
+    }
+
+    assignment.files = [];
+    const inputFiles = Array.from(generateFileInput.files);
+    for (const file of inputFiles){
+        const arrayBuffer = await file.arrayBuffer();
+        assignment.files.push({
+            name: file.name,
+            type: file.type,
+            buffer: arrayBuffer
+        });
     }
 
     if(format > 0){

@@ -32,7 +32,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const openAI = new openai({apiKey:process.env.CHATGPT_API_KEY});
 const app = express();
 const server = createServer(app);
-const io = new Server(server);
+const io = new Server(server, {maxHttpBufferSize:1e7});
 const visionClient = new vision.ImageAnnotatorClient({
     keyFile:"./json/plenary-cascade-452811-p1-d482cdc02704.json"
 });
@@ -665,7 +665,6 @@ async function getCalendar(req, res, refreshToken){
         res.json(events);
     }
     catch(error){
-        client.emit("google-calendar-error", error);
         console.error("Calendar API Error:", error);
         res.status(500).json({error:"Failed to fetch calendar events"});
     }
@@ -1577,11 +1576,17 @@ async function analyzeCEFR(client, text){
     }
 }
 async function generateAssignmentPrompt(settings){
-    const {format, name, theme, questionNum, answerNum, notes, questionLevel, type} = settings;
+    const {format, name, theme, questionNum, answerNum, notes, questionLevel, type, files} = settings;
+    let fileContent = "";
+    for(let i = 0; i < files.length; i++){
+        const fileText = await extractTextFromFile(files[i]);
+        if(fileText !== null) fileContent += `\n\n---\nContent from ${files[i].name}:\n${fileText}`;
+    }
+    
     const noteText = notes ? `Additional notes: ${notes}` : "";
     let referenceContent = "";
     for(const url of settings.urls){
-        const content = await getTextFromURL(url);
+        const content = await extractTextFromURL(url);
         if(content) referenceContent += `\n\n---\nReference from ${url}:\n${content}`;
     }
     switch(format){
@@ -1599,6 +1604,8 @@ async function generateAssignmentPrompt(settings){
                 ${noteText}
                 Use the following reference material to inform the assignment:
                 ${referenceContent}
+                Use the following material from uploaded files to inform the assignment:
+                ${fileContent}
             `;
         case "ABC Question":
             return `
@@ -1626,6 +1633,8 @@ async function generateAssignmentPrompt(settings){
                 ${noteText}
                 Use the following reference material to inform the assignment:
                 ${referenceContent}
+                Use the following material from uploaded files to inform the assignment:
+                ${fileContent}
             `;
         case "Question and Answer":
             return `
@@ -1648,13 +1657,33 @@ async function generateAssignmentPrompt(settings){
                 ${noteText}
                 Use the following reference material to inform the assignment:
                 ${referenceContent}
+                Use the following material from uploaded files to inform the assignment:
+                ${fileContent}
             `;
     }
 }
-async function getTextFromURL(url){
+async function extractTextFromURL(url){
   const { data } = await axios.get(url);
   const $ = cheerio.load(data);
   return $('body').text().replace(/\s+/g, ' ').trim().slice(0, 3000);;
+}
+async function extractTextFromFile(fileData){
+    const buffer = Buffer.from(fileData.buffer);
+    let text = "";
+    if(fileData.type === "text/plain" || fileData.name.endsWith(".txt")){
+        text = buffer.toString("utf8");
+    }
+    else if(fileData.type === "application/pdf"){
+        const data = await pdfParse(buffer);
+        text = data.text;
+    }
+    else if(fileData.name.endsWith(".docx")){
+        const result = await mammoth.extractRawText({buffer});
+        console.log(result)
+        text = result.value;
+    }
+    else text = null;
+    return text;
 }
 async function extractTextFromImage(buffer){
     const [result] = await visionClient.textDetection({image:{content:buffer}});
