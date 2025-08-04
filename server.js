@@ -1253,6 +1253,84 @@ io.on("connection", (client)=>{
     client.on("generate-assignment-cefr", (text)=>{
         analyzeCEFR(client, text);
     });
+    client.on("save-assignment", (assignment, classID)=>{
+        Classes.find({classID:classID})
+        .then((result)=>{
+            if(result.length === 0){
+                console.error("Find Class DB error");
+                client.emit("save-assignment-fail", 0);
+                return;
+            }
+            assignment.id = nanoid(10);
+            const foundClass = result[0];
+            if(assignment.assignmentType === "Assignment") foundClass.assignments.push(assignment);
+            else if(assignment.assignmentType === "Homework") foundClass.homework.push(assignment);
+            else{
+                console.error("Invalid assignment format");
+                client.emit("save-assignment-fail", 1);
+                return;
+            }
+            foundClass.save()
+            .then(()=>{
+                client.emit("save-assignment-success");
+            })
+            .catch((error)=>{
+                console.error("Saving Class error: ", error);
+                client.emit("save-assignment-fail", 2);
+                return;
+            });
+        })
+        .catch((error)=>{
+            console.error("Find Class DB error: ", error);
+            client.emit("save-assignment-fail", 0);
+        });
+    });
+    client.on("delete-assignment", (classID, assignmentID, isHomework)=>{
+        Classes.find({classID:classID})
+        .then((result)=>{
+            if(result.length === 0){
+                client.emit("assignment-delete-fail", 1);
+                console.error("Class delete error");
+                return;
+            }
+            const currClass = result[0];
+            let found = false;
+            if(isHomework){
+                for(let i = 0; i < currClass.homework.length; i++){
+                    if(currClass.homework[i].id === assignmentID){
+                        currClass.homework.splice(i, 1);
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            else{
+                for(let i = 0; i < currClass.assignments.length; i++){
+                    if(currClass.assignments[i].id === assignmentID){
+                        currClass.assignments.splice(i, 1);
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            if(!found){
+                client.emit("assignment-delete-fail", 1);
+                console.error("Class delete error: Assignment not found");
+            }
+            else{
+                currClass.save()
+                .then(()=>{client.emit("assignment-delete-success")})
+                .catch((error)=>{
+                    client.emit("assignment-delete-fail", 2);
+                    console.error("Class delete error: " + error);
+                });
+            }
+        })
+        .catch((error)=>{
+            client.emit("assignment-delete-fail", 0);
+            console.error("Class delete error: " + error);
+        });
+    });
 });
 
 /*--Start Server-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/

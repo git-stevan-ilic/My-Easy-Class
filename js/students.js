@@ -144,14 +144,15 @@ function loadStudentsLogic(client, userID, username){
         displayCurrClass(classes[currClass], studentListSearch, false);
     });
     window.addEventListener("delete-assignment", (e)=>{
-        for(let i = 0; i < classes[currClass].assignments.length; i++){
+        client.emit("delete-assignment", classes[currClass].classID, e.detail.id, e.detail.isHomework);
+        /*for(let i = 0; i < classes[currClass].assignments.length; i++){
             if(classes[currClass].assignments[i].id === e.detail.id){
                 classes[currClass].assignments.splice(i, 1);
             }
         }
         let searchQuery = assignmentSearch;
         if(e.detail.isHomework) searchQuery = homeworkSearch;
-        displayAssignmentsList(classes[currClass], searchQuery, e.detail.isHomework, false);
+        displayAssignmentsList(classes[currClass], searchQuery, e.detail.isHomework, false);*/
     });
 
     client.emit("class-data-request", userID);
@@ -194,6 +195,19 @@ function loadStudentsLogic(client, userID, username){
         console.error(errorTexts[type]);
         notification(errorTexts[type]);
     });
+    client.on("assignment-delete-fail", (type)=>{
+        const errorTexts = [
+            "Class delete error",
+            "Class delete error: Class doesn't exist",
+            "Class delete error: New state save fail"
+        ];
+        console.error(errorTexts[type]);
+        notification(errorTexts[type]);
+    });
+    client.on("assignment-delete-success", ()=>{
+        notification("Assignment deleted");
+        client.emit("class-data-request", userID);
+    });
 }
 function loadClassViewDisplay(receivedClass){
     const mainScreen = document.querySelector("#main");
@@ -226,7 +240,11 @@ function loadClassViewDisplay(receivedClass){
     displayAssignmentsList(receivedClass, homeworkSearch, true, true);
     studentPageSearch(null, studentListSearch, assignmentSearch, homeworkSearch, null, [receivedClass], 0, true);
     generateLessons(lessons[currLesson], currLesson);
-    studentPageTabLogic(lessons, currLesson)
+    studentPageTabLogic(lessons, currLesson);
+
+    document.querySelector("#assignment-close").onclick = ()=>{
+        fadeOut("#display-assignment-screen", 0.1, null);
+    }
 }
 function studentPageSearch(classNameSearch, studentListSearch, assignmentListSearch, homeworkListSearch, inviteStudendSearch, classes, currClass, studentView){
     if(!studentView){
@@ -342,7 +360,6 @@ function generateClasses(classNameSearch, classes){
             const icon = document.createElement("div"); icon.className = "class-list-window-icon";
             const text = document.createElement("div"); text.className = "class-list-window-text";
             const num  = document.createElement("div");  num.className = "class-list-window-num";
-    
           
             num.innerText = classes[i].students.length;
             text.innerText = classes[i].name;
@@ -553,7 +570,7 @@ function displayAssignmentWindow(assignment){
         "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"
     ];
 
-    if(assignment.type === "qna" || assignment.type === "abc"){
+    if(assignment.format === "Question and Answer" || assignment.format === "ABC Question"){
         for(let i = 0; i < assignment.questions.length; i++){
             const question = document.createElement("div");
             question.className = "display-assignemnt-question";
@@ -561,7 +578,7 @@ function displayAssignmentWindow(assignment){
             displayAssignmentBody.appendChild(question);
             html += "<div style='font-weight:bold; margin-top:1rem;'>" + (i+1) + ") "+assignment.questions[i].text+"<br></div>";
 
-            if(assignment.type === "qna"){
+            if(assignment.format === "Question and Answer"){
                 const empty = document.createElement("div");
                 empty.className = "display-assignemnt-empty";
                 displayAssignmentBody.appendChild(empty);
@@ -575,6 +592,7 @@ function displayAssignmentWindow(assignment){
                     displayAssignmentBody.appendChild(answer);
                     html += "<div style='margin-left:1rem;'>" + letters[j]+") "+ assignment.questions[i].answers[j] + "</div>";
                 }
+                html += "<br>";
             }
         }
     }
@@ -1064,11 +1082,27 @@ function loadGenerateLogic(client, userID, classID){
             client.emit("generate-assignment-cefr", text);
             generateCEFR.disabled = true;
         }
+        generateSave.onclick = ()=>{
+            client.emit("save-assignment", assignment, classID);
+            generateSave.disabled = true;
+        }
     });
-
-    setTimeout(()=>{
-        document.querySelector("#new-assignment").click()
-    }, 200)
+    client.on("save-assignment-fail", (type)=>{
+        const errorTexts = [
+            "Class not found",
+            "Invalid assignment format",
+            "Error saving class"
+        ];
+        console.error("Assignment save fail: "+errorTexts[type]);
+        notification("Assignment save fail: "+errorTexts[type])
+        generateSave.disabled = false;
+    });
+    client.on("save-assignment-success", ()=>{
+        generateSave.disabled = false;
+        notification("Assignment saved");
+        client.emit("class-data-request", userID);
+        document.querySelector("#generate-back").click();
+    });
 }
 async function generateAssignmentObject(assignmentType, format, selectedIDs){
     const assignmentTypes = ["Assignment", "Homework"];
