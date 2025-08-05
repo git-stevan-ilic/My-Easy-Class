@@ -10,6 +10,7 @@ function loadStudentsLogic(client, userID, username){
     generateNewClassLogic();
     generateClasses(classNameSearch, classes);
 
+    const editStudentConfirm = document.querySelector("#edit-student-confirm");
     const newLessonName = document.querySelector("#new-lesson-input-name");
     const newLessonContent = document.querySelector("#new-lesson-input-content");
     const newLessonDate = document.querySelector("#new-lesson-input-date");
@@ -57,6 +58,10 @@ function loadStudentsLogic(client, userID, username){
     document.querySelector("#assignment-close").onclick = ()=>{
         fadeOut("#display-assignment-screen", 0.1, null);
     }
+    document.querySelector("#edit-student-cancel").onclick = ()=>{
+        fadeOut("#edit-student-screen", 0.1, null);
+        editStudentConfirm.onclick = null;
+    }
 
     window.addEventListener("new-class", (e)=>{
         const eventName = e.detail.name;
@@ -70,13 +75,30 @@ function loadStudentsLogic(client, userID, username){
         }
         if(!nameMatch) client.emit("new-class", eventName, userID);
     });
+    window.addEventListener("display-curr-class", ()=>{
+        displayCurrClass(classes[currClass], studentListSearch, false);
+        displayAssignmentsList(classes[currClass], assignmentSearch, false, false);
+        displayAssignmentsList(classes[currClass], homeworkSearch, true, false);
+    });
+    window.addEventListener("change-curr-class", (e)=>{
+        const studentSearch = document.querySelector("#student-search");
+        currClass = e.detail.newCurrClass;
+        studentListSearch = "";
+        studentSearch.value = studentListSearch;
+        displayCurrClass(classes[currClass], studentListSearch, false);
+        displayAssignmentsList(classes[currClass], assignmentSearch, false, false);
+        displayAssignmentsList(classes[currClass], homeworkSearch, true, false);
+        addStudentEvents(username, classes[currClass].classID, !firstEventLoaded);
+        if(!firstEventLoaded) firstEventLoaded = true;
+    });
+
     window.addEventListener("request-student-list", ()=>{
-        let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
+        /*let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
         let availableStudents = classes[0].students.filter(item => !currClassIDs.has(item.id)); 
-        generateInviteStudentList(availableStudents, inviteStudendSearch);
+        generateInviteStudentList(availableStudents, inviteStudendSearch);*/
     });
     window.addEventListener("add-students-list", (e)=>{
-        let addedStudentIDs = e.detail.students;
+        /*let addedStudentIDs = e.detail.students;
         let addedStudents = [];
         for(let i = 0; i < classes[0].students.length; i++){
             for(let j = 0; j < addedStudentIDs.length; j++){
@@ -97,38 +119,28 @@ function loadStudentsLogic(client, userID, username){
         document.querySelector("#invite-list-window-close").click();
         classes[currClass].students = classes[currClass].students.concat(addedStudents);
         generateClasses(classNameSearch, classes);
-        displayCurrClass(classes[currClass], studentListSearch, false);
+        displayCurrClass(classes[currClass], studentListSearch, false);*/
     });
-    window.addEventListener("display-curr-class", ()=>{
-        displayCurrClass(classes[currClass], studentListSearch, false);
-        displayAssignmentsList(classes[currClass], assignmentSearch, false, false);
-        displayAssignmentsList(classes[currClass], homeworkSearch, true, false);
-    });
-    window.addEventListener("change-curr-class", (e)=>{
-        const studentSearch = document.querySelector("#student-search");
-        currClass = e.detail.newCurrClass;
-        studentListSearch = "";
-        studentSearch.value = studentListSearch;
-        displayCurrClass(classes[currClass], studentListSearch, false);
-        displayAssignmentsList(classes[currClass], assignmentSearch, false, false);
-        displayAssignmentsList(classes[currClass], homeworkSearch, true, false);
-        addStudentEvents(username, classes[currClass].classID, !firstEventLoaded);
-        if(!firstEventLoaded) firstEventLoaded = true;
-    });
-    window.addEventListener("delete-student", (e)=>{
-        for(let i = 0; i < classes.length; i++){
-            for(let j = 0; j < classes[i].students.length; j++){
-                if(classes[i].students[j].id === e.detail.id){
-                    classes[i].students.splice(j, 1);
-                    break;
-                }
+
+    window.addEventListener("open-edit-student", (e)=>{
+        fadeIn("#edit-student-screen", 0.1, "block", null);
+        const nameInput = document.querySelector("#edit-student-name-input");
+        const emailInput = document.querySelector("#edit-student-email-input");
+        nameInput.value = e.detail.student.name;
+        emailInput.value = e.detail.student.email;
+        editStudentConfirm.onclick = ()=>{
+            if(!nameInput.value || !emailInput.value) notification("Input all fields");
+            else{
+                client.emit("edit-student", e.detail.classID, e.detail.student.id, nameInput.value, emailInput.value);
+                editStudentConfirm.disabled = true;
             }
         }
-        generateClasses(classNameSearch, classes);
-        displayCurrClass(classes[currClass], studentListSearch, false);
+    });
+    window.addEventListener("delete-student", (e)=>{
+        client.emit("delete-student", e.detail.classID, e.detail.student.id);
     });
     window.addEventListener("remove-student", (e)=>{
-        for(let i = 0; i < classes.length; i++){
+        /*for(let i = 0; i < classes.length; i++){
             if(classes[i].name === e.detail.currClass.name){
                 for(let j = 0; j < classes[i].students.length; j++){
                     if(classes[i].students[j].id === e.detail.id){
@@ -141,20 +153,12 @@ function loadStudentsLogic(client, userID, username){
             }
         }
         generateClasses(classNameSearch, classes);
-        displayCurrClass(classes[currClass], studentListSearch, false);
+        displayCurrClass(classes[currClass], studentListSearch, false);*/
     });
     window.addEventListener("delete-assignment", (e)=>{
         client.emit("delete-assignment", classes[currClass].classID, e.detail.id, e.detail.isHomework);
-        /*for(let i = 0; i < classes[currClass].assignments.length; i++){
-            if(classes[currClass].assignments[i].id === e.detail.id){
-                classes[currClass].assignments.splice(i, 1);
-            }
-        }
-        let searchQuery = assignmentSearch;
-        if(e.detail.isHomework) searchQuery = homeworkSearch;
-        displayAssignmentsList(classes[currClass], searchQuery, e.detail.isHomework, false);*/
     });
-
+    
     client.emit("class-data-request", userID);
     client.on("new-class-error", ()=>{
         console.error("Failed creating a new Class");
@@ -174,7 +178,7 @@ function loadStudentsLogic(client, userID, username){
         classes = classData;
 
         loadGenerateLogic(client, userID, classes[currClass].classID);
-        addStudentEvents(username, classes[currClass].classID);
+        addStudentEvents(username, classes[currClass].classID, firstEventLoaded);
         classesExist(classes.length);
         studentPageSearch(classNameSearch, studentListSearch, assignmentSearch, homeworkSearch, inviteStudendSearch, classes, currClass, false);
         studentPageTabLogic(lessons, currLesson);
@@ -198,7 +202,7 @@ function loadStudentsLogic(client, userID, username){
     client.on("assignment-delete-fail", (type)=>{
         const errorTexts = [
             "Class delete error",
-            "Class delete error: Class doesn't exist",
+            "Class delete error: Class not found",
             "Class delete error: New state save fail"
         ];
         console.error(errorTexts[type]);
@@ -208,8 +212,32 @@ function loadStudentsLogic(client, userID, username){
         notification("Assignment deleted");
         client.emit("class-data-request", userID);
     });
+    client.on("edit-student-fail", (type)=>{
+        editStudentConfirm.disabled = false;
+        const errorTexts = [
+            "Edit Student Error",
+            "Edit Student Error: Class not found",
+            "Edit Student Error: Student not found",
+            "Edit Student Error: New state save fail"
+        ];
+        console.error(errorTexts[type]);
+        notification(errorTexts[type]);
+    });
+    client.on("edit-student-success", (type)=>{
+        const successTexts = [
+            "Student data edited",
+            "Student deleted"
+        ];
+        if(type === 0){
+            editStudentConfirm.disabled = false;
+            editStudentConfirm.onclick = null;
+            fadeOut("#edit-student-screen", 0.1, null);
+        }
+        notification(successTexts[type]);
+        client.emit("class-data-request", userID);
+    });
 }
-function loadClassViewDisplay(receivedClass){
+function loadClassViewDisplay(receivedClass, studentEmail, client){
     const mainScreen = document.querySelector("#main");
     while(mainScreen.children.length > 4) mainScreen.removeChild(mainScreen.firstChild);
     mainScreen.removeChild(mainScreen.children[2]);
@@ -245,6 +273,37 @@ function loadClassViewDisplay(receivedClass){
     document.querySelector("#assignment-close").onclick = ()=>{
         fadeOut("#display-assignment-screen", 0.1, null);
     }
+
+    fadeIn("#input-student-name-screen", 0.1, "block", null);
+    const inputStudentName = document.querySelector("#input-student-name-input");
+    const inputStudentButton = document.querySelector("#input-student-name-button");
+    inputStudentName.value = "";
+
+    inputStudentButton.onclick = ()=>{
+        if(!inputStudentName.value) notification("input valid name");
+        else{
+            client.emit("add-student", receivedClass.classID, inputStudentName.value, studentEmail);
+            inputStudentButton.disabled = true;
+        }
+    }
+    client.on("input-name-fail", (type)=>{
+        const errorTexts = [
+            "Class finding error",
+            "Class not found",
+            "Class update failed"
+        ];
+        console.error(errorTexts[type]);
+        notification(errorTexts[type]);
+        inputStudentButton.disabled = false;
+    });
+    client.on("input-name-success", (alreadyPresent, currClass)=>{
+        fadeOut("#input-student-name-screen", 0.1, null);
+        inputStudentButton.disabled = false;
+        if(!alreadyPresent){
+            receivedClass = currClass;
+            displayCurrClass(receivedClass, studentListSearch, true);
+        }
+    });
 }
 function studentPageSearch(classNameSearch, studentListSearch, assignmentListSearch, homeworkListSearch, inviteStudendSearch, classes, currClass, studentView){
     if(!studentView){
@@ -453,13 +512,23 @@ function displayCurrClass(currClass, studentListSearch, studentView){
             studentList.appendChild(student);
 
             if(!studentView){
+                const studentEdit = document.createElement("div");
+                studentEdit.className = "class-window-list-item-button class-window-list-item-edit";
+                student.appendChild(studentEdit);
+
                 const studentDelete = document.createElement("div");
-                studentDelete.className = "class-window-list-item-delete";
+                studentDelete.className = "class-window-list-item-button class-window-list-item-delete";
                 student.appendChild(studentDelete);
+
+                studentEdit.onclick = ()=>{
+                    const data = {detail:{student:displayedStudents[i], classID:currClass.classID}}
+                    const deleteStudentEvent = new CustomEvent("open-edit-student", data);
+                    window.dispatchEvent(deleteStudentEvent);
+                }
                 if(currClass.name === "All Students" || currClass.name === "Ungrouped"){
                     studentDelete.onclick = ()=>{
                         if(confirm("Are you sure you want to remove this student from all classes?")){
-                            const data = {detail:{id:displayedStudents[i].id}}
+                            const data = {detail:{student:displayedStudents[i], classID:currClass.classID}}
                             const deleteStudentEvent = new CustomEvent("delete-student", data);
                             window.dispatchEvent(deleteStudentEvent);
                         }
@@ -710,18 +779,36 @@ function addStudentEvents(username, classID, first){
     }
 
     const inviteEmailInput = document.querySelector("#invite-email-input");
-    document.querySelector("#invite-email-button").onclick = ()=>{
+    const inviteEmailButton = document.querySelector("#invite-email-button");
+    inviteEmailButton.onclick = ()=>{
         if(!isValidEmail(inviteEmailInput.value)) notification("Invalid email");
         else{
-            notification("Email Server Error");
-            return;
-
-            let style = "background-color:rgb(087, 160, 211);color:var(255,255,255);height:50px;width:150px;font:20px Arial bold;";
-            let emailContent = "<!DOCTYPE html><html><body>";
+            inviteEmailButton.disabled = true;
+            let style = `
+                h2{
+                    font-family:Arial, sans-serif;
+                    color:rgb(16, 47, 68);
+                }
+                a{
+                    background-color:rgb(255, 255, 255);
+                    border:1px solid rgb(16, 47, 68);
+                    color:rgb(16, 47, 68);
+                    transform:translate(0px);
+                    border-radius:10px;
+                    padding:5px;
+                    height:50px;
+                    width:220px;
+                    font-size:20px;
+                    cursor:pointer;
+                    text-decoration:none;
+                    font-family:Arial, sans-serif;
+                }
+            `;
+            let emailContent = "<!DOCTYPE html><html><head><style>"+style+"</style></head><body>";
             emailContent += "<h2>My Easy Class</h2>"
             emailContent += "You're being invited to join My Easy Class by "+username;
             emailContent += "<br>Click the button below to join<br><br>";
-            emailContent += "<button style='"+style+"' onclick='()=>{window.open('http:localhost:5000')}'>Join My Easy</button>";
+            emailContent += "<a href='"+window.location+"?classID="+classID+"&studentEmail="+inviteEmailInput.value+"'>Join My Easy Class</a><br>";
             emailContent += "</body></html>";
             sendMail(inviteEmailInput.value, "My Easy Class Invite", emailContent, [], "invite");
         }
@@ -738,8 +825,9 @@ function addStudentEvents(username, classID, first){
         const addStudents = new CustomEvent("add-students-list", addStudentsData);
         window.dispatchEvent(addStudents);
     }
-    if(first){
+    if(!first){
         window.addEventListener("invite-email-sent", (e)=>{
+            inviteEmailButton.disabled = false;
             inviteEmailInput.value = "";
             if(inviteList.children.length === 0) inviteList.innerText = "";
             const invited = document.createElement("div");

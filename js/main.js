@@ -87,11 +87,12 @@ function loadUrlParamLogic(client){
         client.emit("get-class-display-data", urlParams.classID);
         mode = "class-view";
     }
+    console.log(urlParams.studentEmail)
 
     client.on("get-class-display-data-fail", ()=>{notification("Class not found")});
     client.on("get-user-display-data-fail", ()=>{notification("Profile not found")});
     client.on("receive-user-display-data", (userData)=>{loadProfileViewDisplay(userData)});
-    client.on("receive-class-display-data", (classData)=>{loadClassViewDisplay(classData)})
+    client.on("receive-class-display-data", (classData)=>{loadClassViewDisplay(classData, urlParams.studentEmail, client)})
     return mode;
 }
 function getUrlParams(){

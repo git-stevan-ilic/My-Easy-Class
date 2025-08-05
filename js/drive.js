@@ -88,14 +88,14 @@ function loadDriveLogic(client){
             driveFiles = files;
 
             if(!generateAssignment){
-                fadeOut("#display-assignment-drive", 0.1, ()=>{
+                fadeOut("#display-assignment-drive-screen", 0.1, ()=>{
                     document.querySelector("#display-assignment-drive-close").disabled = false;
                     document.querySelector("#generate-assignment-drive-confirm").disabled = false;
                     driveScreen.appendChild(driveHolder);
                 });
             }
             else{
-                fadeIn("#display-assignment-drive", 0.1, "block", ()=>{
+                fadeIn("#display-assignment-drive-screen", 0.1, "block", ()=>{
                     document.querySelector("#generate-input-drive").disabled = false;
                 });
             }

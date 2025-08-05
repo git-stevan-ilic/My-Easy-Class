@@ -1331,6 +1331,112 @@ io.on("connection", (client)=>{
             console.error("Class delete error: " + error);
         });
     });
+    client.on("add-student", (classID, name, email)=>{
+        Classes.find({classID:classID})
+        .then((result)=>{
+            if(result.length === 0){
+                console.error("Find Class Error: Class doesn't exist");
+                client.emit("input-name-fail", 1);
+                return;
+            }
+            const foundClass = result[0];
+            let studentPresent = false;
+            for(let i = 0; i < foundClass.students.length; i++){
+                if(foundClass.students[i].name === name){
+                    studentPresent = true;
+                    break;
+                }
+            }
+            if(studentPresent){
+                client.emit("input-name-success", true, null);
+                return;
+            }
+            foundClass.students.push({id:nanoid(10), name:name, email:email});
+            foundClass.save()
+            .then(()=>{client.emit("input-name-success", false, foundClass)})
+            .catch((error)=>{
+                console.error("Save Class Error: "+error);
+                client.emit("input-name-fail", 2);
+            });
+        })
+        .catch((error)=>{
+            console.error("Find Class Error: "+error);
+            client.emit("input-name-fail", 0);
+        });
+    });
+    client.on("edit-student", (classID, studentID, name, email)=>{
+        Classes.find({classID:classID})
+        .then((result)=>{
+            if(result.length === 0){
+                console.error("Edit Student Failed: Class not found");
+                client.emit("edit-student-fail", 1);
+                return;
+            }
+            const foundClass = result[0];
+            let studentFound = false, studentIndex;
+            for(let i = 0; i < foundClass.students.length; i++){
+                if(foundClass.students[i].id === studentID){
+                    studentFound = true;
+                    studentIndex = i;
+                    break;
+                }
+            }
+            if(!studentFound){
+                console.error("Edit Student Failed: Student not found");
+                client.emit("edit-student-fail", 2);
+                return;
+            }
+            foundClass.students[studentIndex].name = name;
+            foundClass.students[studentIndex].email = email;
+            foundClass.markModified("students");
+            foundClass.save()
+            .then(()=>{client.emit("edit-student-success", 0)})
+            .catch((error)=>{
+                console.error("Edit Student Failed: "+error);
+                client.emit("edit-student-fail", 3);
+            });
+        })
+        .catch((error)=>{
+            console.error("Edit Student Failed: "+error);
+            client.emit("edit-student-fail", 0);
+        });
+    });
+    client.on("delete-student", (classID, studentID)=>{
+        Classes.find({classID:classID})
+        .then((result)=>{
+            if(result.length === 0){
+                console.error("Delete Student Failed: Class not found");
+                client.emit("edit-student-fail", 1);
+                return;
+            }
+            const foundClass = result[0];
+            let studentFound = false, studentIndex;
+            for(let i = 0; i < foundClass.students.length; i++){
+                if(foundClass.students[i].id === studentID){
+                    studentFound = true;
+                    studentIndex = i;
+                    break;
+                }
+            }
+            if(!studentFound){
+                console.error("Delete Student Failed: Student not found");
+                client.emit("edit-student-fail", 2);
+                return;
+            }
+            foundClass.students.splice(studentIndex, 1);
+            foundClass.markModified("students");
+            foundClass.save()
+            .then(()=>{client.emit("edit-student-success", 1)})
+            .catch((error)=>{
+                console.error("Delete Student Failed: "+error);
+                client.emit("edit-student-fail", 3);
+            });
+        })
+        .catch((error)=>{
+            console.error("Delete Student Failed: "+error);
+            client.emit("edit-student-fail", 0);
+        });
+    });
 });
 
 /*--Start Server-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/

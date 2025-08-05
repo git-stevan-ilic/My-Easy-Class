@@ -431,7 +431,7 @@
                 <div class="screen" id="generate-assignment-screen">
                     <div class="generate-holder">
                         <div class="preview-holder">
-                            <div class="preview-page" contenteditable="true"></div>
+                            <div class="preview-page" contenteditable="false"></div>
                             <div class="preview-load-mask">
                                 <div class="preview-loader"></div>
                             </div>
@@ -1035,7 +1035,7 @@
                 <div class="display-assignment-body"></div>
             </div>
         </div>
-        <div class="screen-mask" id="display-assignment-drive">
+        <div class="screen-mask" id="display-assignment-drive-screen">
             <div class="screen-mask-background"></div>
             <div class="display-drive-window">
                 <div class="display-drive-window-head">
@@ -1045,6 +1045,32 @@
                 <div class="display-drive-window-body"></div>
                 <div class="display-drive-window-foot">
                     <button class="blue-button" id="generate-assignment-drive-confirm">Confrim</button>
+                </div>
+            </div>
+        </div>
+        <div class="screen-mask" id="input-student-name-screen">
+            <div class="screen-mask-background"></div>
+            <div class="input-student-name-window">
+                <div class="input-student-name-window-head">Student name:</div>
+                <div class="input-student-name-window-body">
+                    <input type="text" id="input-student-name-input">
+                    <button class="blue-button" id="input-student-name-button">Confirm</button>
+                </div>
+            </div>
+        </div>
+        <div class="screen-mask" id="edit-student-screen">
+            <div class="screen-mask-background"></div>
+            <div class="edit-student-window">
+                <div class="edit-student-window-head">Edit Student Info</div>
+                <div class="edit-student-window-body">
+                    <div class="edit-student-window-text">Student name:</div>
+                    <input type="text" id="edit-student-name-input">
+                    <div class="edit-student-window-text">Student email:</div>
+                    <input type="text" id="edit-student-email-input">
+                </div>
+                <div class="edit-student-window-foot">
+                    <button id="edit-student-confirm">Confirm</button>
+                    <button id="edit-student-cancel">Cancel</button>
                 </div>
             </div>
         </div>
