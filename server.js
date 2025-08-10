@@ -132,6 +132,8 @@ app.get("/auth/google", passport.authenticate("google", {
     ]
 }));
 
+
+/*--Setup Export Functions---------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 function authentificateGoogleAPI(req, res, index){
     const googleFunctions = [
         getEmailInbox, getEmailContent, readEmail, starEmail,
@@ -1333,47 +1335,16 @@ io.on("connection", (client)=>{
         });
     });
     client.on("add-student", (classID, name, email)=>{
-        addStudentToClass(client, classID, name, email, true, null);
+        addStudent(client, classID, name, email, null, true);
     });
     client.on("edit-student", (classID, studentID, name, email)=>{
-        Classes.find({classID:classID})
-        .then((result)=>{
-            if(result.length === 0){
-                console.error("Edit Student Failed: Class not found");
-                client.emit("edit-student-fail", 1);
-                return;
-            }
-            const foundClass = result[0];
-            let studentFound = false, studentIndex;
-            for(let i = 0; i < foundClass.students.length; i++){
-                if(foundClass.students[i].id === studentID){
-                    studentFound = true;
-                    studentIndex = i;
-                    break;
-                }
-            }
-            if(!studentFound){
-                console.error("Edit Student Failed: Student not found");
-                client.emit("edit-student-fail", 2);
-                return;
-            }
-            foundClass.students[studentIndex].name = name;
-            foundClass.students[studentIndex].email = email;
-            foundClass.markModified("students");
-            foundClass.save()
-            .then(()=>{client.emit("edit-student-success", 0)})
-            .catch((error)=>{
-                console.error("Edit Student Failed: "+error);
-                client.emit("edit-student-fail", 3);
-            });
-        })
-        .catch((error)=>{
-            console.error("Edit Student Failed: "+error);
-            client.emit("edit-student-fail", 0);
-        });
+        editStudent(client, classID, studentID, name, email, true);
     });
     client.on("delete-student", (classID, studentID)=>{
         deleteStudent(client, classID, studentID, true);
+    });
+    client.on("remove-student", (classID, studentID)=>{
+        removeStudent(client, classID, studentID);
     });
 });
 
@@ -1652,8 +1623,9 @@ function getClassData(client, userID, newClass){
         client.emit("class-data-request-fail");
     });
 }
-function addStudentToClass(client, classID, name, email, checkDefaulAdd, studentID){
-    if(!studentID) studentID = nanoid(10);
+function addStudent(client, classID, name, email, studentID, checkDefaulAdd){
+    let newStudentID = studentID;
+    if(!studentID) newStudentID = nanoid(10);
     Classes.find({classID:classID})
     .then((result)=>{
         if(result.length === 0){
@@ -1673,33 +1645,15 @@ function addStudentToClass(client, classID, name, email, checkDefaulAdd, student
             client.emit("input-name-success", true, null);
             return;
         }
-        if(checkDefaulAdd){
-            if(foundClass.type === "all-students" || foundClass.type === "ungrouped-students"){
-                let classIndex = 0;
-                if(foundClass.type === "all-students") classIndex = 1;
 
-                Users.find({userID:foundClass.ownerID})
-                .then((result)=>{
-                    if(result.length === 0){
-                        console.error("Find Class Error: "+error);
-                        client.emit("input-name-fail", 4);
-                        return;
-                    }
-                    const foundUser = result[0];
-                    addStudentToClass(client, foundUser.classes[classIndex], name, email, false, studentID);
-                })
-                .catch((error)=>{
-                    console.error("Find Class Error: "+error);
-                    client.emit("input-name-fail", 3);
-                });
-            }
-        }
-
-        foundClass.students.push({id:studentID, name:name, email:email});
+        foundClass.students.push({id:newStudentID, name:name, email:email});
         foundClass.save()
         .then(()=>{
-            client.emit("input-name-success", false, foundClass);
-            addStudentToClassRequestUpdate(foundClass.ownerID);
+            if(checkDefaulAdd){
+                client.emit("input-name-success", false, foundClass);
+                addStudentRequestUpdate(foundClass.ownerID);
+                addStudentsOtherClassUpdate(client, foundClass.ownerID, foundClass.type, name, email, newStudentID);
+            }
         })
         .catch((error)=>{
             console.error("Save Class Error: "+error);
@@ -1711,7 +1665,7 @@ function addStudentToClass(client, classID, name, email, checkDefaulAdd, student
         client.emit("input-name-fail", 0);
     });
 }
-function addStudentToClassRequestUpdate(ownerID){
+function addStudentRequestUpdate(ownerID){
     Users.find({userID:ownerID})
     .then((result)=>{
         if(result.length === 0){
@@ -1725,6 +1679,27 @@ function addStudentToClassRequestUpdate(ownerID){
     })
     .catch((error)=>{
         console.error("Find Class Error: "+error);
+    });
+}
+function addStudentsOtherClassUpdate(client, ownerID, type, name, email, newStudentID){
+    Users.find({userID:ownerID})
+    .then((result)=>{
+        if(result.length === 0){
+            console.error("Find Class Error: "+error);
+            client.emit("input-name-fail", 4);
+            return;
+        }
+        const foundUser = result[0];
+        if(type === "user-class") addStudent(client, foundUser.classes[0], name, email, newStudentID, false);
+        else{
+            let classIndex = 0;
+            if(type === "all-students") classIndex = 1;
+            addStudent(client, foundUser.classes[classIndex], name, email, newStudentID, false);
+        }
+    })
+    .catch((error)=>{
+        console.error("Find Class Error: "+error);
+        client.emit("input-name-fail", 3);
     });
 }
 function deleteStudent(client, classID, studentID, checkDefaulDelete){
@@ -1744,34 +1719,15 @@ function deleteStudent(client, classID, studentID, checkDefaulDelete){
                 break;
             }
         }
-        if(!studentFound){
-            console.error("Delete Student Failed: Student not found");
-            client.emit("edit-student-fail", 2);
-            return;
-        }
+        if(!studentFound) return;
+
         foundClass.students.splice(studentIndex, 1);
         foundClass.markModified("students");
         foundClass.save()
         .then(()=>{
-            client.emit("edit-student-success", 1)
-
             if(checkDefaulDelete){
-                Users.find({userID:foundClass.ownerID})
-                .then((result)=>{
-                    let classIndex = 0;
-                    if(foundClass.type === "all-students") classIndex = 1;
-                    if(result.length === 0){
-                        console.error("Delete Student Failed: Owner not found");
-                        client.emit("edit-student-fail", 5);
-                        return;
-                    }
-                    const foundUser = result[0];
-                    deleteStudent(client, foundUser.classes[classIndex], studentID, false);
-                })
-                .catch((error)=>{
-                    console.error("Delete Student Failed: "+error);
-                    client.emit("edit-student-fail", 4);
-                });
+                client.emit("edit-student-success", 1);
+                deleteStudentOtherClassUpdate(client, classID, studentID, foundClass.ownerID);  
             }
         })
         .catch((error)=>{
@@ -1782,6 +1738,138 @@ function deleteStudent(client, classID, studentID, checkDefaulDelete){
     .catch((error)=>{
         console.error("Delete Student Failed: "+error);
         client.emit("edit-student-fail", 0);
+    });
+}
+function deleteStudentOtherClassUpdate(client, classID, studentID, ownerID){
+    Users.find({userID:ownerID})
+    .then((result)=>{
+        if(result.length === 0){
+            console.error("Delete Student Failed: Owner not found");
+            client.emit("edit-student-fail", 5);
+            return;
+        }
+        const foundUser = result[0];
+        for(let i = 0; i < foundUser.classes.length; i++){
+            if(foundUser.classes[i] !== classID){
+                deleteStudent(client, foundUser.classes[i], studentID, false);
+            }
+        }
+    })
+    .catch((error)=>{
+        console.error("Delete Student Failed: "+error);
+        client.emit("edit-student-fail", 4);
+    });
+}
+function removeStudent(client, classID, studentID){
+    Classes.find({classID:classID})
+    .then((result)=>{
+        if(result.length === 0){
+            console.error("Remove Student Failed: Class not found");
+            client.emit("edit-student-fail", 1);
+            return;
+        }
+        const foundClass = result[0];
+        let studentFound = false, studentIndex;
+        for(let i = 0; i < foundClass.students.length; i++){
+            if(foundClass.students[i].id === studentID){
+                studentFound = true;
+                studentIndex = i;
+                break;
+            }
+        }
+        if(!studentFound) return;
+
+        const removedStudent = foundClass.students[studentIndex];
+        foundClass.students.splice(studentIndex, 1);
+        foundClass.markModified("students");
+        foundClass.save()
+        .then(()=>{
+            client.emit("edit-student-success", 2);
+            ungroupRemovedStudent(client, foundClass.ownerID, removedStudent);
+        })
+        .catch((error)=>{
+            console.error("Remove Student Failed: "+error);
+            client.emit("edit-student-fail", 3);
+        });
+    })
+    .catch((error)=>{
+        console.error("Remove Student Failed: "+error);
+        client.emit("edit-student-fail", 0);
+    });
+}
+function ungroupRemovedStudent(client, ownerID, removedStudent){
+    Users.find({userID:ownerID})
+    .then((result)=>{
+        if(result.length === 0){
+            console.error("Remove Student Failed: Owner not found");
+            client.emit("edit-student-fail", 5);
+            return;
+        }
+        const foundUser = result[0];
+        addStudent(client, foundUser.classes[1], removedStudent.name, removedStudent.email, removedStudent.id, false);
+    })
+    .catch((error)=>{
+        console.error("Remove Student Failed: "+error);
+        client.emit("edit-student-fail", 4);
+    });
+}
+function editStudent(client, classID, studentID, studentName, studentEmail, checkDefaultEdit){
+    Classes.find({classID:classID})
+    .then((result)=>{
+        if(result.length === 0){
+              console.error("Edit Student Failed: Class not found");
+            client.emit("edit-student-fail", 1);
+            return;
+        }
+        const foundClass = result[0];
+        let studentFound = false, studentIndex;
+        for(let i = 0; i < foundClass.students.length; i++){
+            if(foundClass.students[i].id === studentID){
+                studentFound = true;
+                studentIndex = i;
+                break;
+            }
+        }
+        if(!studentFound) return;
+
+        foundClass.students[studentIndex].name = studentName;
+        foundClass.students[studentIndex].email = studentEmail;
+        foundClass.markModified("students");
+        foundClass.save()
+        .then(()=>{
+            if(checkDefaultEdit){
+                client.emit("edit-student-success", 0);
+                editStudentOtherClassUpdate(client, foundClass.ownerID, classID, studentID, studentName, studentEmail);
+            }
+        })
+        .catch((error)=>{
+            console.error("Edit Student Failed: "+error);
+            client.emit("edit-student-fail", 3);
+        });
+    })
+    .catch((error)=>{
+        console.error("Edit Student Failed: "+error);
+        client.emit("edit-student-fail", 0);
+    });
+}
+function editStudentOtherClassUpdate(client, ownerID, classID, studentID, studentName, studentEmail){
+    Users.find({userID:ownerID})
+    .then((result)=>{
+        if(result.length === 0){
+            console.error("Edit Student Failed: Owner not found");
+            client.emit("edit-student-fail", 5);
+            return;
+        }
+        const foundUser = result[0];
+        for(let i = 0; i < foundUser.classes.length; i++){
+            if(foundUser.classes[i] !== classID){
+                editStudent(client, foundUser.classes[i], studentID, studentName, studentEmail, false);
+            }
+        }
+    })
+    .catch((error)=>{
+        console.error("Edit Student Failed: "+error);
+        client.emit("edit-student-fail", 4);
     });
 }
 

@@ -132,7 +132,7 @@ function loadStudentsLogic(client, userID, username){
         nameInput.value = e.detail.student.name;
         emailInput.value = e.detail.student.email;
         editStudentConfirm.onclick = ()=>{
-            if(!nameInput.value || !emailInput.value) notification("Input all fields");
+            if(!nameInput.value) notification("Input student name");
             else{
                 client.emit("edit-student", e.detail.classID, e.detail.student.id, nameInput.value, emailInput.value);
                 editStudentConfirm.disabled = true;
@@ -143,20 +143,7 @@ function loadStudentsLogic(client, userID, username){
         client.emit("delete-student", e.detail.classID, e.detail.student.id);
     });
     window.addEventListener("remove-student", (e)=>{
-        /*for(let i = 0; i < classes.length; i++){
-            if(classes[i].name === e.detail.currClass.name){
-                for(let j = 0; j < classes[i].students.length; j++){
-                    if(classes[i].students[j].id === e.detail.id){
-                        let removedStudent = classes[i].students.splice(j, 1);
-                        classes[1].students = classes[1].students.concat(removedStudent);
-                        break;
-                    }
-                }
-                break;
-            }
-        }
-        generateClasses(classNameSearch, classes);
-        displayCurrClass(classes[currClass], studentListSearch, false);*/
+        client.emit("remove-student", e.detail.classID, e.detail.student.id);
     });
     window.addEventListener("delete-assignment", (e)=>{
         client.emit("delete-assignment", classes[currClass].classID, e.detail.id, e.detail.isHomework);
@@ -223,6 +210,7 @@ function loadStudentsLogic(client, userID, username){
             "Edit Student Error: Student not found",
             "Edit Student Error: New state save fail",
             "Default Edit Student Error",
+            "Edit Student Error: Owner not found",
         ];
         console.error(errorTexts[type]);
         notification(errorTexts[type]);
@@ -230,7 +218,8 @@ function loadStudentsLogic(client, userID, username){
     client.on("edit-student-success", (type)=>{
         const successTexts = [
             "Student data edited",
-            "Student deleted"
+            "Student deleted",
+            "Student removed"
         ];
         if(type === 0){
             editStudentConfirm.disabled = false;
@@ -484,7 +473,6 @@ function classesExist(classNum){
     const classRequired = document.querySelectorAll(".class-required");
     if(classNum === 0) for(let i = 0; i < classRequired.length; i++) classRequired[i].style.display = "none";
     else for(let i = 0; i < classRequired.length; i++) classRequired[i].style.display = "block";
-    
 }
 function displayCurrClass(currClass, studentListSearch, studentView){
     if(!currClass) return;
@@ -544,10 +532,10 @@ function displayCurrClass(currClass, studentListSearch, studentView){
                     }
                 }
                 else{
-                    studentDelete.classList.add("class-window-student-remove");
+                    studentDelete.classList.add("class-window-list-item-remove");
                     studentDelete.onclick = ()=>{
                         if(confirm("Are you sure you want to remove this student from this class?")){
-                            const data = {detail:{id:displayedStudents[i].id, currClass:currClass}}
+                            const data = {detail:{student:displayedStudents[i], classID:currClass.classID}}
                             const deleteStudentEvent = new CustomEvent("remove-student", data);
                             window.dispatchEvent(deleteStudentEvent);
                         }
