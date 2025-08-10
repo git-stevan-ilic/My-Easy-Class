@@ -87,7 +87,6 @@ function loadUrlParamLogic(client){
         client.emit("get-class-display-data", urlParams.classID);
         mode = "class-view";
     }
-    console.log(urlParams.studentEmail)
 
     client.on("get-class-display-data-fail", ()=>{notification("Class not found")});
     client.on("get-user-display-data-fail", ()=>{notification("Profile not found")});

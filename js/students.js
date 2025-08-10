@@ -93,6 +93,9 @@ function loadStudentsLogic(client, userID, username){
     });
 
     window.addEventListener("request-student-list", ()=>{
+        //let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
+        //console.log(currClassIDs, classes[currClass].students, )
+
         /*let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
         let availableStudents = classes[0].students.filter(item => !currClassIDs.has(item.id)); 
         generateInviteStudentList(availableStudents, inviteStudendSearch);*/
@@ -218,7 +221,8 @@ function loadStudentsLogic(client, userID, username){
             "Edit Student Error",
             "Edit Student Error: Class not found",
             "Edit Student Error: Student not found",
-            "Edit Student Error: New state save fail"
+            "Edit Student Error: New state save fail",
+            "Default Edit Student Error",
         ];
         console.error(errorTexts[type]);
         notification(errorTexts[type]);
@@ -234,6 +238,9 @@ function loadStudentsLogic(client, userID, username){
             fadeOut("#edit-student-screen", 0.1, null);
         }
         notification(successTexts[type]);
+        client.emit("class-data-request", userID);
+    });
+    client.on("update-student-list", ()=>{
         client.emit("class-data-request", userID);
     });
 }
@@ -290,7 +297,9 @@ function loadClassViewDisplay(receivedClass, studentEmail, client){
         const errorTexts = [
             "Class finding error",
             "Class not found",
-            "Class update failed"
+            "Class update failed",
+            "Default Class update error: User find error",
+            "Default Class update error: User not found"
         ];
         console.error(errorTexts[type]);
         notification(errorTexts[type]);
@@ -847,7 +856,7 @@ function generateInviteStudentList(students, inviteStudendSearch){
     for(let i = 0; i < students.length; i++){
         let searchResult = students[i].name.toLowerCase().indexOf(inviteStudendSearch)
         if(searchResult !== -1 || inviteStudendSearch === ""){
-            displayedStudents.push(students[i])
+            displayedStudents.push(students[i]);
         }
     }
 
