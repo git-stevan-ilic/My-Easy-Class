@@ -288,7 +288,7 @@ function noGoogle(client){
         screen.appendChild(googleConnectWindow);
 
         googleConnectButton.onclick = ()=>{
-            client.emit("connect-google");
+            client.emit("google-log-in");
         }
     }
 }

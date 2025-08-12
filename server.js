@@ -1459,25 +1459,27 @@ function userRegister(client, newAccount){
             return;
         }
         const userID = nanoid(10)
-        const allStudentsClass = await createClass("All Students", userID, "all-students");
-        const ungroupedClass = await createClass("Ungrouped", userID, "ungrouped-students");
-        if(!allStudentsClass || !ungroupedClass){
-            client.emit("user-register-fail", 2);
-            console.log("Class Creation Error")
-        }
         const newUser = new Users({
             userID:userID,
             username:newAccount.username,
             password:newAccount.password,
             sessionID:nanoid(10),
             email:newAccount.email,
-            classes:[allStudentsClass, ungroupedClass],
+            classes:[],
             googleConnected:false,
             googleRefreshToken:null,
             googleUserID:null
         });
+        
         await newUser.save()
-        .then(()=>{
+        .then(async ()=>{
+            const allStudentsClass = await createClass("All Students", userID, "all-students");
+            const ungroupedClass = await createClass("Ungrouped", userID, "ungrouped-students");
+            if(!allStudentsClass || !ungroupedClass){
+                client.emit("user-register-fail", 2);
+                console.log("Class Creation Error");
+            }
+
             console.log("New user '"+newUser.username+"' added");
             client.emit("user-register-success", newUser);
         })
@@ -1493,7 +1495,7 @@ function userRegister(client, newAccount){
 }
 async function checkUserExistGoogleLogin(profile){
     try{
-        const result = await Users.find({email: profile.emails[0].value});
+        const result = await Users.find({email:profile.emails[0].value});
         if(result.length > 0){
             const foundUser = result[0];
             if(!foundUser.googleConnected){
