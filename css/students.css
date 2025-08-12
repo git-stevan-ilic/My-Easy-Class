@@ -131,7 +131,12 @@
     height:fit-content;
     width:calc(100% - 40rem);
     margin-left:1rem;
+    margin-top:1rem;
     min-width:50rem;
+
+    background-color:var(--background-white);
+    border:1px solid var(--border-gray-1);
+    border-radius:var(--border-radius-2);
 }
 .students-main-head{
     justify-content:flex-start;
@@ -146,12 +151,22 @@
     color:var(--dark-blue);
     font-size:2rem;
     height:100%;
-    width:100%;
+    width:calc(100% - 9rem);
+    margin-left:1.5rem;
 
     justify-content:flex-start;
     align-items:center;
     font-weight:bold;
     display:flex;
+}
+.class-buttons{
+    justify-content:flex-end;
+    align-items:center;
+    display:flex;
+
+    flex-shrink:0;
+    height:100%;
+    width:6rem;
 }
 .students-top-buttons-elements{
     position:absolute;
@@ -258,15 +273,11 @@
 
 /*--Main Elements------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .class-window{
-    background-color:var(--background-white);
-    border:1px solid var(--border-gray-1);
-    border-radius:var(--border-radius-2);
     transform:translate(-50%);
     height:calc(22rem + 2px);
     width:calc(100% - 2rem);
     color:var(--dark-blue);
     margin-left:50%;
-    padding:1vw;
 }
 .class-window-tab-holder{
     background-color:var(--background-gray-2);
@@ -408,6 +419,7 @@
     aspect-ratio:1;
     flex-shrink:0;
     height:1.5rem;
+    cursor:pointer;
 }
 .class-window-list-item-button:hover{
     transform:scale(1.1);
@@ -423,6 +435,45 @@
 }
 .class-window-list-item-remove{
     background-image:url("../assets/icons/x gray.png");
+}
+
+/*--Edit Class Name----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+.edit-class-window{
+    box-shadow:0.25rem 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+    background-color:var(--background-white);
+    border:1px solid var(--border-gray-1);
+    border-radius:var(--border-radius-2);
+    transform:translate(-50%, -50%);
+    color:var(--dark-blue);
+    position:absolute;
+    padding:1rem;
+    left:50%;
+    width:min(20rem, calc(100vw - 4rem));
+    top:min(15rem, 50%);
+}
+.edit-class-window-head{
+    justify-content:flex-start;
+    align-items:flex-start;
+    font-weight:bold;
+    display:flex;
+
+    font-size:1.5rem;
+    height:3rem;
+    width:100%;
+}
+.edit-class-window-body{
+    margin-bottom:2rem;
+}
+.edit-class-window-body > *{
+    width:95%;
+}
+.edit-class-window-foot{
+    justify-content:space-evenly;
+    align-items:center;
+    display:flex;
+
+    height:4rem;
+    width:100%;
 }
 
 /*--Invite Elements----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/

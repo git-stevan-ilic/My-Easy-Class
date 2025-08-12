@@ -11,6 +11,7 @@ function loadStudentsLogic(client, userID, username){
     generateClasses(classNameSearch, classes);
 
     const editStudentConfirm = document.querySelector("#edit-student-confirm");
+    const editClassConfirm = document.querySelector("#edit-class-confirm");
     const newLessonName = document.querySelector("#new-lesson-input-name");
     const newLessonContent = document.querySelector("#new-lesson-input-content");
     const newLessonDate = document.querySelector("#new-lesson-input-date");
@@ -62,6 +63,9 @@ function loadStudentsLogic(client, userID, username){
         fadeOut("#edit-student-screen", 0.1, null);
         editStudentConfirm.onclick = null;
     }
+    document.querySelector("#edit-class-cancel").onclick = ()=>{
+        fadeOut("#edit-class-screen", 0.1, null);
+    }
 
     window.addEventListener("new-class", (e)=>{
         const eventName = e.detail.name;
@@ -76,7 +80,7 @@ function loadStudentsLogic(client, userID, username){
         if(!nameMatch) client.emit("new-class", eventName, userID);
     });
     window.addEventListener("display-curr-class", ()=>{
-        displayCurrClass(classes[currClass], studentListSearch, false);
+        displayCurrClass(client, classes[currClass], studentListSearch, false);
         displayAssignmentsList(classes[currClass], assignmentSearch, false, false);
         displayAssignmentsList(classes[currClass], homeworkSearch, true, false);
     });
@@ -85,7 +89,7 @@ function loadStudentsLogic(client, userID, username){
         currClass = e.detail.newCurrClass;
         studentListSearch = "";
         studentSearch.value = studentListSearch;
-        displayCurrClass(classes[currClass], studentListSearch, false);
+        displayCurrClass(client, classes[currClass], studentListSearch, false);
         displayAssignmentsList(classes[currClass], assignmentSearch, false, false);
         displayAssignmentsList(classes[currClass], homeworkSearch, true, false);
         addStudentEvents(username, classes[currClass].classID, !firstEventLoaded);
@@ -122,7 +126,7 @@ function loadStudentsLogic(client, userID, username){
         document.querySelector("#invite-list-window-close").click();
         classes[currClass].students = classes[currClass].students.concat(addedStudents);
         generateClasses(classNameSearch, classes);
-        displayCurrClass(classes[currClass], studentListSearch, false);*/
+        displayCurrClass(client, classes[currClass], studentListSearch, false);*/
     });
 
     window.addEventListener("open-edit-student", (e)=>{
@@ -159,6 +163,7 @@ function loadStudentsLogic(client, userID, username){
         notification("Class Data Error");
     })
     client.on("class-data-received", (classData, newCurrClass)=>{
+        if(currClass >= classData.length) currClass = 0;
         if(newCurrClass > -1 && newCurrClass < classData.length) currClass = newCurrClass;
         lessons = [
             classData[currClass].lessons.upcoming,
@@ -174,7 +179,7 @@ function loadStudentsLogic(client, userID, username){
         studentPageTabLogic(lessons, currLesson);
         generateClasses(classNameSearch, classes);
         generateLessons(lessons[currLesson], currLesson);
-        displayCurrClass(classes[currClass], studentListSearch, false);
+        displayCurrClass(client, classes[currClass], studentListSearch, false);
         displayAssignmentsList(classes[currClass], assignmentSearch, false, false);
         displayAssignmentsList(classes[currClass], homeworkSearch, true, false);
     });
@@ -232,6 +237,27 @@ function loadStudentsLogic(client, userID, username){
     client.on("update-student-list", ()=>{
         client.emit("class-data-request", userID);
     });
+    client.on("edit-class-fail", (type)=>{
+        editClassConfirm.disabled = false;
+        const errorTexts = [
+            "Edit Class Error",
+            "Edit Class Error: Class not found",
+            "Edit Class Error: Save new state fail",
+            "Edit Class Error: Class owner not found",
+        ];
+        console.error(errorTexts[type]);
+        notification(errorTexts[type]);
+    });
+    client.on("edit-class-success", (type)=>{
+        editClassConfirm.disabled = false;
+        const successTexts = [
+            "Class name edited",
+            "Class removed"
+        ];
+        notification(successTexts[type]);
+        client.emit("class-data-request", userID);
+        fadeOut("#edit-class-screen", 0.1, null);
+    });
 }
 function loadClassViewDisplay(receivedClass, studentEmail, client){
     const mainScreen = document.querySelector("#main");
@@ -259,7 +285,7 @@ function loadClassViewDisplay(receivedClass, studentEmail, client){
         receivedClass.lessons.canceled
     ];
 
-    displayCurrClass(receivedClass, studentListSearch, true);
+    displayCurrClass(client, receivedClass, studentListSearch, true);
     displayAssignmentsList(receivedClass, assignmentSearch, false, true);
     displayAssignmentsList(receivedClass, homeworkSearch, true, true);
     studentPageSearch(null, studentListSearch, assignmentSearch, homeworkSearch, null, [receivedClass], 0, true);
@@ -299,7 +325,7 @@ function loadClassViewDisplay(receivedClass, studentEmail, client){
         inputStudentButton.disabled = false;
         if(!alreadyPresent){
             receivedClass = currClass;
-            displayCurrClass(receivedClass, studentListSearch, true);
+            displayCurrClass(client, receivedClass, studentListSearch, true);
         }
     });
 }
@@ -338,11 +364,11 @@ function studentPageSearch(classNameSearch, studentListSearch, assignmentListSea
     studentSearch.value = "";
     studentSearchIcon.onclick = ()=>{
         studentListSearch = studentSearch.value;
-        displayCurrClass(classes[currClass], studentListSearch, studentView);
+        displayCurrClass(client, classes[currClass], studentListSearch, studentView);
     }
     studentSearch.oninput = ()=>{
         studentListSearch = studentSearch.value;
-        displayCurrClass(classes[currClass], studentListSearch, studentView);
+        displayCurrClass(client, classes[currClass], studentListSearch, studentView);
     }
     
     const assignmentSearchIcon = document.querySelector("#assignment-search-icon");
@@ -474,8 +500,40 @@ function classesExist(classNum){
     if(classNum === 0) for(let i = 0; i < classRequired.length; i++) classRequired[i].style.display = "none";
     else for(let i = 0; i < classRequired.length; i++) classRequired[i].style.display = "block";
 }
-function displayCurrClass(currClass, studentListSearch, studentView){
+function displayCurrClass(client, currClass, studentListSearch, studentView){
     if(!currClass) return;
+    
+    const editClassNameInput = document.querySelector("#edit-class-name-input");
+    const editClassConfirm = document.querySelector("#edit-class-confirm");
+    const classButtons = document.querySelector(".class-buttons");
+    if(currClass.type !== "user-class"){
+        editClassConfirm.onclick = null;
+        classButtons.style.display = "none";
+        for(let i = 0; i < classButtons.children.length; i++){
+            classButtons.children[i].onclick = null;
+        }
+    }
+    else{
+        classButtons.style.display = "flex";
+        classButtons.children[0].onclick = ()=>{
+            editClassConfirm.disabled = false;
+            editClassNameInput.value = currClass.name;
+            fadeIn("#edit-class-screen", 0.1, "block", null);
+        }
+        classButtons.children[1].onclick = ()=>{
+            if(confirm("Are you sure you want to delete this class?\nThis will delete all users and assigments contained within"))
+                client.emit("delete-class", currClass.classID, currClass.ownerID);
+        }
+        editClassConfirm.onclick = ()=>{
+            if(!editClassNameInput.value){
+                notification("Input a name");
+                return;
+            }
+            editClassConfirm.disabled = true;
+            client.emit("edit-class", currClass.classID, editClassNameInput.value);
+        }
+    }
+
     document.querySelector(".class-title").innerText = currClass.name;
     const studentList = document.querySelector("#class-window-student-list");
     while(studentList.children.length > 0) studentList.removeChild(studentList.lastChild);

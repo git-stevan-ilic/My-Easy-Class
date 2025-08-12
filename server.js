@@ -21,7 +21,6 @@ const vision = require("@google-cloud/vision");
 const multer = require("multer");
 const upload = multer({storage:multer.memoryStorage()});
 const pdfParse = require("pdf-parse");
-const fs = require("fs-extra");
 const mammoth = require("mammoth");
 const stream = require("stream");
 const puppeteer = require("puppeteer");
@@ -394,8 +393,7 @@ async function sendEmail(req, res, refreshToken){
                     "Content-Transfer-Encoding: base64",
                     ""
                 );
-                const fileContent = fs.readFileSync(attachment.path);
-                const encodedAttachment = fileContent.toString("base64");
+                const encodedAttachment = attachment.buffer.toString("base64");
                 rawEmailParts.push(encodedAttachment);
                 rawEmailParts.push("");
             }
@@ -1137,6 +1135,12 @@ io.on("connection", (client)=>{
         if(!newClassID) client.emit("new-class-error");
         else getClassData(client, userID, true);
     });
+    client.on("delete-class", (classID, ownerID)=>{
+        deleteClass(client, classID, ownerID);
+    });
+    client.on("edit-class", (classID, name)=>{
+        editClass(client, classID, name);
+    });
     client.on("update-user-data", (userData)=>{
         Users.find({email:userData.email})
         .then((result)=>{
@@ -1621,6 +1625,69 @@ function getClassData(client, userID, newClass){
     .catch((error)=>{
         console.error("Find user DB error: ", error);
         client.emit("class-data-request-fail");
+    });
+}
+function deleteClass(client, classID, ownerID){
+    Users.find({userID:ownerID})
+    .then((result)=>{
+        if(result.length === 0){
+            console.error("Edit Class Error: Class owner not found");
+            client.emit("edit-class-fail", 3);
+            return;
+        }
+        const foundUser = result[0];
+        let classIndex, foundClass = false;
+        for(let i = 0; i < foundUser.classes.length; i++){
+            if(foundUser.classes[i] === classID){
+                foundClass = true;
+                classIndex = i;
+            }
+        }
+        if(!foundClass){
+            console.error("Edit Class Error: Class not found in User");
+            client.emit("edit-class-fail", 4);
+            return;
+        }
+        foundUser.classes.splice(classIndex, 1);
+        foundUser.save()
+        .then(()=>{
+            Classes.findOneAndDelete({classID:classID})
+            .then(()=>{client.emit("edit-class-success", 1)})
+            .catch((error)=>{
+                console.error("Edit Class Error: " + error);
+                client.emit("edit-class-fail", 0);
+            });
+        })
+        .catch((error)=>{
+            console.error("Edit Class Error: " + error);
+            client.emit("edit-class-fail", 2);
+        });
+    })
+    .catch((error)=>{
+        console.error("Edit Class Error: " + error);
+        client.emit("edit-class-fail", 0);
+    });
+}
+function editClass(client, classID, name){
+    Classes.find({classID:classID})
+    .then((result)=>{
+        if(result.length === 0){
+            console.error("Edit Class failed: Class not found");
+            client.emit("edit-class-fail", 1);
+            return;
+        }
+        const foundClass = result[0];
+        foundClass.name = name;
+        foundClass.save()
+        .then(()=>{client.emit("edit-class-success", 0)})
+        .catch((error)=>{
+            console.error("Edit Class failed: " + error);
+            client.emit("edit-class-fail", 2);
+        });
+    })
+    .catch((error)=>{
+        console.error("Edit Class failed: " + error);
+        client.emit("edit-class-fail", 0);
     });
 }
 function addStudent(client, classID, name, email, studentID, checkDefaulAdd){
