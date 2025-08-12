@@ -617,12 +617,12 @@
     background-color:var(--background-white);
     border:1px solid var(--border-gray-1);
     border-radius:var(--border-radius-2);
-    transform:translate(-50%, -50%);
+    transform:translate(-50%);
     color:var(--dark-blue);
     position:absolute;
     padding:1rem;
     left:50%;
-    top:min(15rem, 50%);
+    top:min(5rem, 50%);
     width:min(30rem, calc(100vw - 4rem));
 }
 .invite-list-window-head{

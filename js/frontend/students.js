@@ -10,6 +10,7 @@ function loadStudentsLogic(client, userID, username){
     generateNewClassLogic();
     generateClasses(classNameSearch, classes);
 
+    const moveToClass = document.querySelector("#move-to-class");
     const editStudentConfirm = document.querySelector("#edit-student-confirm");
     const editClassConfirm = document.querySelector("#edit-class-confirm");
     const newLessonName = document.querySelector("#new-lesson-input-name");
@@ -92,41 +93,25 @@ function loadStudentsLogic(client, userID, username){
         displayCurrClass(client, classes[currClass], studentListSearch, false);
         displayAssignmentsList(classes[currClass], assignmentSearch, false, false);
         displayAssignmentsList(classes[currClass], homeworkSearch, true, false);
-        addStudentEvents(username, classes[currClass].classID, !firstEventLoaded);
+        addStudentEvents(username, classes[currClass].classID, classes[currClass].type, !firstEventLoaded);
         if(!firstEventLoaded) firstEventLoaded = true;
     });
-
     window.addEventListener("request-student-list", ()=>{
-        //let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
-        //console.log(currClassIDs, classes[currClass].students, )
-
-        /*let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
-        let availableStudents = classes[0].students.filter(item => !currClassIDs.has(item.id)); 
-        generateInviteStudentList(availableStudents, inviteStudendSearch);*/
+        generateInviteStudentList(classes[0].students, inviteStudendSearch);
     });
     window.addEventListener("add-students-list", (e)=>{
-        /*let addedStudentIDs = e.detail.students;
-        let addedStudents = [];
-        for(let i = 0; i < classes[0].students.length; i++){
-            for(let j = 0; j < addedStudentIDs.length; j++){
-                if(classes[0].students[i].id === addedStudentIDs[j]){
-                    addedStudents.push(classes[0].students[i]);
-                }
-            }
+        let addedStudentIDs = e.detail.students;
+        if(!classes[0].classID || !classes[1].classID || !classes[currClass].classID){
+            console.error("Invalid Class ID: " + classes[0].classID + " " + classes[1].classID + " " + classes[currClass].classID);
+            notification("Invalid Class ID");
+            return;
         }
-        if(currClass !== 0){
-            for(let i = 0; i < classes[1].students.length; i++){
-                for(let j = 0; j < addedStudentIDs.length; j++){
-                    if(classes[1].students[i].id === addedStudentIDs[j]){
-                        classes[1].students.splice(i, 1);
-                    }
-                }
-            }
+        if(addedStudentIDs.lenght === 0){
+            notification("No students selected");
+            return;
         }
-        document.querySelector("#invite-list-window-close").click();
-        classes[currClass].students = classes[currClass].students.concat(addedStudents);
-        generateClasses(classNameSearch, classes);
-        displayCurrClass(client, classes[currClass], studentListSearch, false);*/
+        moveToClass.disbled = true;
+        client.emit("add-students-list", classes[0].classID, classes[1].classID, classes[currClass].classID, addedStudentIDs);
     });
 
     window.addEventListener("open-edit-student", (e)=>{
@@ -173,7 +158,7 @@ function loadStudentsLogic(client, userID, username){
         classes = classData;
 
         loadGenerateLogic(client, userID, classes[currClass].classID);
-        addStudentEvents(username, classes[currClass].classID, firstEventLoaded);
+        addStudentEvents(username, classes[currClass].classID, classes[currClass].type, firstEventLoaded);
         classesExist(classes.length);
         studentPageSearch(classNameSearch, studentListSearch, assignmentSearch, homeworkSearch, inviteStudendSearch, classes, currClass, false);
         studentPageTabLogic(lessons, currLesson);
@@ -257,6 +242,27 @@ function loadStudentsLogic(client, userID, username){
         notification(successTexts[type]);
         client.emit("class-data-request", userID);
         fadeOut("#edit-class-screen", 0.1, null);
+    });
+    client.on("add-students-list-fail", (type)=>{
+        moveToClass.disabled = false;
+        const errorTexts = [
+            "Add List Student Error",
+            "Add List Student Error: All Students Class not found",
+            "Add List Student Error: Student IDs not found",
+            "Add List Student Error: Ungrouped Class find error",
+            "Add List Student Error: Save new Ungrouped Class state",
+            "Add List Student Error: Receiving Class find error",
+            "Add List Student Error: Receiving Class not found",
+            "Add List Student Error: Save new Receiving Class state",
+        ];
+        console.error(errorTexts[type]);
+        notification(errorTexts[type]);
+    });
+    client.on("add-students-list-success", ()=>{
+        moveToClass.disabled = false;
+        notification("Students added to Class");
+        client.emit("class-data-request", userID);
+        fadeOut("#invite-list-screen", 0.1, null);
     });
 }
 function loadClassViewDisplay(receivedClass, studentEmail, client){
@@ -347,15 +353,11 @@ function studentPageSearch(classNameSearch, studentListSearch, assignmentListSea
         const inviteListSearch = document.querySelector("#invite-list-search");
         inviteListSearchIcon.onclick = ()=>{
             inviteStudendSearch = inviteListSearch.value;
-            let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
-            let availableStudents = classes[0].students.filter(item => !currClassIDs.has(item.id)); 
-            inviteListSearchApply(availableStudents, inviteStudendSearch);
+            generateInviteStudentList(classes[0].students, inviteStudendSearch);
         }
         inviteListSearch.oninput = ()=>{
             inviteStudendSearch = inviteListSearch.value;
-            let currClassIDs = new Set(classes[currClass].students.map(item => item.id)); 
-            let availableStudents = classes[0].students.filter(item => !currClassIDs.has(item.id)); 
-            inviteListSearchApply(availableStudents, inviteStudendSearch);
+            generateInviteStudentList(classes[0].students, inviteStudendSearch);
         }
     }
 
@@ -768,7 +770,7 @@ async function requestDownloadAssignment(type, name, html){
 }
 
 /*--Add Students-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function addStudentEvents(username, classID, first){
+function addStudentEvents(username, classID, classType, first){
     const dropMenu = document.querySelector(".add-student-drop-down");
     const inviteList = document.querySelector(".invite-list");
     let addStudentDropDown = false;
@@ -825,12 +827,21 @@ function addStudentEvents(username, classID, first){
         addStudentDropDown = false;
         fadeIn("#invite-qr-screen", 0.1);
     }
-    document.querySelector("#invite-list").onclick = ()=>{
-        const requestStudentList = new Event("request-student-list");
-        document.querySelector("#invite-list-search").value = "";
-        window.dispatchEvent(requestStudentList);
-        fadeIn("#invite-list-screen", 0.1);
-        closeDropDown();
+
+    const inviteListButton = document.querySelector("#invite-list");
+    if(classType === "user-class"){
+        inviteListButton.parentElement.style.display = "flex";
+        inviteListButton.onclick = ()=>{
+            const requestStudentList = new Event("request-student-list");
+            document.querySelector("#invite-list-search").value = "";
+            window.dispatchEvent(requestStudentList);
+            fadeIn("#invite-list-screen", 0.1);
+            closeDropDown();
+        }
+    }
+    else{
+        inviteListButton.parentElement.style.display = "none";
+        inviteListButton.onclick = null;
     }
 
     const inviteEmailInput = document.querySelector("#invite-email-input");
@@ -907,6 +918,7 @@ function generateInviteStudentList(students, inviteStudendSearch){
     }
 
     const list = document.querySelector(".student-list");
+    while(list.children.length > 0) list.removeChild(list.lastChild);
     for(let i = 0; i < students.length; i++){
         const studentCheckMark = document.createElement("div");
         const studentCheck = document.createElement("div");

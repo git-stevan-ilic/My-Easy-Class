@@ -1350,6 +1350,9 @@ io.on("connection", (client)=>{
     client.on("remove-student", (classID, studentID)=>{
         removeStudent(client, classID, studentID);
     });
+    client.on("add-students-list", (allStudentsID, ungroupedStudentsID, receiveingClassID, studentList)=>{
+        addStudentsList(client, allStudentsID, ungroupedStudentsID, receiveingClassID, studentList);
+    });
 });
 
 /*--Start Server-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -1937,6 +1940,101 @@ function editStudentOtherClassUpdate(client, ownerID, classID, studentID, studen
     .catch((error)=>{
         console.error("Edit Student Failed: "+error);
         client.emit("edit-student-fail", 4);
+    });
+}
+function addStudentsList(client, allStudentsID, ungroupedStudentsID, receiveingClassID, studentList){
+    let students = [];
+    Classes.find({classID:allStudentsID})
+    .then((result)=>{
+        if(result.length === 0){
+            console.error("Add Student Error: All Students Class not found");
+            client.emit("add-students-list-fail", 1);
+            return;
+        }
+        const allStudentsClass = result[0];
+        for(let i = 0; i < allStudentsClass.students.length; i++){
+            for(let j = 0; j < studentList.length; j++){
+                if(allStudentsClass.students[i].id === studentList[j]){
+                    students.push(allStudentsClass.students[i]);
+                    break;
+                }
+            }
+        }
+        if(students.length === 0){
+            console.error("Add Student Error: Student IDs not found");
+            client.emit("add-students-list-fail", 2);
+        }
+        else{
+            removeFromUngrouped(client, students, ungroupedStudentsID);
+            addStudentListReceive(client, students, receiveingClassID);
+        }
+    })
+    .catch((error)=>{
+        console.error("Add Student Error: " + error);
+        client.emit("add-students-list-fail", 0);
+    });
+}
+function removeFromUngrouped(client, students, ungroupedStudentsID){
+    Classes.find({classID:ungroupedStudentsID})
+    .then((result)=>{
+        if(result.length === 0){
+            console.error("Remove Ungrouped Students Error: Ungrouped Students Class not found");
+            client.emit("add-students-list-fail", 4);
+            return;
+        }
+        const ungroupedStudentsClass = result[0];
+        for(let i = ungroupedStudentsClass.students.length-1; i >= 0; i--){
+            for(let j = 0; j < students.length; j++){
+                if(ungroupedStudentsClass.students[i].id === students[j].id){
+                    ungroupedStudentsClass.students.splice(i, 1);
+                    break;
+                }
+            }
+        }
+        ungroupedStudentsClass.markModified("students");
+        ungroupedStudentsClass.save()
+        .catch((error)=>{
+            console.error("Remove Ungrouped Students Error: " + error);
+            client.emit("add-students-list-fail", 4);
+        });
+    })
+    .catch((error)=>{
+        console.error("Remove Ungrouped Students Error: " + error);
+        client.emit("add-students-list-fail", 3);
+    });
+}
+function addStudentListReceive(client, students, receiveingClassID){
+    Classes.find({classID:receiveingClassID})
+    .then((result)=>{
+        if(result.length === 0){
+            console.error("Add list Students to Class Error: Receiving Class not found");
+            client.emit("add-students-list-fail", 6);
+            return;
+        }
+        const receivingClass = result[0];
+        for(let i = 0; i < students.length; i++){
+            let studentAlreadyInClass = false;
+            for(let j = 0; j < receivingClass.students.length; j++){
+                if(students[i].id === receivingClass.students[j].id){
+                    studentAlreadyInClass = true;
+                    break;
+                }
+            }
+            if(!studentAlreadyInClass){
+                receivingClass.students.push(students[i]);
+            }
+        }
+        receivingClass.markModified("students");
+        receivingClass.save()
+        .then(()=>{client.emit("add-students-list-success")})
+        .catch((error)=>{
+            console.error("Add List Students to Class Error: " + error);
+            client.emit("add-students-list-fail", 7);
+        });
+    })
+    .catch((error)=>{
+        console.error("Add list Students to Class Error: " + error);
+        client.emit("add-students-list-fail", 5);
     });
 }
 
