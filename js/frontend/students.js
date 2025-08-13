@@ -1449,6 +1449,95 @@ function generateAssignmentPreview(assignment){
     }
 }
 
+/*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+var sdkKey = 'zeY5YgjkTDG0TN4WvNlPuw'
+var meetingNumber = '82008698839'
+var passWord = '0iGNG2'
+var role = 0
+var userName = 'Slobodan'
+var userEmail = 'my.easy.class.work@gmail.com'
+
+window.addEventListener("load", ()=>{
+    ZoomMtg.preLoadWasm();
+    ZoomMtg.prepareWebSDK();
+});
+function getSignature(){
+    fetch("/zoom-meeting", {
+        method:"POST",
+        headers:{"Content-Type": "application/json"},
+        body:JSON.stringify({
+            meetingNumber:meetingNumber,
+            role:role
+        })
+    })
+    .then((response)=>{return response.json()})
+    .then((data)=>{
+        console.log(data);
+        startMeeting(data.signature);
+    })
+    .catch((error) => {
+        console.log(error)
+    });
+}
+function startMeeting(signature){
+    document.getElementById("main").style.display = "none";
+    const zoomScreen = document.getElementById("zoom-screen");
+    const zoomRoot = document.getElementById("zmmtg-root");
+    zoomScreen.style.display = "block";
+    zoomRoot.style.display = "block";
+    zoomScreen.appendChild(zoomRoot);
+
+    ZoomMtg.init({
+        leaveUrl:"http://localhost:5000",
+        patchJsMedia:true,
+        leaveOnPageUnload:true,
+        success:(success)=>{
+            console.log(success)
+            ZoomMtg.join({
+                signature:signature,
+                sdkKey:sdkKey,
+                meetingNumber:meetingNumber,
+                passWord:passWord,
+                userName:userName,
+                userEmail:userEmail,
+                tk:"",
+                zak:"",
+                success:(success) => console.log(success),
+                error:(error) => console.log(error)
+            })
+
+            setTimeout(()=>{
+                const zoomCSS = document.getElementById("zoom-elements-overwrite");
+                const head = document.getElementsByTagName("head")[0];
+                head.appendChild(zoomCSS);
+            }, 1000);
+        },
+        error:(error)=> console.error(error)
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1551,7 +1640,7 @@ function generateAssignmentPreview(assignment){
 
 
 /*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-let meetingSDK;
+/*let meetingSDK;
 async function connectZoom(){
     window.location.href = "/auth/zoom";
 }
@@ -1635,6 +1724,7 @@ async function startMeeting() {
     });
   }
 
+  */
 
 
 

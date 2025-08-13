@@ -18,14 +18,6 @@
     <link rel="stylesheet" type="text/css" href="../css/login.css">
     <link rel="stylesheet" type="text/css" href="../css/drive.css">
     <link rel="stylesheet" type="text/css" href="../css/mail.css">
-
-    <!--<script type="text/javascript" src="../js/zoom/react.min.js"></script>
-    <script type="text/javascript" src="../js/zoom/react-dom.min.js"></script>
-    <script type="text/javascript" src="../js/zoom/redux.min.js"></script>
-    <script type="text/javascript" src="../js/zoom/redux-thunk.min.js"></script>
-    <script type="text/javascript" src="../js/zoom/lodash.min.js"></script>
-    <script type="text/javascript" src="../js/zoom/zoom-meeting-embedded.min.js"></script>
-    <script type="text/javascript" src="../js/zoom/zoom-meeting.min.js"></script>-->
     
     <script type="text/javascript" src="../js/frontend/mammoth.browser.js"></script>
     <script type="text/javascript" src="../js/frontend/login logic.js"></script>
@@ -155,7 +147,7 @@
                 </div>
             </div>
             <div class="screen" id="main">
-                <div class="screen tab-affected" id="dahsboard-screen">
+                <div class="screen tab-affected" id="dahsboard-screen" style="display:none;">
                     <div class="dashboard-account-display">
                         <div class="dashboard-account-image user-icon"></div>
                         <div class="dashboard-account-name"></div>
@@ -311,7 +303,7 @@
                         <div class="drive-body"></div>
                     </div>
                 </div>
-                <div class="screen tab-affected" id="students-screen">
+                <div class="screen tab-affected" id="students-screen" style="display:block;">
                     <div class="students-main-holder">
                         <div class="student-portrait-button-holder class-required"></div>
                         <div class="class-list-window">
@@ -737,7 +729,7 @@
                 </div>
             </div>
         </div>
-
+        
         <div class="assistant-holder">
             <div class="assistant-button"></div>
             <div class="assistant-window">
@@ -765,6 +757,8 @@
             <div class="file-display-body"></div>
             <div class="file-loader"></div>
         </div>
+        
+        <div class="screen-mask" id="zoom-screen"></div>
         <div class="screen-mask" id="edit-calendar-event">
             <div class="screen-mask-background"></div>
             <div class="edit-calendar-event-window">
@@ -1095,5 +1089,12 @@
         <div class="notification"></div>
         <div class="download-notification">Downloading...</div>
     </div>
+
+    <script type="text/javascript" src="../js/zoom/react.min.js"></script>
+    <script type="text/javascript" src="../js/zoom/react-dom.min.js"></script>
+    <script type="text/javascript" src="../js/zoom/redux.min.js"></script>
+    <script type="text/javascript" src="../js/zoom/redux-thunk.min.js"></script>
+    <script type="text/javascript" src="../js/zoom/lodash.min.js"></script>
+    <script type="text/javascript" src="../js/zoom/zoom-meeting.min.js"></script>
 </body>
 </html>

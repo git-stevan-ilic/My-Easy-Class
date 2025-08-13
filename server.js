@@ -13,6 +13,8 @@ const querystring = require("querystring");
 const session = require("express-session");
 const axios = require("axios");
 
+const cors = require("cors");
+const { KJUR } = require("jsrsasign");
 const openai = require("openai");
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
@@ -47,7 +49,7 @@ app.use(bodyParser.json({limit:"10mb"}));
 app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(express.json());
+app.use(express.json(), cors());
 app.use(express.urlencoded({extended:true}));
 io.use(sharedsession(sessionMiddleware, {autoSave:true}));
 
@@ -130,7 +132,6 @@ app.get("/auth/google", passport.authenticate("google", {
         "https://www.googleapis.com/auth/gmail.send"
     ]
 }));
-
 
 /*--Setup Export Functions---------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 function authentificateGoogleAPI(req, res, index){
@@ -2263,11 +2264,121 @@ async function extractTextFromImage(buffer){
     return "";
 }
 
+/*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+app.post("/zoom-meeting", (req, res)=>{
+    const requestBody = coerceRequestBody(req.body);
+    const validationErrors = validateRequest(requestBody, propValidations, schemaValidations);
+    if(validationErrors.length > 0) return res.status(400).json({errors:validationErrors});
+    
+    const { meetingNumber, role, expirationSeconds, videoWebRtcMode } = requestBody;
+    const iat = Math.floor(Date.now() / 1000);
+    const exp = expirationSeconds ? iat + expirationSeconds : iat + 60 * 60 * 2;
+    const oHeader = {alg:"HS256", typ:"JWT"};
 
+    const oPayload = {
+        appKey:process.env.ZOOM_CLIENT_ID,
+        sdkKey:process.env.ZOOM_CLIENT_ID,
+        mn:meetingNumber,
+        role,
+        iat,
+        exp,
+        tokenExp:exp,
+        video_webrtc_mode:videoWebRtcMode
+    }
 
+    const sHeader = JSON.stringify(oHeader)
+    const sPayload = JSON.stringify(oPayload)
+    const sdkJWT = KJUR.jws.JWS.sign('HS256', sHeader, sPayload, process.env.ZOOM_CLIENT_SECRET)
+    return res.json({signature:sdkJWT, sdkKey:process.env.ZOOM_CLIENT_ID});
+});
 
+function isValidationError(value){
+    return typeof value?.property !== "undefined" && typeof value?.reason !== "undefined";
+}
+function inNumberArray(allowedNumbers){
+    return function(property, value){
+        if(typeof value === "undefined") return;
+        if(typeof value !== "number" || isNaN(value)){
+            return{
+                property,
+                reason:`Value ${value} not allowed, must be of type number`
+            };
+        }
+        if(!allowedNumbers.includes(value)){
+            return{
+                property,
+                reason:`Value is not valid. Got ${value}, expected ${allowedNumbers}`
+            };
+        }
+    };
+}
+function isBetween(min, max){
+    return function(property, value){
+        if(typeof value === "undefined") return;
+        if(typeof value !== "number" || isNaN(value)){
+            return{
+                property,
+                reason:`Value ${value} not allowed, must be of type number`
+            };
+        }
+        if(value < min || value > max){
+            return{
+                property,
+                reason:`Value must be in between ${min} and ${max}`
+            };
+        }
+    };
+}
+function isRequiredAllOrNone(requiredKeys){
+    return function(body){
+        const presentKeys = Object.keys(body).filter((x) => typeof body[x] !== "undefined");
+        const isValid = requiredKeys.every((x) => presentKeys.includes(x)) || requiredKeys.every((x) => !presentKeys.includes(x));
 
+        if(!isValid){
+            return{
+                property:'$schema',
+                reason:`If one of the following properties is present, all or none must be present: ${requiredKeys.join(', ')}`
+            };
+        }
+    };
+}
+function validateRequest(body, propertyValidator, schemaValidator){
+    const schemaValidations = schemaValidator.map((validator) => validator?.(body));
 
+    const propValidations = Object.keys(propertyValidator).flatMap((property)=>{
+        const value = body?.[property];
+        const func = propertyValidator[property];
+        const validations = Array.isArray(func)
+            ? func.map((f) => f(property, value))
+            : func?.(property, value);
+        return Array.isArray(validations) ? validations : [validations];
+    });
+
+    return schemaValidations
+        .concat(propValidations)
+        .filter(isValidationError);
+}
+function coerceRequestBody(body){
+    return {
+        ...body,
+        ...["role", "expirationSeconds", "videoWebRtcMode"].reduce(
+            (acc, cur)=>({
+                ...acc,
+                [cur]: typeof body[cur] === "string"
+                    ? parseInt(body[cur])
+                    : body[cur]
+            }),
+            {}
+        )
+    };
+}
+
+const schemaValidations = [isRequiredAllOrNone(["meetingNumber", "role"])];
+const propValidations = {
+    role:inNumberArray([0, 1]),
+    expirationSeconds:isBetween(1800, 172800),
+    videoWebRtcMode:inNumberArray([0, 1])
+}
 
 
 
@@ -2368,7 +2479,7 @@ setupStripeProduct();
 
 /*--Setup Zoom Services------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 /*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-const jwt = require('jsonwebtoken');
+/*const jwt = require('jsonwebtoken');
 const { file } = require("googleapis/build/src/apis/file");
 
 app.get('/auth/zoom', (req, res) => {
@@ -2459,3 +2570,4 @@ app.post('/api/generate-zoom-signature', async (req, res) => {
         res.status(500).json({ error: 'Failed to generate signature or process request.' });
     }
 });
+*/

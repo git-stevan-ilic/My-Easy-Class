@@ -24,6 +24,7 @@ function initLoad(){
     link.rel   = "stylesheet";
     link.type  = "text/css";
     link.href  = "../css/overwrite.css";
+    link.id    = "zoom-elements-overwrite";
     head.appendChild(link);
     setTimeout(()=>{fadeOut(".loading-screen", 0.1)}, 200);
 

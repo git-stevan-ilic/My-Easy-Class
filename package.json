@@ -20,6 +20,7 @@
     "express.js": "^1.0.0",
     "googleapis": "^148.0.0",
     "jsonwebtoken": "^9.0.2",
+    "jsrsasign": "^11.1.0",
     "mammoth": "^1.9.1",
     "mongodb": "^6.15.0",
     "mongoose": "^8.13.2",
