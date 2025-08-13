@@ -41,6 +41,15 @@ button:active{
     font-weight:bold;
     border:none;
 }
+.class-head-button{
+    position:relative;
+    margin-bottom:0.5rem;
+    margin-top:0rem;
+    font-size:1rem;
+    height:2.5rem;
+    width:100%;
+    z-index:1;
+}
 
 .selected-tab{
     background-color:var(--background-gray-3);

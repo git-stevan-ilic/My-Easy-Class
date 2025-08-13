@@ -32,6 +32,19 @@ function loadLogInLogic(client){
         notification("User register error: "+errorTexts[errorType]);
     });
     client.on("user-register-success", (userData)=>{
+        const signinScreen = document.querySelector("#sign-in-screen");
+        const loginScreen  = document.querySelector("#log-in-screen");
+        const signinName = document.querySelector("#sign-in-name");
+        const signinEmail = document.querySelector("#sign-in-email");
+        const signinPassword1 = document.querySelector("#sign-in-password-1");
+        const signinPassword2 = document.querySelector("#sign-in-password-2");
+        signinName.value = "";
+        signinEmail.value = "";
+        signinPassword1.value = "";
+        signinPassword2.value = "";
+        signinScreen.style.display = "none";
+        loginScreen.style.display = "block";
+
         document.querySelector("#sign-in-confirm").disabled = false;
         notification("Account created");
         logIn(client, userData, false);
@@ -75,11 +88,11 @@ function logIn(client, userData, requestPassword){
     fadeIn(".assistant-holder", 0.1);
 
     loadPaymentLogic(client, userData.userID, userData.subscription);
-    loadStudentsLogic(client, userData.userID, userData.username);
+    loadStudentsLogic(client, userData.userID, userData.username, userData.googleConnected);
     loadAboutMeLogic(client, userData);
     loadAssistantLogic(client);
     
-    if(!userData.googleConnected) noGoogle(client);
+    if(!userData.googleConnected) noGoogle(client, userData.userID);
     else{
         loadDriveLogic(client);
         loadMailLogic();
@@ -240,7 +253,7 @@ function editPasswordLogic(client){
 }
 function googleLogin(client){
     const signinGoogle = document.querySelector(".sign-in-google");
-    signinGoogle.onclick = ()=>{client.emit("google-log-in")}
+    signinGoogle.onclick = ()=>{client.emit("google-log-in", null)}
 
     client.on("google-redirect", (url)=>{window.location.href = url});
     client.on("google-status", (user)=>{
@@ -261,7 +274,7 @@ function copyURL(param, userID){
         console.error("Failed to copy: ", error);
     });
 }
-function noGoogle(client){
+function noGoogle(client, userID){
     const ids = ["#mail-screen", "#calendar-screen", "#drive-screen"];
     for(let i = 0; i < ids.length; i++){
         const screen = document.querySelector(ids[i]);
@@ -288,7 +301,7 @@ function noGoogle(client){
         screen.appendChild(googleConnectWindow);
 
         googleConnectButton.onclick = ()=>{
-            client.emit("google-log-in");
+            client.emit("google-log-in", userID);
         }
     }
 }

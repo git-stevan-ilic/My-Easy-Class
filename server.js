@@ -84,6 +84,7 @@ const usersSchema = new Schema({
     googleConnected:    {type:Boolean, required:true,  default:false},
     googleRefreshToken: {type:String,  required:false, default:null},
     googleUserID:       {type:String,  required:false, default:null},
+    googleEmail:        {type:String,  required:false,  default:null}
 });
 const classSchema = new Schema({
     classID:       {type:String, required:true},
@@ -102,17 +103,19 @@ const classSchema = new Schema({
  
 const Users = mongoose.model("User", usersSchema);
 const Classes = mongoose.model("Class", classSchema);
-
 /*--Setup Google Services----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 passport.use(new GoogleStrategy({
     clientID:process.env.GOOGLE_CLIENT_ID,
     clientSecret:process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL:process.env.GOOGLE_REDIRECT_URL
+    callbackURL:process.env.GOOGLE_REDIRECT_URL,
+    passReqToCallback:true
 },
-(accessToken, refreshToken, profile, done) => {
+(req, accessToken, refreshToken, profile, done) => {
     profile.refreshToken = refreshToken;
     profile.accessToken = accessToken;
-    checkUserExistGoogleLogin(profile);
+
+    const userID = req.query.state;
+    checkUserExistGoogleLogin(profile, userID);
     return done(null, profile);
 }));
 passport.serializeUser((user, done) => done(null, user));
@@ -122,16 +125,19 @@ GoogleStrategy.prototype.authorizationParams = (options)=>{
 };
 
 app.get("/auth/google/callback", passport.authenticate("google", {failureRedirect:"/login"}), (req, res) => res.redirect("/"));
-app.get("/auth/google", passport.authenticate("google", {
-    scope:[
-        "profile", "email", "https://www.googleapis.com/auth/calendar",
-        "https://www.googleapis.com/auth/drive.metadata.readonly",
-        "https://www.googleapis.com/auth/drive",
-        "https://www.googleapis.com/auth/gmail.readonly",
-        "https://www.googleapis.com/auth/gmail.modify",
-        "https://www.googleapis.com/auth/gmail.send"
-    ]
-}));
+app.get("/auth/google", (req, res, next)=>{
+    passport.authenticate("google", {
+        state:req.query.userID,
+        scope:[
+            "profile", "email", "https://www.googleapis.com/auth/calendar",
+            "https://www.googleapis.com/auth/drive.metadata.readonly",
+            "https://www.googleapis.com/auth/drive",
+            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/gmail.modify",
+            "https://www.googleapis.com/auth/gmail.send"
+        ]
+    })(req, res, next);
+});
 
 /*--Setup Export Functions---------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 function authentificateGoogleAPI(req, res, index){
@@ -1083,8 +1089,8 @@ io.on("connection", (client)=>{
             client.emit("user-log-in-fail", 0);
         });
     });
-    client.on("google-log-in", ()=>{
-        client.emit("google-redirect", "/auth/google");
+    client.on("google-log-in", (userID)=>{
+        client.emit("google-redirect", `/auth/google?userID=${userID}`);
     });
     client.on("get-user-display-data", (userID)=>{
         Users.find({userID:userID})
@@ -1431,12 +1437,13 @@ function userLogIn(client, email, password, sessionLogin, sessionID){
             description:       foundUser.description,
             subscription:      foundUser.subscription,
             classes:           foundUser.classes,
-            googleConnected:   foundUser.googleConnected
+            googleConnected:   foundUser.googleConnected,
+            googleEmail:       foundUser.googleEmail
         }
         let requestPassword = false;
         if(foundUser.password === "") requestPassword = true;
         client.request.session.userID = foundUser.userID;
-        client.request.session.email = foundUser.email;
+        client.request.session.email = foundUser.googleEmail;
         client.request.session.save((error)=>{
             if(error){
                 console.error("Session save error:", error);
@@ -1469,6 +1476,7 @@ function userRegister(client, newAccount){
             classes:[],
             googleConnected:false,
             googleRefreshToken:null,
+            googleEmail:null,
             googleUserID:null
         });
         
@@ -1494,15 +1502,16 @@ function userRegister(client, newAccount){
         client.emit("user-register-fail", 0);
     });
 }
-async function checkUserExistGoogleLogin(profile){
+async function checkUserExistGoogleLogin(profile, userID){
     try{
-        const result = await Users.find({email:profile.emails[0].value});
+        const result = await Users.find({userID:userID});
         if(result.length > 0){
             const foundUser = result[0];
             if(!foundUser.googleConnected){
                 foundUser.googleConnected = true;
                 foundUser.googleRefreshToken = profile.refreshToken;
                 foundUser.googleUserID = profile.id;
+                foundUser.googleEmail = profile.emails[0].value;
             }
             await foundUser.save().catch((error)=>{
                 console.error("Client ID update error: ", error);
@@ -1510,9 +1519,9 @@ async function checkUserExistGoogleLogin(profile){
             return;
         }
 
-        const userID = nanoid(10);
+        const newUserID = nanoid(10);
         const newUser = new Users({
-            userID:userID,
+            userID:newUserID,
             username:profile.displayName,
             password:"",
             sessionID:nanoid(10),
@@ -1520,15 +1529,16 @@ async function checkUserExistGoogleLogin(profile){
             classes:[],
             googleConnected:true,
             googleRefreshToken:profile.refreshToken,
-            googleUserID:profile.id
+            googleUserID:profile.id,
+            googleEmail:profile.emails[0].value,
         });
 
         await newUser.save()
         .then(async ()=>{
             console.log("New user '"+newUser.username+"' added");
 
-            const allStudentsClass = await createClass("All Students", userID, "all-students");
-            const ungroupedClass = await createClass("Ungrouped", userID, "ungrouped-students");
+            const allStudentsClass = await createClass("All Students", newUserID, "all-students");
+            const ungroupedClass = await createClass("Ungrouped", newUserID, "ungrouped-students");
             if(!allStudentsClass || !ungroupedClass){
                 console.log("Class Creation Error");
                 return;

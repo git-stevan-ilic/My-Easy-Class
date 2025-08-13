@@ -454,7 +454,10 @@ async function sendMail(recipients, subject, message, attachments, appPart){
             method:"POST",
             body:formData
         });
-        if(!response.ok) notification("Failed to send email");
+        if(!response.ok){
+            document.querySelector("#invite-email-button").display = false;
+            notification("Failed to send email");
+        }
         else{
             switch(appPart){
                 default:break;

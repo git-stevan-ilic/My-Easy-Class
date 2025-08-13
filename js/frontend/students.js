@@ -1,5 +1,5 @@
 /*--Initial------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function loadStudentsLogic(client, userID, username){
+function loadStudentsLogic(client, userID, username, googleConnected){
     let studentListSearch = "", assignmentSearch = "", homeworkSearch = "";
     let classNameSearch = "", inviteStudendSearch = "";
     let currLesson = 0, lessons = [[], [], []];
@@ -18,10 +18,14 @@ function loadStudentsLogic(client, userID, username){
     const newLessonDate = document.querySelector("#new-lesson-input-date");
     const newLessonTime = document.querySelector("#new-lesson-input-time");
     document.querySelector("#new-lesson").onclick = ()=>{
-        newLessonName.value = "";
+        /*newLessonName.value = "";
         newLessonContent.value = "";
         newLessonDate.value = "";
-        newLessonTime.value = "";
+        newLessonTime.value = "";*/
+        newLessonName.value = "Test Name";
+        newLessonContent.value = "Test Content";
+        newLessonDate.value = "2025-08-13";
+        newLessonTime.value = "17:12";
         fadeIn("#new-lesson-screen", 0.1, "block");
     }
     document.querySelector("#new-button-cancel").onclick = ()=>{
@@ -37,15 +41,11 @@ function loadStudentsLogic(client, userID, username){
             notification("Input all values");
             return;
         }
-
-        notification("Zoom connection not secure");
-        return;
-
-
         let studentNames = [];
         for(let i = 0; i < classes[currClass].students.length; i++){
             studentNames.push(classes[currClass].students[i].name);
         }
+        console.log(studentNames)
         lessons[0].push({
             lessonName:newLessonName.value,
             content:newLessonContent.value,
@@ -93,7 +93,7 @@ function loadStudentsLogic(client, userID, username){
         displayCurrClass(client, classes[currClass], studentListSearch, false);
         displayAssignmentsList(classes[currClass], assignmentSearch, false, false);
         displayAssignmentsList(classes[currClass], homeworkSearch, true, false);
-        addStudentEvents(username, classes[currClass].classID, classes[currClass].type, !firstEventLoaded);
+        addStudentEvents(username, classes[currClass].classID, classes[currClass].type, !firstEventLoaded, googleConnected);
         if(!firstEventLoaded) firstEventLoaded = true;
     });
     window.addEventListener("request-student-list", ()=>{
@@ -158,7 +158,7 @@ function loadStudentsLogic(client, userID, username){
         classes = classData;
 
         loadGenerateLogic(client, userID, classes[currClass].classID);
-        addStudentEvents(username, classes[currClass].classID, classes[currClass].type, firstEventLoaded);
+        addStudentEvents(username, classes[currClass].classID, classes[currClass].type, firstEventLoaded, googleConnected);
         classesExist(classes.length);
         studentPageSearch(classNameSearch, studentListSearch, assignmentSearch, homeworkSearch, inviteStudendSearch, classes, currClass, false);
         studentPageTabLogic(lessons, currLesson);
@@ -770,7 +770,7 @@ async function requestDownloadAssignment(type, name, html){
 }
 
 /*--Add Students-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function addStudentEvents(username, classID, classType, first){
+function addStudentEvents(username, classID, classType, first, googleConnected){
     const dropMenu = document.querySelector(".add-student-drop-down");
     const inviteList = document.querySelector(".invite-list");
     let addStudentDropDown = false;
@@ -799,14 +799,6 @@ function addStudentEvents(username, classID, classType, first){
             dropMenu.style.animation = "add-student-down ease-in-out 0.1s forwards";
             addStudentDropDown = true;
         }
-    }
-    document.querySelector("#invite-email").onclick = ()=>{
-        dropMenu.style.animation = "add-student-up ease-in-out 0.1s forwards";
-        document.querySelector("#invite-email-input").value = "";
-        while(inviteList.children.length > 0) inviteList.removeChild(inviteList.lastChild);
-        inviteList.innerHTML = "No invites sent";
-        fadeIn("#invite-email-screen", 0.1);
-        addStudentDropDown = false;
     }
     document.querySelector("#invite-link").onclick = ()=>{
         copyURL("classID", classID)
@@ -842,6 +834,23 @@ function addStudentEvents(username, classID, classType, first){
     else{
         inviteListButton.parentElement.style.display = "none";
         inviteListButton.onclick = null;
+    }
+
+    const inviteEmailListButton = document.querySelector("#invite-email");
+    if(googleConnected){
+        inviteEmailListButton.parentElement.style.display = "flex";
+        inviteEmailListButton.onclick = ()=>{
+            dropMenu.style.animation = "add-student-up ease-in-out 0.1s forwards";
+            document.querySelector("#invite-email-input").value = "";
+            while(inviteList.children.length > 0) inviteList.removeChild(inviteList.lastChild);
+            inviteList.innerHTML = "No invites sent";
+            fadeIn("#invite-email-screen", 0.1);
+            addStudentDropDown = false;
+        }
+    }
+    else{
+        inviteEmailListButton.parentElement.style.display = "none";
+        inviteEmailListButton.onclick = null;
     }
 
     const inviteEmailInput = document.querySelector("#invite-email-input");
