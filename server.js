@@ -1361,7 +1361,7 @@ io.on("connection", (client)=>{
         Classes.find({classID:classID})
         .then((result)=>{
             if(result.length === 0){
-                console.error("Find Class DB error: ", error);
+                console.error("Find Class DB error: Class not found");
                 client.emit("get-class-display-data-fail");
                 return;
             }
@@ -1601,6 +1601,9 @@ io.on("connection", (client)=>{
     });
     client.on("new-lesson", (lesson)=>{
         newLesson(client, lesson);
+    });
+    client.on("cancel-lesson", (lessonID, classID)=>{
+        cancelLesson(client, lessonID, classID);
     });
 });
 
@@ -2409,13 +2412,14 @@ function newLesson(client, lesson){
             time:lesson.time,
             meetingNumber:meetingData.data.id,
             meetingPassword:meetingData.data.password,
-            meetingJoinURL:meetingData.data.join_url
+            meetingJoinURL:meetingData.data.join_url,
+            classID:lesson.classID
         }
         
         foundClass.lessons.upcoming.push(addLesson);
         foundClass.markModified("lessons");
         foundClass.save()
-        .then(()=>{client.emit("edit-lesson-success")})
+        .then(()=>{client.emit("edit-lesson-success", 0)})
         .catch((error)=>{
             console.error("Class save new state error: " + error);
             client.emit("edit-lesson-fail", 3);
@@ -2429,6 +2433,44 @@ function newLesson(client, lesson){
 function toUTCDateTime(dateStr, timeStr){
     const localDateTime = new Date(`${dateStr}T${timeStr}:00`);
     return localDateTime.toISOString();
+}
+function cancelLesson(client, lessonID, classID){
+    Classes.find({classID:classID})
+    .then((result)=>{
+        if(result.length === 0){
+            console.error("Find Class DB error: Class not found");
+            client.emit("edit-lesson-fail", 1);
+            return;
+        }
+        let lession, lessionIndex;
+        const foundClass = result[0];
+        for(let i = 0; i < foundClass.lessons.upcoming.length; i++){
+            if(foundClass.lessons.upcoming[i].id === lessonID){
+                lession = foundClass.lessons.upcoming[i];
+                lessionIndex = i;
+                break;
+            }
+        }
+        if(!lession){
+            console.error("Find Class DB error: Lesson not found");
+            client.emit("edit-lesson-fail", 4);
+            return;
+        }
+
+        foundClass.lessons.canceled.push(lession);
+        foundClass.lessons.upcoming.splice(lessionIndex, 1);
+        foundClass.markModified("lessons");
+        foundClass.save()
+        .then(()=>{client.emit("edit-lesson-success", 1)})
+        .catch((error)=>{
+            console.error("Class save new state error: " + error);
+            client.emit("edit-lesson-fail", 3);
+        });
+    })
+    .catch((error)=>{
+        console.error("Find Class DB error: ", error);
+        client.emit("edit-lesson-fail", 0);
+    });
 }
 
 /*--AI Functions-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/

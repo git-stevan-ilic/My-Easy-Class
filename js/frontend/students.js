@@ -1,5 +1,5 @@
 /*--Initial------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function loadStudentsLogic(client, userID, username, googleConnected, zoomConnected){
+function loadStudentsLogic(client, userID, username, email, googleConnected, zoomConnected){
     let studentListSearch = "", assignmentSearch = "", homeworkSearch = "";
     let classNameSearch = "", inviteStudendSearch = "";
     let currLesson = 0, lessons = [[], [], []];
@@ -99,7 +99,7 @@ function loadStudentsLogic(client, userID, username, googleConnected, zoomConnec
         displayAssignmentsList(classes[currClass], assignmentSearch, false, false);
         displayAssignmentsList(classes[currClass], homeworkSearch, true, false);
         addStudentEvents(username, classes[currClass].classID, classes[currClass].type, !firstEventLoaded, googleConnected);
-        generateLessons(lessons[currLesson], currLesson);
+        generateLessons(lessons[currLesson], currLesson, username, email);
         if(!firstEventLoaded) firstEventLoaded = true;
     });
     window.addEventListener("request-student-list", ()=>{
@@ -143,6 +143,11 @@ function loadStudentsLogic(client, userID, username, googleConnected, zoomConnec
     window.addEventListener("delete-assignment", (e)=>{
         client.emit("delete-assignment", classes[currClass].classID, e.detail.id, e.detail.isHomework);
     });
+    window.addEventListener("cancel-lesson", (e)=>{
+        if(confirm("Are you sure you wish to cancel? the lesson")){
+            client.emit("cancel-lesson", e.detail.lessonID, e.detail.classID);
+        }
+    });
     
     client.emit("class-data-request", userID);
     client.on("new-class-error", ()=>{
@@ -167,9 +172,9 @@ function loadStudentsLogic(client, userID, username, googleConnected, zoomConnec
         addStudentEvents(username, classes[currClass].classID, classes[currClass].type, firstEventLoaded, googleConnected);
         classesExist(classes.length);
         studentPageSearch(classNameSearch, studentListSearch, assignmentSearch, homeworkSearch, inviteStudendSearch, classes, currClass, false);
-        studentPageTabLogic(lessons, currLesson);
+        studentPageTabLogic(lessons, currLesson, username, email);
         generateClasses(classNameSearch, classes);
-        generateLessons(lessons[currLesson], currLesson);
+        generateLessons(lessons[currLesson], currLesson, username, email);
         displayCurrClass(client, classes[currClass], studentListSearch, false);
         displayAssignmentsList(classes[currClass], assignmentSearch, false, false);
         displayAssignmentsList(classes[currClass], homeworkSearch, true, false);
@@ -275,17 +280,22 @@ function loadStudentsLogic(client, userID, username, googleConnected, zoomConnec
             "Find Class Error",
             "Find Class Error: Class not found",
             "Create Lesson error: Meeting creation failed",
-            "Class save new state error"
+            "Class save new state error",
+            "Find Class DB error: Lesson not found"
         ];
         console.error(errorTexts[type]);
         notification(errorTexts[type]);
     });
-    client.on("edit-lesson-success", ()=>{
-        notification("Lesson added");
+    client.on("edit-lesson-success", (type)=>{
+        const successTexts = [
+            "Lesson added",
+            "Lession canceled"
+        ]
+        notification(successTexts[type]);
         client.emit("class-data-request", userID);
     });
 }
-function loadClassViewDisplay(receivedClass, studentEmail, client){
+function loadClassViewDisplay(receivedClass, studentEmail, client, username, email){
     const mainScreen = document.querySelector("#main");
     while(mainScreen.children.length > 4) mainScreen.removeChild(mainScreen.firstChild);
     mainScreen.removeChild(mainScreen.children[2]);
@@ -315,8 +325,8 @@ function loadClassViewDisplay(receivedClass, studentEmail, client){
     displayAssignmentsList(receivedClass, assignmentSearch, false, true);
     displayAssignmentsList(receivedClass, homeworkSearch, true, true);
     studentPageSearch(null, studentListSearch, assignmentSearch, homeworkSearch, null, [receivedClass], 0, true);
-    generateLessons(lessons[currLesson], currLesson);
-    studentPageTabLogic(lessons, currLesson);
+    generateLessons(lessons[currLesson], currLesson, username, email);
+    studentPageTabLogic(lessons, currLesson, username, email);
 
     document.querySelector("#assignment-close").onclick = ()=>{
         fadeOut("#display-assignment-screen", 0.1, null);
@@ -417,7 +427,7 @@ function studentPageSearch(classNameSearch, studentListSearch, assignmentListSea
         displayAssignmentsList(classes[currClass], homeworkListSearch, true, studentView);
     }
 }
-function studentPageTabLogic(lessons, currLesson){
+function studentPageTabLogic(lessons, currLesson, username, email){
     const lessonTabs = document.querySelectorAll(".lesson-tab");
     for(let i = 0; i < lessonTabs.length; i++){
         lessonTabs[i].onclick = ()=>{
@@ -425,7 +435,7 @@ function studentPageTabLogic(lessons, currLesson){
                 document.querySelector(".lesson-selected-tab").classList.remove("lesson-selected-tab");
                 lessonTabs[i].classList.add("lesson-selected-tab");
                 currLesson = i;
-                generateLessons(lessons[currLesson], currLesson);
+                generateLessons(lessons[currLesson], currLesson, username, email);
             }
         }
     }
@@ -1022,7 +1032,7 @@ function inviteListSearchApply(students, inviteStudendSearch){
 }
 
 /*--Lessons------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function generateLessons(lessons, currLesson){
+function generateLessons(lessons, currLesson, username, email){
     const listHolder = document.querySelector(".lesson-list-holder");
     while(listHolder.children.length > 0) listHolder.removeChild(listHolder.lastChild);
     if(lessons.length === 0){
@@ -1071,7 +1081,10 @@ function generateLessons(lessons, currLesson){
                 startButton.innerHTML = "Start lesson";
                 lessonA.appendChild(startButton);
                 startButton.onclick = async ()=>{
-                    
+                    const id = lessons[currLesson].clientID;
+                    const mn = lessons[currLesson].meetingNumber;
+                    const mp = lessons[currLesson].meetingPassword;
+                    getSignature(1, id, mn, mp, username, email);
                 }
 
                 const cancelButton = document.createElement("button");
@@ -1079,11 +1092,13 @@ function generateLessons(lessons, currLesson){
                 cancelButton.innerHTML = "Cancel lesson";
                 lessonA.appendChild(cancelButton);
                 cancelButton.onclick = ()=>{
-                    /*if(confirm("Are you sure you want to cancel this lesson?")){
-                        const cancellesson = new CustomEvent("cancel-lesson", {detail:{index:i}});
-                        window.dispatchEvent(cancellesson);
-                    }*/
-                    notification("database error");
+                    const cancelLesson = new CustomEvent("cancel-lesson", {
+                        detail:{
+                            lessonID:lessons[currLesson].id,
+                            classID:lessons[currLesson].classID
+                        }
+                    });
+                    window.dispatchEvent(cancelLesson);
                 }
                 break;
             case 1:
@@ -1103,7 +1118,7 @@ function generateLessons(lessons, currLesson){
                 rescheduleButton.onclick = ()=>{
                     //const reschedulelesson = new CustomEvent("reschedule-lesson", {detail:{index:i}});
                     //window.dispatchEvent(reschedulelesson);
-                    notification("database error");
+                    //notification("database error");
                 }
                 break;
         }
@@ -1480,18 +1495,11 @@ function generateAssignmentPreview(assignment){
 }
 
 /*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-var sdkKey = 'zeY5YgjkTDG0TN4WvNlPuw'
-var meetingNumber = '82008698839'
-var passWord = '0iGNG2'
-var role = 0
-var userName = 'Slobodan'
-var userEmail = 'my.easy.class.work@gmail.com'
-
 window.addEventListener("load", ()=>{
     ZoomMtg.preLoadWasm();
     ZoomMtg.prepareWebSDK();
 });
-function getSignature(){
+function getSignature(role, sdkKey, meetingNumber, meetingPassword, username, email){
     fetch("/zoom-meeting", {
         method:"POST",
         headers:{"Content-Type": "application/json"},
@@ -1501,15 +1509,10 @@ function getSignature(){
         })
     })
     .then((response)=>{return response.json()})
-    .then((data)=>{
-        console.log(data);
-        startMeeting(data.signature);
-    })
-    .catch((error) => {
-        console.log(error)
-    });
+    .then((data)=>{startMeeting(data.signature, sdkKey, meetingNumber, meetingPassword, username, email)})
+    .catch((error) => {console.log(error)});
 }
-function startMeeting(signature){
+function startMeeting(signature, sdkKey, meetingNumber, meetingPassword, username, email){
     document.getElementById("main").style.display = "none";
     const zoomScreen = document.getElementById("zoom-screen");
     const zoomRoot = document.getElementById("zmmtg-root");
@@ -1527,9 +1530,9 @@ function startMeeting(signature){
                 signature:signature,
                 sdkKey:sdkKey,
                 meetingNumber:meetingNumber,
-                passWord:passWord,
-                userName:userName,
-                userEmail:userEmail,
+                passWord:meetingPassword,
+                userName:username,
+                userEmail:email,
                 tk:"",
                 zak:"",
                 success:(success) => console.log(success),
@@ -1545,243 +1548,3 @@ function startMeeting(signature){
         error:(error)=> console.error(error)
     });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-    //class-required
-    /*classes = [
-        {name:"All Students", 
-            students:[
-                {id:"1", name:"Student 1", iconURL:""}
-            ],
-            assignments:[
-                {id:"1", name:"Assignment Essay", type:"essay", content:"This is te essay requirement"},
-                {id:"2", name:"Assignment Name ABC", type:"abc", questionNum:5, answerNum:3, questionLevel:"C1-C2", questions:[
-                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]},
-                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]},
-                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]},
-                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]},
-                    {text:"What is this?", answers:["Answer 1", "Answer 2", "Answer 3"]}
-                ]}
-            ],
-            homework:[
-
-            ]},
-        {name:"Ungrouped", students:[], assignments:[
-            {
-                id:"1", name:"Assignment Name QnA", type:"qna", questionNum:5, questionLevel:"C1-C2", questions:[
-                    {text:"What is this?"},
-                    {text:"What is this?"},
-                    {text:"What is this?"},
-                    {text:"What is this?"},
-                    {text:"What is this?"}
-                ]
-            }
-        ], homework:[]}
-    ];*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-/*let meetingSDK;
-async function connectZoom(){
-    window.location.href = "/auth/zoom";
-}
-async function startMeeting() {
-    const response = await fetch("/api/create-meeting");
-    const meetingData = await response.json();
-
-    console.log( meetingData)
-    let signatureResponse;
-    try{
-        signatureResponse = await fetch("/api/generate-zoom-signature", { // Create this backend endpoint
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                meetingNumber: meetingData.id,
-                role: 1
-                // You might need to pass userId or email if your backend needs to fetch ZAK for a specific user
-            })
-        });
-        if (!signatureResponse.ok) {
-            const errorText = await signatureResponse.text();
-            throw new Error(`Failed to get signature: ${errorText}`);
-        }
-    }
-    catch(e){
-        console.error("Error fetching signature:", e);
-        notification(`Error fetching meeting signature: ${e.message}`);
-        return;
-    }
-
-
-
-    const signatureData = await signatureResponse.json();
-    const signature = signatureData.signature;
-    const zakToken = signatureData.zak; // Your backend should provide this if role is host
-
-    if (!signature) {
-        console.error("Signature is missing from backend response.");
-        notification("Error: Could not obtain meeting signature.");
-        return;
-    }
-
-    if (!zakToken) {
-        console.warn("Attempting to join as host without ZAK token. This might fail.");
-        // Depending on your Zoom account settings and meeting type, joining as host
-        // without ZAK might work for instant meetings started by the SDK user directly,
-        // but for scheduled meetings or to ensure host controls, ZAK is usually needed.
-    }
-
-
-    ZoomMtg.setZoomJSLib("https://source.zoom.us/2.13.0/lib", "/av");
-    ZoomMtg.preLoadWasm();
-    ZoomMtg.prepareWebSDK();
-
-    const config = {
-        meetingNumber:meetingData.id,
-        userName:"Your Name", // Use the user's name from Google Login
-        passWord:meetingData.password, // Only required for password-protected meetings
-        leaveUrl:"http://localhost:5000",
-        role:1, // 1 for host, 0 for participant
-        sdkKey: "zeY5YgjkTDG0TN4WvNlPuw",
-        signature: signature,
-        zak: zakToken,
-    };
-
-    ZoomMtg.init({
-      leaveUrl: config.leaveUrl,
-      success: () => {
-        const zoomElement = document.getElementById("zmmtg-root");
-        zoomElement.style.position = "absolute";
-        zoomElement.style.display = "block";
-        ZoomMtg.join({
-          ...config,
-          success: (res) => console.log('Joined meeting'),
-          error: (err) => console.error('Join error:', err),
-        });
-      },
-      error: (err) => console.error('Init error:', err),
-    });
-  }
-
-  */
-
-
-
-/*
-async function connectZoom() {
-    window.location.href = "/auth/zoom";
-}
-async function createMeeting() {
-    try {
-      const response = await fetch('http://localhost:5000/create-meeting', {
-        method: 'POST',
-        credentials: 'include', // 👈 Mandatory for cookies
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Request failed');
-      }
-  
-      const meetingData = await response.json();
-      window.open(meetingData.join_url);
-    } catch (error) {
-      console.error('Frontend Error:', error);
-      notification(error.message);
-    }
-}
-*/
