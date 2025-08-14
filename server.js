@@ -1661,47 +1661,62 @@ function userRegister(client, newAccount){
 }
 async function checkUserExistGoogleLogin(profile, userID){
     try{
-        const result = await Users.find({userID:userID});
-        if(result.length > 0){
-            const foundUser = result[0];
-            if(!foundUser.googleConnected){
-                foundUser.googleConnected = true;
-                foundUser.googleRefreshToken = profile.refreshToken;
-                foundUser.googleUserID = profile.id;
-                foundUser.googleEmail = profile.emails[0].value;
+        if(userID !== "null"){
+            const result = await Users.find({userID:userID});
+            if(result.length === 0) newUser();
+            else{
+                const foundUser = result[0];
+                if(!foundUser.googleConnected){
+                    foundUser.googleConnected = true;
+                    foundUser.googleRefreshToken = profile.refreshToken;
+                    foundUser.googleUserID = profile.id;
+                    foundUser.googleEmail = profile.emails[0].value;
+                }
+                await foundUser.save().catch((error)=>{
+                    console.error("Client ID update error: ", error);
+                });
             }
-            await foundUser.save().catch((error)=>{
-                console.error("Client ID update error: ", error);
-            });
-            return;
+        }
+        else{
+            const result = await Users.find({email:profile.emails[0].value});
+            if(result.length === 0) newUser();
+            else{
+                const foundUser = result[0];
+                foundUser.googleRefreshToken = profile.refreshToken;
+                await foundUser.save().catch((error)=>{
+                    console.error("Client ID update error: ", error);
+                });
+            }
         }
 
-        const newUserID = nanoid(10);
-        const newUser = new Users({
-            userID:newUserID,
-            username:profile.displayName,
-            password:"",
-            sessionID:nanoid(10),
-            email:profile.emails[0].value,
-            classes:[],
-            googleConnected:true,
-            googleRefreshToken:profile.refreshToken,
-            googleUserID:profile.id,
-            googleEmail:profile.emails[0].value,
-        });
+        async function newUser(){
+            const newUserID = nanoid(10);
+            const newUser = new Users({
+                userID:newUserID,
+                username:profile.displayName,
+                password:"",
+                sessionID:nanoid(10),
+                email:profile.emails[0].value,
+                classes:[],
+                googleConnected:true,
+                googleRefreshToken:profile.refreshToken,
+                googleUserID:profile.id,
+                googleEmail:profile.emails[0].value,
+            });
 
-        await newUser.save()
-        .then(async ()=>{
-            console.log("New user '"+newUser.username+"' added");
+            await newUser.save()
+            .then(async ()=>{
+                console.log("New user '"+newUser.username+"' added");
 
-            const allStudentsClass = await createClass("All Students", newUserID, "all-students");
-            const ungroupedClass = await createClass("Ungrouped", newUserID, "ungrouped-students");
-            if(!allStudentsClass || !ungroupedClass){
-                console.log("Class Creation Error");
-                return;
-            }
-        })
-        .catch((error)=>{console.error("New user DB error: ", error)});
+                const allStudentsClass = await createClass("All Students", newUserID, "all-students");
+                const ungroupedClass = await createClass("Ungrouped", newUserID, "ungrouped-students");
+                if(!allStudentsClass || !ungroupedClass){
+                    console.log("Class Creation Error");
+                    return;
+                }
+            })
+            .catch((error)=>{console.error("New user DB error: ", error)});
+        }
     }
     catch(error){
         console.error("Find user DB error: ", error);
@@ -1715,43 +1730,60 @@ async function getZoomUserInfo(accessToken){
 }
 async function checkUserExistZoomLogin(userID, name, email, refreshToken){
     try{
-        const result = await Users.find({userID:userID});
-        if(result.length > 0){
-            const foundUser = result[0];
-            if(!foundUser.zoomConnected){
-                foundUser.zoomConnected = true;
-                foundUser.zoomRefreshToken = refreshToken;
-            }
-            await foundUser.save().catch((error)=>{
-                console.error("Client ID update error: ", error);
-            });
-            return;
-        }
-
-        const newUserID = nanoid(10);
-        const newUser = new Users({
-            userID:newUserID,
-            username:name,
-            password:"",
-            sessionID:nanoid(10),
-            email:email,
-            classes:[],
-            zoomConnected:true,
-            zoomRefreshToken:refreshToken,
-        });
-
-        await newUser.save()
-        .then(async ()=>{
-            console.log("New user '"+newUser.username+"' added");
-
-            const allStudentsClass = await createClass("All Students", newUserID, "all-students");
-            const ungroupedClass = await createClass("Ungrouped", newUserID, "ungrouped-students");
-            if(!allStudentsClass || !ungroupedClass){
-                console.log("Class Creation Error");
+        if(userID !== "null"){
+            const result = await Users.find({userID:userID});
+            if(result.length === 0) newUser();
+            else{
+                const foundUser = result[0];
+                if(!foundUser.zoomConnected){
+                    foundUser.zoomConnected = true;
+                    foundUser.zoomRefreshToken = refreshToken;
+                }
+                await foundUser.save().catch((error)=>{
+                    console.error("Client ID update error: ", error);
+                });
                 return;
             }
-        })
-        .catch((error)=>{console.error("New user DB error: ", error)});
+        }
+        else{
+            const result = await Users.find({email:email});
+            if(result.length === 0) newUser();
+            else{
+                const foundUser = result[0];
+                foundUser.zoomRefreshToken = refreshToken;
+                await foundUser.save().catch((error)=>{
+                    console.error("Client ID update error: ", error);
+                });
+                return;
+            }
+        }
+        
+        async function newUser(){
+            const newUserID = nanoid(10);
+            const newUser = new Users({
+                userID:newUserID,
+                username:name,
+                password:"",
+                sessionID:nanoid(10),
+                email:email,
+                classes:[],
+                zoomConnected:true,
+                zoomRefreshToken:refreshToken,
+            });
+
+            await newUser.save()
+            .then(async ()=>{
+                console.log("New user '"+newUser.username+"' added");
+
+                const allStudentsClass = await createClass("All Students", newUserID, "all-students");
+                const ungroupedClass = await createClass("Ungrouped", newUserID, "ungrouped-students");
+                if(!allStudentsClass || !ungroupedClass){
+                    console.log("Class Creation Error");
+                    return;
+                }
+            })
+            .catch((error)=>{console.error("New user DB error: ", error)});
+        }
     }
     catch(error){
         console.error("Find user DB error: ", error);
