@@ -1197,6 +1197,85 @@ function coerceRequestBody(body){
         )
     };
 }
+async function refreshZoomAccessToken(refreshToken){
+    try{
+        const tokenResponse = await axios.post(
+            "https://zoom.us/oauth/token",
+            qs.stringify({
+                grant_type: "refresh_token",
+                refresh_token:refreshToken
+            }),
+            {
+                auth: {
+                    username:process.env.ZOOM_CLIENT_ID,
+                    password:process.env.ZOOM_CLIENT_SECRET
+                },
+                headers: {"Content-Type": "application/x-www-form-urlencoded"}
+            }
+        );
+        return tokenResponse.data;
+    }
+    catch(error){
+        console.error("Error refreshing Zoom token:", error.response?.data || error.message);
+        throw error;
+    }
+}
+async function getZoomRefreshToken(userID){
+    try{
+        const result = await Users.find({userID:userID});
+        if(result.length === 0){
+            console.error("Find user DB error: User not found");
+            return null;
+        }
+        const foundUser = result[0];
+        return foundUser.zoomRefreshToken;
+    }
+    catch(error){
+        console.error("Find user DB error: ", error);
+        return null;
+    }
+}
+function updateZoomRefreshToken(userID, refreshToken){
+    Users.find({userID:userID})
+    .then((result)=>{
+        if(result.length === 0){
+            console.error("Find User DB error: User not found");
+            return;
+        }
+        const foundUser = result[0];
+        foundUser.zoomRefreshToken = refreshToken;
+        foundUser.save()
+        .catch((error)=>{console.error("Update Zoom Refresh token error: ", error)});
+    })
+    .catch((error)=>{
+        console.error("Find User DB error: ", error);
+    });
+}
+async function createZoomMeeting(accessToken, topic, startTime){
+    try{
+        const meetingRes = await axios.post(
+        "https://api.zoom.us/v2/users/me/meetings",
+        {
+            topic,
+            type:2,
+            startTime,            
+            duration:30,
+            settings:{join_before_host:true}
+        },
+        {
+            headers:{
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json"
+            }
+        }
+        );
+        return meetingRes;
+    }
+    catch(error){
+        console.error(error.response?.data || error.message);
+        return null;
+    }
+}
 
 const schemaValidations = [isRequiredAllOrNone(["meetingNumber", "role"])];
 const propValidations = {
@@ -1208,8 +1287,13 @@ const propValidations = {
 /*--Input/Output-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 io.use((client, next) => {sessionMiddleware(client.request, {}, next);});
 io.on("connection", (client)=>{
-    if(client.handshake.session.passport?.user) client.emit("google-status", client.handshake.session.passport.user);
-    if(client.handshake.session.zoomUser) client.emit("zoom-status", client.handshake.session.zoomUser);
+    if(client.handshake.session.passport?.user || client.handshake.session.zoomUser){
+        if(client.handshake.session.passport?.user && client.handshake.session.zoomUser) client.emit("google-status", client.handshake.session.passport.user);
+        else{
+            if(client.handshake.session.passport?.user) client.emit("google-status", client.handshake.session.passport.user);
+            if(client.handshake.session.zoomUser) client.emit("zoom-status", client.handshake.session.zoomUser);
+        }
+    }
     
     client.on("disconnect", ()=>{userLogOff(client)});
     client.on("user-log-off", ()=>{userLogOff(client)});
@@ -1514,6 +1598,9 @@ io.on("connection", (client)=>{
     });
     client.on("add-students-list", (allStudentsID, ungroupedStudentsID, receiveingClassID, studentList)=>{
         addStudentsList(client, allStudentsID, ungroupedStudentsID, receiveingClassID, studentList);
+    });
+    client.on("new-lesson", (lesson)=>{
+        newLesson(client, lesson);
     });
 });
 
@@ -2288,6 +2375,60 @@ function addStudentListReceive(client, students, receiveingClassID){
         console.error("Add list Students to Class Error: " + error);
         client.emit("add-students-list-fail", 5);
     });
+}
+
+/*--Lesson Functions---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+function newLesson(client, lesson){
+    Classes.find({classID:lesson.classID})
+    .then(async (result)=>{
+        if(result.length === 0){
+            console.error("Find Class DB error: Class not found");
+            client.emit("edit-lesson-fail", 1);
+            return;
+        }
+        const foundClass = result[0];
+        const refreshToken = await getZoomRefreshToken(foundClass.ownerID);
+        const tokenData = await refreshZoomAccessToken(refreshToken);
+        updateZoomRefreshToken(foundClass.ownerID, tokenData.refresh_token);
+
+        const startTime = toUTCDateTime(lesson.date, lesson.time);
+        const meetingData = await createZoomMeeting(tokenData.access_token, lesson.name, startTime);
+        if(!meetingData){
+            console.error("Create Lesson error: Meeting creation failed");
+            client.emit("edit-lesson-fail", 2);
+            return;
+        }
+
+        const addLesson = {
+            clientID:process.env.ZOOM_CLIENT_ID,
+            id:nanoid(10),
+            name:lesson.name,
+            content:lesson.content,
+            students:lesson.students,
+            date:lesson.date,
+            time:lesson.time,
+            meetingNumber:meetingData.data.id,
+            meetingPassword:meetingData.data.password,
+            meetingJoinURL:meetingData.data.join_url
+        }
+        
+        foundClass.lessons.upcoming.push(addLesson);
+        foundClass.markModified("lessons");
+        foundClass.save()
+        .then(()=>{client.emit("edit-lesson-success")})
+        .catch((error)=>{
+            console.error("Class save new state error: " + error);
+            client.emit("edit-lesson-fail", 3);
+        });
+    })
+    .catch((error)=>{
+        console.error("Find Class DB error: ", error);
+        client.emit("edit-lesson-fail", 0);
+    });
+}
+function toUTCDateTime(dateStr, timeStr){
+    const localDateTime = new Date(`${dateStr}T${timeStr}:00`);
+    return localDateTime.toISOString();
 }
 
 /*--AI Functions-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/

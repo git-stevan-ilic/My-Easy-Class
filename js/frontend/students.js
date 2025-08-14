@@ -1,5 +1,5 @@
 /*--Initial------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-function loadStudentsLogic(client, userID, username, googleConnected){
+function loadStudentsLogic(client, userID, username, googleConnected, zoomConnected){
     let studentListSearch = "", assignmentSearch = "", homeworkSearch = "";
     let classNameSearch = "", inviteStudendSearch = "";
     let currLesson = 0, lessons = [[], [], []];
@@ -18,14 +18,14 @@ function loadStudentsLogic(client, userID, username, googleConnected){
     const newLessonDate = document.querySelector("#new-lesson-input-date");
     const newLessonTime = document.querySelector("#new-lesson-input-time");
     document.querySelector("#new-lesson").onclick = ()=>{
-        /*newLessonName.value = "";
+        if(!zoomConnected){
+            client.emit("zoom-log-in", userID);
+            return;
+        }
+        newLessonName.value = "";
         newLessonContent.value = "";
         newLessonDate.value = "";
-        newLessonTime.value = "";*/
-        newLessonName.value = "Test Name";
-        newLessonContent.value = "Test Content";
-        newLessonDate.value = "2025-08-13";
-        newLessonTime.value = "17:12";
+        newLessonTime.value = "";
         fadeIn("#new-lesson-screen", 0.1, "block");
     }
     document.querySelector("#new-button-cancel").onclick = ()=>{
@@ -45,17 +45,16 @@ function loadStudentsLogic(client, userID, username, googleConnected){
         for(let i = 0; i < classes[currClass].students.length; i++){
             studentNames.push(classes[currClass].students[i].name);
         }
-        console.log(studentNames)
-        lessons[0].push({
-            lessonName:newLessonName.value,
+        const newLesson = {
+            name:newLessonName.value,
             content:newLessonContent.value,
             students:studentNames,
-            className:classes[currClass].name,
             date:newLessonDate.value,
-            time:newLessonTime.value
-        });
+            time:newLessonTime.value,
+            classID:classes[currClass].classID
+        }
+        client.emit("new-lesson", newLesson);
         document.querySelector("#new-button-cancel").click();
-        generateLessons(lessons[currLesson], currLesson);
     }
     document.querySelector("#assignment-close").onclick = ()=>{
         fadeOut("#display-assignment-screen", 0.1, null);
@@ -270,6 +269,20 @@ function loadStudentsLogic(client, userID, username, googleConnected){
         notification("Students added to Class");
         client.emit("class-data-request", userID);
         fadeOut("#invite-list-screen", 0.1, null);
+    });
+    client.on("edit-lesson-fail", (type)=>{
+        const errorTexts = [
+            "Find Class Error",
+            "Find Class Error: Class not found",
+            "Create Lesson error: Meeting creation failed",
+            "Class save new state error"
+        ];
+        console.error(errorTexts[type]);
+        notification(errorTexts[type]);
+    });
+    client.on("edit-lesson-success", ()=>{
+        notification("Lesson added");
+        client.emit("class-data-request", userID);
     });
 }
 function loadClassViewDisplay(receivedClass, studentEmail, client){
@@ -1038,8 +1051,9 @@ function generateLessons(lessons, currLesson){
             if(j === lessons[i].students.length - 1) comma = "";
             studentText += lessons[i].students[j]+comma;
         }
+        if(studentText === "") studentText = "No students in lesson";
 
-        lessonN.innerHTML = lessons[i].lessonName;
+        lessonN.innerHTML = lessons[i].name;
         lessonC.innerHTML = lessons[i].content;
         lessonS.innerHTML = studentText;
 

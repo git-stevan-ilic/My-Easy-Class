@@ -89,7 +89,7 @@ function logIn(client, userData, requestPassword){
     fadeIn(".assistant-holder", 0.1);
 
     loadPaymentLogic(client, userData.userID, userData.subscription);
-    loadStudentsLogic(client, userData.userID, userData.username, userData.googleConnected);
+    loadStudentsLogic(client, userData.userID, userData.username, userData.googleConnected, userData.zoomConnected);
     loadAboutMeLogic(client, userData);
     loadAssistantLogic(client);
     

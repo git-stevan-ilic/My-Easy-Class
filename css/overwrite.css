@@ -51,6 +51,10 @@ button:active{
     z-index:1;
 }
 
+.new-class-input-button-holder > *{
+    width:6rem;
+}
+
 .selected-tab{
     background-color:var(--background-gray-3);
     color:var(--dark-blue);
