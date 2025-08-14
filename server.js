@@ -12,6 +12,7 @@ const cookieParser = require("cookie-parser");
 const querystring = require("querystring");
 const session = require("express-session");
 const axios = require("axios");
+const qs = require("qs");
 
 const cors = require("cors");
 const { KJUR } = require("jsrsasign");
@@ -84,7 +85,9 @@ const usersSchema = new Schema({
     googleConnected:    {type:Boolean, required:true,  default:false},
     googleRefreshToken: {type:String,  required:false, default:null},
     googleUserID:       {type:String,  required:false, default:null},
-    googleEmail:        {type:String,  required:false,  default:null}
+    googleEmail:        {type:String,  required:false, default:null},
+    zoomConnected:      {type:Boolean, required:true,  default:false},
+    zoomRefreshToken:   {type:String,  required:false, default:null},
 });
 const classSchema = new Schema({
     classID:       {type:String, required:true},
@@ -1055,10 +1058,159 @@ app.post("/generate-pdf", async (req, res)=>{
     }
 });
 
+/*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+app.get("/auth/zoom", (req, res, next)=>{
+    const authorizeUrl = "https://zoom.us/oauth/authorize" +
+        `?response_type=code&client_id=${process.env.ZOOM_CLIENT_ID}` +
+        `&redirect_uri=${encodeURIComponent(process.env.ZOOM_REDIRECT_URL)}` + 
+        `&state=${encodeURIComponent(req.query.userID)}`;
+    res.redirect(authorizeUrl);
+});
+app.get("/zoom/callback", async (req, res)=>{
+    const { code, userID } = req.query;
+    try{
+        const tokenRes = await axios.post(
+            "https://zoom.us/oauth/token",
+            qs.stringify({grant_type:"authorization_code", code, redirect_uri:process.env.ZOOM_REDIRECT_URL}),
+            {
+                auth:{
+                    username:process.env.ZOOM_CLIENT_ID,
+                    password:process.env.ZOOM_CLIENT_SECRET
+                },
+                headers:{"Content-Type": "application/x-www-form-urlencoded"}
+            }
+        );
+        const accountInfo = await getZoomUserInfo(tokenRes.data.access_token);
+        req.session.zoomUser = {email:accountInfo.email};
+        checkUserExistZoomLogin(userID, accountInfo.display_name, accountInfo.email, tokenRes.data.refresh_token);
+        res.json({data:tokenRes.data, email:accountInfo.email});
+    }
+    catch(error){
+        console.error(error.response?.data || error.message);
+        res.status(500).json({error:"Token exchange failed"});
+    }
+});
+app.post("/zoom-meeting", (req, res)=>{
+    const requestBody = coerceRequestBody(req.body);
+    const validationErrors = validateRequest(requestBody, propValidations, schemaValidations);
+    if(validationErrors.length > 0) return res.status(400).json({errors:validationErrors});
+    
+    const { meetingNumber, role, expirationSeconds, videoWebRtcMode } = requestBody;
+    const iat = Math.floor(Date.now() / 1000);
+    const exp = expirationSeconds ? iat + expirationSeconds : iat + 60 * 60 * 2;
+    const oHeader = {alg:"HS256", typ:"JWT"};
+
+    const oPayload = {
+        appKey:process.env.ZOOM_CLIENT_ID,
+        sdkKey:process.env.ZOOM_CLIENT_ID,
+        mn:meetingNumber,
+        role,
+        iat,
+        exp,
+        tokenExp:exp,
+        video_webrtc_mode:videoWebRtcMode
+    }
+
+    const sHeader = JSON.stringify(oHeader)
+    const sPayload = JSON.stringify(oPayload)
+    const sdkJWT = KJUR.jws.JWS.sign('HS256', sHeader, sPayload, process.env.ZOOM_CLIENT_SECRET)
+    return res.json({signature:sdkJWT, sdkKey:process.env.ZOOM_CLIENT_ID});
+});
+
+function isValidationError(value){
+    return typeof value?.property !== "undefined" && typeof value?.reason !== "undefined";
+}
+function inNumberArray(allowedNumbers){
+    return function(property, value){
+        if(typeof value === "undefined") return;
+        if(typeof value !== "number" || isNaN(value)){
+            return{
+                property,
+                reason:`Value ${value} not allowed, must be of type number`
+            };
+        }
+        if(!allowedNumbers.includes(value)){
+            return{
+                property,
+                reason:`Value is not valid. Got ${value}, expected ${allowedNumbers}`
+            };
+        }
+    };
+}
+function isBetween(min, max){
+    return function(property, value){
+        if(typeof value === "undefined") return;
+        if(typeof value !== "number" || isNaN(value)){
+            return{
+                property,
+                reason:`Value ${value} not allowed, must be of type number`
+            };
+        }
+        if(value < min || value > max){
+            return{
+                property,
+                reason:`Value must be in between ${min} and ${max}`
+            };
+        }
+    };
+}
+function isRequiredAllOrNone(requiredKeys){
+    return function(body){
+        const presentKeys = Object.keys(body).filter((x) => typeof body[x] !== "undefined");
+        const isValid = requiredKeys.every((x) => presentKeys.includes(x)) || requiredKeys.every((x) => !presentKeys.includes(x));
+
+        if(!isValid){
+            return{
+                property:'$schema',
+                reason:`If one of the following properties is present, all or none must be present: ${requiredKeys.join(', ')}`
+            };
+        }
+    };
+}
+function validateRequest(body, propertyValidator, schemaValidator){
+    const schemaValidations = schemaValidator.map((validator) => validator?.(body));
+
+    const propValidations = Object.keys(propertyValidator).flatMap((property)=>{
+        const value = body?.[property];
+        const func = propertyValidator[property];
+        const validations = Array.isArray(func)
+            ? func.map((f) => f(property, value))
+            : func?.(property, value);
+        return Array.isArray(validations) ? validations : [validations];
+    });
+
+    return schemaValidations
+        .concat(propValidations)
+        .filter(isValidationError);
+}
+function coerceRequestBody(body){
+    return {
+        ...body,
+        ...["role", "expirationSeconds", "videoWebRtcMode"].reduce(
+            (acc, cur)=>({
+                ...acc,
+                [cur]: typeof body[cur] === "string"
+                    ? parseInt(body[cur])
+                    : body[cur]
+            }),
+            {}
+        )
+    };
+}
+
+const schemaValidations = [isRequiredAllOrNone(["meetingNumber", "role"])];
+const propValidations = {
+    role:inNumberArray([0, 1]),
+    expirationSeconds:isBetween(1800, 172800),
+    videoWebRtcMode:inNumberArray([0, 1])
+}
+
 /*--Input/Output-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 io.use((client, next) => {sessionMiddleware(client.request, {}, next);});
 io.on("connection", (client)=>{
     if(client.handshake.session.passport?.user) client.emit("google-status", client.handshake.session.passport.user);
+    if(client.handshake.session.zoomUser) client.emit("zoom-status", client.handshake.session.zoomUser);
+    
     client.on("disconnect", ()=>{userLogOff(client)});
     client.on("user-log-off", ()=>{userLogOff(client)});
     client.on("user-log-in", (email)=>{userLogIn(client, email, null, false, null)});
@@ -1091,6 +1243,9 @@ io.on("connection", (client)=>{
     });
     client.on("google-log-in", (userID)=>{
         client.emit("google-redirect", `/auth/google?userID=${userID}`);
+    });
+    client.on("zoom-log-in", (userID)=>{
+        client.emit("zoom-redirect", `/auth/zoom?userID=${userID}`);
     });
     client.on("get-user-display-data", (userID)=>{
         Users.find({userID:userID})
@@ -1438,7 +1593,8 @@ function userLogIn(client, email, password, sessionLogin, sessionID){
             subscription:      foundUser.subscription,
             classes:           foundUser.classes,
             googleConnected:   foundUser.googleConnected,
-            googleEmail:       foundUser.googleEmail
+            googleEmail:       foundUser.googleEmail,
+            zoomConnected:     foundUser.zoomConnected
         }
         let requestPassword = false;
         if(foundUser.password === "") requestPassword = true;
@@ -1477,7 +1633,8 @@ function userRegister(client, newAccount){
             googleConnected:false,
             googleRefreshToken:null,
             googleEmail:null,
-            googleUserID:null
+            googleUserID:null,
+            zoomConnected:false,
         });
         
         await newUser.save()
@@ -1531,6 +1688,56 @@ async function checkUserExistGoogleLogin(profile, userID){
             googleRefreshToken:profile.refreshToken,
             googleUserID:profile.id,
             googleEmail:profile.emails[0].value,
+        });
+
+        await newUser.save()
+        .then(async ()=>{
+            console.log("New user '"+newUser.username+"' added");
+
+            const allStudentsClass = await createClass("All Students", newUserID, "all-students");
+            const ungroupedClass = await createClass("Ungrouped", newUserID, "ungrouped-students");
+            if(!allStudentsClass || !ungroupedClass){
+                console.log("Class Creation Error");
+                return;
+            }
+        })
+        .catch((error)=>{console.error("New user DB error: ", error)});
+    }
+    catch(error){
+        console.error("Find user DB error: ", error);
+    }
+}
+async function getZoomUserInfo(accessToken){
+    const res = await axios.get("https://api.zoom.us/v2/users/me", {
+        headers:{Authorization: `Bearer ${accessToken}`}
+    });
+    return res.data;
+}
+async function checkUserExistZoomLogin(userID, name, email, refreshToken){
+    try{
+        const result = await Users.find({userID:userID});
+        if(result.length > 0){
+            const foundUser = result[0];
+            if(!foundUser.zoomConnected){
+                foundUser.zoomConnected = true;
+                foundUser.zoomRefreshToken = refreshToken;
+            }
+            await foundUser.save().catch((error)=>{
+                console.error("Client ID update error: ", error);
+            });
+            return;
+        }
+
+        const newUserID = nanoid(10);
+        const newUser = new Users({
+            userID:newUserID,
+            username:name,
+            password:"",
+            sessionID:nanoid(10),
+            email:email,
+            classes:[],
+            zoomConnected:true,
+            zoomRefreshToken:refreshToken,
         });
 
         await newUser.save()
@@ -2274,167 +2481,6 @@ async function extractTextFromImage(buffer){
     return "";
 }
 
-/*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-app.post("/zoom-meeting", (req, res)=>{
-    const requestBody = coerceRequestBody(req.body);
-    const validationErrors = validateRequest(requestBody, propValidations, schemaValidations);
-    if(validationErrors.length > 0) return res.status(400).json({errors:validationErrors});
-    
-    const { meetingNumber, role, expirationSeconds, videoWebRtcMode } = requestBody;
-    const iat = Math.floor(Date.now() / 1000);
-    const exp = expirationSeconds ? iat + expirationSeconds : iat + 60 * 60 * 2;
-    const oHeader = {alg:"HS256", typ:"JWT"};
-
-    const oPayload = {
-        appKey:process.env.ZOOM_CLIENT_ID,
-        sdkKey:process.env.ZOOM_CLIENT_ID,
-        mn:meetingNumber,
-        role,
-        iat,
-        exp,
-        tokenExp:exp,
-        video_webrtc_mode:videoWebRtcMode
-    }
-
-    const sHeader = JSON.stringify(oHeader)
-    const sPayload = JSON.stringify(oPayload)
-    const sdkJWT = KJUR.jws.JWS.sign('HS256', sHeader, sPayload, process.env.ZOOM_CLIENT_SECRET)
-    return res.json({signature:sdkJWT, sdkKey:process.env.ZOOM_CLIENT_ID});
-});
-
-function isValidationError(value){
-    return typeof value?.property !== "undefined" && typeof value?.reason !== "undefined";
-}
-function inNumberArray(allowedNumbers){
-    return function(property, value){
-        if(typeof value === "undefined") return;
-        if(typeof value !== "number" || isNaN(value)){
-            return{
-                property,
-                reason:`Value ${value} not allowed, must be of type number`
-            };
-        }
-        if(!allowedNumbers.includes(value)){
-            return{
-                property,
-                reason:`Value is not valid. Got ${value}, expected ${allowedNumbers}`
-            };
-        }
-    };
-}
-function isBetween(min, max){
-    return function(property, value){
-        if(typeof value === "undefined") return;
-        if(typeof value !== "number" || isNaN(value)){
-            return{
-                property,
-                reason:`Value ${value} not allowed, must be of type number`
-            };
-        }
-        if(value < min || value > max){
-            return{
-                property,
-                reason:`Value must be in between ${min} and ${max}`
-            };
-        }
-    };
-}
-function isRequiredAllOrNone(requiredKeys){
-    return function(body){
-        const presentKeys = Object.keys(body).filter((x) => typeof body[x] !== "undefined");
-        const isValid = requiredKeys.every((x) => presentKeys.includes(x)) || requiredKeys.every((x) => !presentKeys.includes(x));
-
-        if(!isValid){
-            return{
-                property:'$schema',
-                reason:`If one of the following properties is present, all or none must be present: ${requiredKeys.join(', ')}`
-            };
-        }
-    };
-}
-function validateRequest(body, propertyValidator, schemaValidator){
-    const schemaValidations = schemaValidator.map((validator) => validator?.(body));
-
-    const propValidations = Object.keys(propertyValidator).flatMap((property)=>{
-        const value = body?.[property];
-        const func = propertyValidator[property];
-        const validations = Array.isArray(func)
-            ? func.map((f) => f(property, value))
-            : func?.(property, value);
-        return Array.isArray(validations) ? validations : [validations];
-    });
-
-    return schemaValidations
-        .concat(propValidations)
-        .filter(isValidationError);
-}
-function coerceRequestBody(body){
-    return {
-        ...body,
-        ...["role", "expirationSeconds", "videoWebRtcMode"].reduce(
-            (acc, cur)=>({
-                ...acc,
-                [cur]: typeof body[cur] === "string"
-                    ? parseInt(body[cur])
-                    : body[cur]
-            }),
-            {}
-        )
-    };
-}
-
-const schemaValidations = [isRequiredAllOrNone(["meetingNumber", "role"])];
-const propValidations = {
-    role:inNumberArray([0, 1]),
-    expirationSeconds:isBetween(1800, 172800),
-    videoWebRtcMode:inNumberArray([0, 1])
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /*
 async function setupStripeProduct() {
     const product = await stripe.products.create({
@@ -2454,130 +2500,4 @@ async function setupStripeProduct() {
 }
 
 setupStripeProduct();
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*--Setup Zoom Services------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-/*--Zoom API-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-/*const jwt = require('jsonwebtoken');
-const { file } = require("googleapis/build/src/apis/file");
-
-app.get('/auth/zoom', (req, res) => {
-    const url = `https://zoom.us/oauth/authorize?response_type=code&client_id=${process.env.ZOOM_CLIENT_ID}&redirect_uri=${process.env.ZOOM_REDIRECT_URL}`;
-    res.redirect(url);
-});
-app.get('/auth/zoom/callback', async (req, res) => {
-    const { code } = req.query;
-    const params = {
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: process.env.ZOOM_REDIRECT_URL,
-      client_id: process.env.ZOOM_CLIENT_ID,
-      client_secret: process.env.ZOOM_CLIENT_SECRET,
-    };
-  
-    try {
-      const response = await axios.post('https://zoom.us/oauth/token', querystring.stringify(params));
-      req.session.zoomAccessToken = response.data.access_token;
-      res.redirect('/');
-    } catch (error) {
-      res.send('Zoom authentication failed.');
-    }
-});
-app.get('/api/create-meeting', async (req, res) => {
-    if (!req.session.zoomAccessToken) return res.status(401).send('Unauthorized');
-  
-    try {
-      const meetingConfig = {
-        topic: 'My Zoom Meeting',
-        type: 1, // Instant meeting
-        settings: { host_video: true, participant_video: true },
-      };
-  
-      const response = await axios.post('https://api.zoom.us/v2/users/me/meetings', meetingConfig, {
-        headers: { Authorization: `Bearer ${req.session.zoomAccessToken}` },
-      });
-  
-      res.json(response.data);
-    } catch (error) {
-        console.log(error)
-      res.status(500).json({ error: 'Failed to create meeting' });
-    }
-});
-app.post('/api/generate-zoom-signature', async (req, res) => {
-    const { meetingNumber, role } = req.body;
-
-    if (!meetingNumber || typeof role === 'undefined') {
-        return res.status(400).json({ error: 'Meeting number and role are required.' });
-    }
-
-    const iat = Math.floor(Date.now() / 1000) - 30;
-    const exp = iat + 60 * 60 * 2; // Expires in 2 hours
-
-    const payload = {
-        sdkKey: process.env.ZOOM_CLIENT_ID,
-        mn: meetingNumber.toString(),
-        role: parseInt(role, 10),
-        iat: iat,
-        exp: exp,
-        appKey: process.env.ZOOM_CLIENT_ID, // Some SDK versions might expect appKey
-        tokenExp: exp,
-    };
-
-    try {
-        const signature = jwt.sign(payload, process.env.ZOOM_CLIENT_SECRET, { algorithm: 'HS256' });
-        let zakToken = null;
-
-        if (parseInt(role, 10) === 1) {
-            // === Option 1: If the meeting is being created by and for the API user ===
-            // And you're using a Server-to-Server OAuth app or JWT app for that user,
-            // you might fetch their ZAK token.
-            // This is a placeholder - actual ZAK fetching requires Zoom API call.
-            const zakResponse = await axios.get(`https://api.zoom.us/v2/users/me/zak`, { headers: { 'Authorization': `Bearer ${YOUR_S2S_ACCESS_TOKEN}` } });
-            zakToken = zakResponse.data.token;
-            // For simplicity in this example, we'll assume you might have it or get it.
-            // If your /api/create-meeting already returns a host_zak, you could use that.
-            // For now, let's send null and acknowledge it might be an issue.
-            console.warn("ZAK token fetching logic not fully implemented in this example for host role.");
-            // You might need to pass the ZAK from the meeting creation step if it provides it,
-            // or have a dedicated user ID for whom you fetch the ZAK.
-        }
-
-        res.json({ signature, zak: zakToken });
-
-    } catch (error) {
-        console.error('Error generating signature or fetching ZAK:', error);
-        res.status(500).json({ error: 'Failed to generate signature or process request.' });
-    }
-});
 */

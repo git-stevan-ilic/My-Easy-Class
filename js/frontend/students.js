@@ -88,12 +88,19 @@ function loadStudentsLogic(client, userID, username, googleConnected){
     window.addEventListener("change-curr-class", (e)=>{
         const studentSearch = document.querySelector("#student-search");
         currClass = e.detail.newCurrClass;
+        lessons = [
+            classes[currClass].lessons.upcoming,
+            classes[currClass].lessons.completed,
+            classes[currClass].lessons.canceled
+        ];
         studentListSearch = "";
         studentSearch.value = studentListSearch;
+
         displayCurrClass(client, classes[currClass], studentListSearch, false);
         displayAssignmentsList(classes[currClass], assignmentSearch, false, false);
         displayAssignmentsList(classes[currClass], homeworkSearch, true, false);
         addStudentEvents(username, classes[currClass].classID, classes[currClass].type, !firstEventLoaded, googleConnected);
+        generateLessons(lessons[currLesson], currLesson);
         if(!firstEventLoaded) firstEventLoaded = true;
     });
     window.addEventListener("request-student-list", ()=>{
@@ -1025,7 +1032,7 @@ function generateLessons(lessons, currLesson){
         lessonS.className = "lesson-list-element lesson-students";
         lessonA.className = "lesson-list-element lesson-action";
 
-        let studentText = "Class: "+lessons[i].className+"<br>";
+        let studentText = "";
         for(let j = 0; j < lessons[i].students.length; j++){
             let comma = ", ";
             if(j === lessons[i].students.length - 1) comma = "";

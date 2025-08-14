@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Zoom OAuth Callback</title>
+</head>
+<body>
+    <p>Connecting to Zoom...</p>
+    <script>
+        (async function() {
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get("code");
+            const userID = params.get("state");
+            if(!code){
+                document.body.innerHTML = "<p>Authorization failed or was denied.</p>";
+                return;
+            }
+            try{
+                const res = await fetch("/zoom/callback?userID=" + encodeURIComponent(userID) + "&code=" + encodeURIComponent(code));
+                const data = await res.json();
+
+                if(res.ok && data.data.access_token) window.location.href = "/";
+                else{
+                    document.body.innerHTML = "<p>Error fetching access token.</p>";
+                    console.error(data);
+                }
+            }
+            catch(error){
+                document.body.innerHTML = "<p>Network error.</p>";
+                console.error(error);
+            }
+        })();
+    </script>
+</body>
+</html>

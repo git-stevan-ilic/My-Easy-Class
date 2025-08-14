@@ -4,6 +4,7 @@ function loadLogInLogic(client){
     switchLoginSignin(client);
     rememberMeLogic(client);
     googleLogin(client);
+    zoomLogic(client);
 
     client.on("user-log-in-fail", (errorType)=>{
         const errorTexts = [
@@ -257,10 +258,16 @@ function googleLogin(client){
 
     client.on("google-redirect", (url)=>{window.location.href = url});
     client.on("google-status", (user)=>{
-        if(user){
-            console.log(user);
-            client.emit("user-log-in", user.emails[0].value);
-        }
+        if(user) client.emit("user-log-in", user.emails[0].value);
+    });
+}
+function zoomLogic(client){
+    const signinZoom = document.querySelector(".sign-in-zoom");
+    signinZoom.onclick = ()=>{client.emit("zoom-log-in", null)}
+
+    client.on("zoom-redirect", (url)=>{window.location.href = url});
+    client.on("zoom-status", (user)=>{
+        if(user) client.emit("user-log-in", user.email);
     });
 }
 function copyURL(param, userID){
