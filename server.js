@@ -1259,7 +1259,7 @@ async function createZoomMeeting(accessToken, topic, startTime){
             topic,
             type:2,
             startTime,            
-            duration:30,
+            duration:60,
             settings:{join_before_host:true}
         },
         {
@@ -1604,6 +1604,12 @@ io.on("connection", (client)=>{
     });
     client.on("cancel-lesson", (lessonID, classID)=>{
         cancelLesson(client, lessonID, classID);
+    });
+    client.on("remove-lesson", (lessonID, classID)=>{
+        removeLesson(client, lessonID, classID);
+    });
+    client.on("finish-lesson", (lessonID, classID)=>{
+        finishLesson(client, lessonID, classID);
     });
 });
 
@@ -2462,6 +2468,80 @@ function cancelLesson(client, lessonID, classID){
         foundClass.markModified("lessons");
         foundClass.save()
         .then(()=>{client.emit("edit-lesson-success", 1)})
+        .catch((error)=>{
+            console.error("Class save new state error: " + error);
+            client.emit("edit-lesson-fail", 3);
+        });
+    })
+    .catch((error)=>{
+        console.error("Find Class DB error: ", error);
+        client.emit("edit-lesson-fail", 0);
+    });
+}
+function removeLesson(client, lessonID, classID){
+    Classes.find({classID:classID})
+    .then((result)=>{
+        if(result.length === 0){
+            console.error("Find Class DB error: Class not found");
+            client.emit("edit-lesson-fail", 1);
+            return;
+        }
+        let lessionIndex, lessonFound = false;
+        const foundClass = result[0];
+        for(let i = 0; i < foundClass.lessons.canceled.length; i++){
+            if(foundClass.lessons.canceled[i].id === lessonID){
+                lessonFound = true;
+                lessionIndex = i;
+                break;
+            }
+        }
+        if(!lessonFound){
+            console.error("Find Class DB error: Lesson not found");
+            client.emit("edit-lesson-fail", 4);
+            return;
+        }
+
+        foundClass.lessons.canceled.splice(lessionIndex, 1);
+        foundClass.markModified("lessons");
+        foundClass.save()
+        .then(()=>{client.emit("edit-lesson-success", 2)})
+        .catch((error)=>{
+            console.error("Class save new state error: " + error);
+            client.emit("edit-lesson-fail", 3);
+        });
+    })
+    .catch((error)=>{
+        console.error("Find Class DB error: ", error);
+        client.emit("edit-lesson-fail", 0);
+    });
+}
+function finishLesson(client, lessonID, classID){
+    Classes.find({classID:classID})
+    .then((result)=>{
+        if(result.length === 0){
+            console.error("Find Class DB error: Class not found");
+            client.emit("edit-lesson-fail", 1);
+            return;
+        }
+        let lession, lessionIndex;
+        const foundClass = result[0];
+        for(let i = 0; i < foundClass.lessons.upcoming.length; i++){
+            if(foundClass.lessons.upcoming[i].id === lessonID){
+                lession = foundClass.lessons.upcoming[i];
+                lessionIndex = i;
+                break;
+            }
+        }
+        if(!lession){
+            console.error("Find Class DB error: Lesson not found");
+            client.emit("edit-lesson-fail", 4);
+            return;
+        }
+
+        foundClass.lessons.completed.push(lession);
+        foundClass.lessons.upcoming.splice(lessionIndex, 1);
+        foundClass.markModified("lessons");
+        foundClass.save()
         .catch((error)=>{
             console.error("Class save new state error: " + error);
             client.emit("edit-lesson-fail", 3);

@@ -925,6 +925,35 @@
     height:2rem;
     width:10rem;
 }
+.record-button{
+    background-color:rgb(255, 0, 0);
+    border:2px solid rgb(0, 0, 0);
+    color:var(--background-white);
+    transform:translateY(0px);
+    border-radius:100%;
+    position:absolute;
+   
+    font-size:0.75rem;
+    height:2rem;
+    width:2rem;
+    z-index:10;
+    left:20px;
+    top:55px;
+
+    transition:ease-in-out 0.05s;
+    justify-content:center;
+    align-items:center;
+    user-select:none;
+    font-weight:bold;
+    cursor:pointer;
+    display:none;
+}
+.record-button:hover{
+    transform:translateY(-1px);
+}
+.record-button:active{
+    transform:translateY(1px);
+}
 
 /*--New Lesson--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .new-lesson-window{

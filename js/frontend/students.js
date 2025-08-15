@@ -66,6 +66,9 @@ function loadStudentsLogic(client, userID, username, email, googleConnected, zoo
     document.querySelector("#edit-class-cancel").onclick = ()=>{
         fadeOut("#edit-class-screen", 0.1, null);
     }
+    document.querySelector(".record-button").onclick = ()=>{
+        startScreenCapture();
+    }
 
     window.addEventListener("new-class", (e)=>{
         const eventName = e.detail.name;
@@ -144,9 +147,17 @@ function loadStudentsLogic(client, userID, username, email, googleConnected, zoo
         client.emit("delete-assignment", classes[currClass].classID, e.detail.id, e.detail.isHomework);
     });
     window.addEventListener("cancel-lesson", (e)=>{
-        if(confirm("Are you sure you wish to cancel? the lesson")){
+        if(confirm("Are you sure you wish to cancel the lesson?")){
             client.emit("cancel-lesson", e.detail.lessonID, e.detail.classID);
         }
+    });
+    window.addEventListener("remove-lesson", (e)=>{
+        if(confirm("Are you sure you wish to remove the lesson?")){
+            client.emit("remove-lesson", e.detail.lessonID, e.detail.classID);
+        }
+    });
+    window.addEventListener("finish-lesson", (e)=>{
+        client.emit("finish-lesson", e.detail.lessonID, e.detail.classID);
     });
     
     client.emit("class-data-request", userID);
@@ -289,7 +300,8 @@ function loadStudentsLogic(client, userID, username, email, googleConnected, zoo
     client.on("edit-lesson-success", (type)=>{
         const successTexts = [
             "Lesson added",
-            "Lession canceled"
+            "Lession canceled",
+            "Lesson removed"
         ]
         notification(successTexts[type]);
         client.emit("class-data-request", userID);
@@ -1067,12 +1079,13 @@ function generateLessons(lessons, currLesson, username, email){
         lessonC.innerHTML = lessons[i].content;
         lessonS.innerHTML = studentText;
 
+        
         lesson.appendChild(lessonN);
         lesson.appendChild(lessonC);
         lesson.appendChild(lessonS);
         lesson.appendChild(lessonA);
         listHolder.appendChild(lesson);
-
+       
         switch(currLesson){
             default:break;
             case 0:
@@ -1081,10 +1094,10 @@ function generateLessons(lessons, currLesson, username, email){
                 startButton.innerHTML = "Start lesson";
                 lessonA.appendChild(startButton);
                 startButton.onclick = async ()=>{
-                    const id = lessons[currLesson].clientID;
-                    const mn = lessons[currLesson].meetingNumber;
-                    const mp = lessons[currLesson].meetingPassword;
-                    getSignature(1, id, mn, mp, username, email);
+                    const id = lessons[i].clientID;
+                    const mn = lessons[i].meetingNumber;
+                    const mp = lessons[i].meetingPassword;
+                    getSignature(1, id, mn, mp, username, email, lessons[i].id, lessons[i].classID);
                 }
 
                 const cancelButton = document.createElement("button");
@@ -1094,8 +1107,8 @@ function generateLessons(lessons, currLesson, username, email){
                 cancelButton.onclick = ()=>{
                     const cancelLesson = new CustomEvent("cancel-lesson", {
                         detail:{
-                            lessonID:lessons[currLesson].id,
-                            classID:lessons[currLesson].classID
+                            lessonID:lessons[i].id,
+                            classID:lessons[i].classID
                         }
                     });
                     window.dispatchEvent(cancelLesson);
@@ -1111,18 +1124,34 @@ function generateLessons(lessons, currLesson, username, email){
                 }
                 break;
             case 2:
-                const rescheduleButton = document.createElement("button");
-                rescheduleButton.className = "action-button";
-                rescheduleButton.innerHTML = "Reschedule lesson";
-                lessonA.appendChild(rescheduleButton);
-                rescheduleButton.onclick = ()=>{
-                    //const reschedulelesson = new CustomEvent("reschedule-lesson", {detail:{index:i}});
-                    //window.dispatchEvent(reschedulelesson);
-                    //notification("database error");
+                const removeButton = document.createElement("button");
+                removeButton.className = "action-button";
+                removeButton.innerHTML = "Remove Lesson";
+                lessonA.appendChild(removeButton);
+                removeButton.onclick = ()=>{
+                    const removeLesson = new CustomEvent("remove-lesson", {
+                        detail:{
+                            lessonID:lessons[i].id,
+                            classID:lessons[i].classID
+                        }
+                    });
+                    window.dispatchEvent(removeLesson);
                 }
                 break;
         }
     }
+}
+async function startScreenCapture(){
+    const stream = await navigator.mediaDevices.getDisplayMedia({video:true, audio:true});
+    const recorder = new MediaRecorder(stream);
+    recorder.ondataavailable = (e)=>{
+        const url = URL.createObjectURL(e.data);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "recording.webm";
+        a.click();
+    };
+    recorder.start();
 }
 
 /*--Generate Assignment Logic------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -1499,7 +1528,7 @@ window.addEventListener("load", ()=>{
     ZoomMtg.preLoadWasm();
     ZoomMtg.prepareWebSDK();
 });
-function getSignature(role, sdkKey, meetingNumber, meetingPassword, username, email){
+function getSignature(role, sdkKey, meetingNumber, meetingPassword, username, email, lessonID, classID){
     fetch("/zoom-meeting", {
         method:"POST",
         headers:{"Content-Type": "application/json"},
@@ -1509,10 +1538,10 @@ function getSignature(role, sdkKey, meetingNumber, meetingPassword, username, em
         })
     })
     .then((response)=>{return response.json()})
-    .then((data)=>{startMeeting(data.signature, sdkKey, meetingNumber, meetingPassword, username, email)})
+    .then((data)=>{startMeeting(data.signature, sdkKey, meetingNumber, meetingPassword, username, email, lessonID, classID)})
     .catch((error) => {console.log(error)});
 }
-function startMeeting(signature, sdkKey, meetingNumber, meetingPassword, username, email){
+function startMeeting(signature, sdkKey, meetingNumber, meetingPassword, username, email, lessonID, classID){
     document.getElementById("main").style.display = "none";
     const zoomScreen = document.getElementById("zoom-screen");
     const zoomRoot = document.getElementById("zmmtg-root");
@@ -1535,7 +1564,19 @@ function startMeeting(signature, sdkKey, meetingNumber, meetingPassword, usernam
                 userEmail:email,
                 tk:"",
                 zak:"",
-                success:(success) => console.log(success),
+                success:(success) => {
+                    console.log(success);
+                    document.querySelector(".record-button").style.display = "flex";
+                    document.querySelector(".assistant-button").style.display = "none";
+
+                    const finishedLesson = new CustomEvent("finish-lesson", {
+                        detail:{
+                            lessonID:lessonID,
+                            classID:classID
+                        }
+                    });
+                    window.dispatchEvent(finishedLesson);
+                },
                 error:(error) => console.log(error)
             })
 
