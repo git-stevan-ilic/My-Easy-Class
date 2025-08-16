@@ -215,6 +215,10 @@ async function uploadCV(userID){
             });
             const text = await res.text();
             console.log(text);
+            if(res.status !== 200){
+                notification("CV upload error");
+                return;
+            }
         }
         catch(error){
             notification("CV upload failed");
@@ -236,10 +240,12 @@ async function uploadIcon(userID){
             });
             const text = await res.text();
             console.log(text);
-            if(res.status === 200){
-                const updateProfileImage = new Event("update-profile-image");
-                window.dispatchEvent(updateProfileImage);
+            if(res.status !== 200){
+                notification("Image upload error");
+                return;
             }
+            const updateProfileImage = new Event("update-profile-image");
+            window.dispatchEvent(updateProfileImage);
         }
         catch(error){
             notification("Profile image upload failed");

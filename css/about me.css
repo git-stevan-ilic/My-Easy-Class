@@ -246,8 +246,11 @@
     .about-me-info-holder{
         flex-direction:column;
         padding-top:2rem;
+        width:100%;
     }
     .about-me-image{
+        transform:translate(-50%);
+        margin-left:50%;
         margin-bottom:2rem;
     }
 }

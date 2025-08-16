@@ -803,7 +803,7 @@ app.post("/upload-cv/:userID", upload.single("cvFile"), async (req, res)=>{
         const userID = req.params.userID;
         if(!req.file) return res.status(400).send("No file uploaded");
 
-        const allowedDocTypes = ["application/vnd.openxmlformats-officedocument.wordprocessingml.document",];
+        const allowedDocTypes = ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
         if(!allowedDocTypes.includes(req.file.mimetype)) return res.status(400).send("Invalid document format");
         
         Users.find({userID:userID})

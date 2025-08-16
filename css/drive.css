@@ -620,6 +620,12 @@
         top:4rem;
     }
     #file-display-cefr{
-        top:7rem;
+        left:6.5rem;
+        top:4rem;
+    }
+    .file-display-title{
+        transform:translate(-50%);
+        width:calc(100% - 6rem);
+        left:50%;
     }
 }
