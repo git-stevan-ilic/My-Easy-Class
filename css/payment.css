@@ -31,9 +31,9 @@
 .plan{
     background-color:var(--background-white);
     color:var(--dark-blue);
-    max-width:40vw;
+    max-width:48vw;
     padding:1rem;
-    height:42rem;
+    height:46rem;
     width:20rem;
 }
 .plan:nth-child(2){
@@ -42,12 +42,14 @@
 .plan-title{
     justify-content:center;
     align-items:center;
+    white-space:nowrap;
     font-weight:bold;
+    overflow:hidden;
     display:flex;
 
     color:var(--accent-blue-1);
     margin-bottom:2rem;
-    font-size:1.6rem;
+    font-size:1.5rem;
     width:100%;
 }
 .plan-value{

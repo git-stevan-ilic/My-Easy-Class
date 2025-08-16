@@ -54,6 +54,16 @@ button:active{
 .new-class-input-button-holder > *{
     width:6rem;
 }
+.file-input-button{
+    margin-top:0px;
+    font-size:1rem;
+    flex-shrink:0;
+    width:5.5rem;
+    height:2rem;
+}
+#input-cv{
+    display: block;
+}
 
 .selected-tab{
     background-color:var(--background-gray-3);
